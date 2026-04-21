@@ -113,6 +113,117 @@ export type Database = {
         }
         Relationships: []
       }
+      pdv_leads: {
+        Row: {
+          contact_name: string
+          contact_phone: string | null
+          created_at: string
+          id: string
+          ip: string | null
+          lead_id: string | null
+          note: string | null
+          pdv_id: string
+          reward_amount: number
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          contact_name: string
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          ip?: string | null
+          lead_id?: string | null
+          note?: string | null
+          pdv_id: string
+          reward_amount?: number
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          contact_name?: string
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          ip?: string | null
+          lead_id?: string | null
+          note?: string | null
+          pdv_id?: string
+          reward_amount?: number
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pdv_leads_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pdv_leads_pdv_id_fkey"
+            columns: ["pdv_id"]
+            isOneToOne: false
+            referencedRelation: "pdvs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pdvs: {
+        Row: {
+          active: boolean
+          city: string | null
+          cnpj: string | null
+          created_at: string
+          id: string
+          last_lead_at: string | null
+          leads_count: number
+          manager_name: string | null
+          name: string
+          reward_per_lead: number
+          short_code: string
+          state: string | null
+          updated_at: string
+          user_id: string
+          whatsapp: string | null
+        }
+        Insert: {
+          active?: boolean
+          city?: string | null
+          cnpj?: string | null
+          created_at?: string
+          id?: string
+          last_lead_at?: string | null
+          leads_count?: number
+          manager_name?: string | null
+          name: string
+          reward_per_lead?: number
+          short_code: string
+          state?: string | null
+          updated_at?: string
+          user_id: string
+          whatsapp?: string | null
+        }
+        Update: {
+          active?: boolean
+          city?: string | null
+          cnpj?: string | null
+          created_at?: string
+          id?: string
+          last_lead_at?: string | null
+          leads_count?: number
+          manager_name?: string | null
+          name?: string
+          reward_per_lead?: number
+          short_code?: string
+          state?: string | null
+          updated_at?: string
+          user_id?: string
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -297,6 +408,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      capture_pdv_lead: {
+        Args: {
+          _contact_name: string
+          _contact_phone?: string
+          _note?: string
+          _short_code: string
+        }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
