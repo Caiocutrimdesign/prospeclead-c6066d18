@@ -301,13 +301,17 @@ export default function Frentista() {
               </div>
             </div>
 
-            <div className="w-full max-w-sm mt-5 grid grid-cols-2 gap-3">
-              <Button type="button" variant="outline" onClick={retake} className="h-12 bg-transparent border-white/15 text-white hover:bg-white/10">
-                <RotateCcw className="w-4 h-4 mr-2" /> Refazer
+            <div className="w-full max-w-sm mt-4 space-y-3">
+              <Button type="button" onClick={submit} disabled={busy || !coords || !plate.trim()} className="w-full h-14 bg-success hover:bg-success/90 text-white text-base font-semibold shadow-lg shadow-success/30">
+                {busy ? (
+                  <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Salvando...</>
+                ) : (
+                  <><CheckCircle2 className="w-5 h-5 mr-2" /> CONFIRMAR LEAD</>
+                )}
               </Button>
-              <Button type="button" onClick={submit} disabled={busy || !coords || !plate.trim()} className="h-12 bg-success hover:bg-success/90 text-white">
-                {busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
-                Salvar lead
+              
+              <Button type="button" variant="outline" onClick={retake} className="w-full h-11 bg-transparent border-white/15 text-white hover:bg-white/10">
+                <RotateCcw className="w-4 h-4 mr-2" /> Refazer foto
               </Button>
             </div>
           </>
