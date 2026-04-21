@@ -179,12 +179,112 @@ export type Database = {
         }
         Relationships: []
       }
+      wallet_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string
+          id: string
+          kind: Database["public"]["Enums"]["wallet_tx_kind"]
+          lead_id: string | null
+          metadata: Json | null
+          source: Database["public"]["Enums"]["wallet_tx_source"]
+          user_id: string
+          withdrawal_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description: string
+          id?: string
+          kind: Database["public"]["Enums"]["wallet_tx_kind"]
+          lead_id?: string | null
+          metadata?: Json | null
+          source?: Database["public"]["Enums"]["wallet_tx_source"]
+          user_id: string
+          withdrawal_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["wallet_tx_kind"]
+          lead_id?: string | null
+          metadata?: Json | null
+          source?: Database["public"]["Enums"]["wallet_tx_source"]
+          user_id?: string
+          withdrawal_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_transactions_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wallet_withdrawals: {
+        Row: {
+          amount: number
+          created_at: string
+          holder_name: string
+          id: string
+          notes: string | null
+          pix_key: string
+          pix_key_kind: Database["public"]["Enums"]["pix_key_kind"]
+          processed_at: string | null
+          requested_at: string
+          status: Database["public"]["Enums"]["withdrawal_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          holder_name: string
+          id?: string
+          notes?: string | null
+          pix_key: string
+          pix_key_kind: Database["public"]["Enums"]["pix_key_kind"]
+          processed_at?: string | null
+          requested_at?: string
+          status?: Database["public"]["Enums"]["withdrawal_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          holder_name?: string
+          id?: string
+          notes?: string | null
+          pix_key?: string
+          pix_key_kind?: Database["public"]["Enums"]["pix_key_kind"]
+          processed_at?: string | null
+          requested_at?: string
+          status?: Database["public"]["Enums"]["withdrawal_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      wallet_balance: {
+        Args: { _user_id: string }
+        Returns: {
+          available: number
+          pending: number
+          total_earned: number
+          withdrawn: number
+        }[]
+      }
     }
     Enums: {
       lead_kind: "b2c" | "b2b"
@@ -196,8 +296,29 @@ export type Database = {
         | "prospectado"
         | "negociando"
         | "fechado"
+      pix_key_kind: "cpf" | "cnpj" | "email" | "phone" | "random"
       user_level: "BRONZE" | "PRATA" | "OURO"
       visit_status: "pendente" | "em_andamento" | "concluida"
+      wallet_tx_kind:
+        | "credit"
+        | "debit"
+        | "withdraw_hold"
+        | "withdraw_paid"
+        | "withdraw_refund"
+        | "bonus"
+        | "adjustment"
+      wallet_tx_source:
+        | "lead_b2c"
+        | "lead_b2b"
+        | "manual"
+        | "withdrawal"
+        | "mission"
+      withdrawal_status:
+        | "pendente"
+        | "aprovado"
+        | "pago"
+        | "rejeitado"
+        | "cancelado"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -335,8 +456,32 @@ export const Constants = {
         "negociando",
         "fechado",
       ],
+      pix_key_kind: ["cpf", "cnpj", "email", "phone", "random"],
       user_level: ["BRONZE", "PRATA", "OURO"],
       visit_status: ["pendente", "em_andamento", "concluida"],
+      wallet_tx_kind: [
+        "credit",
+        "debit",
+        "withdraw_hold",
+        "withdraw_paid",
+        "withdraw_refund",
+        "bonus",
+        "adjustment",
+      ],
+      wallet_tx_source: [
+        "lead_b2c",
+        "lead_b2b",
+        "manual",
+        "withdrawal",
+        "mission",
+      ],
+      withdrawal_status: [
+        "pendente",
+        "aprovado",
+        "pago",
+        "rejeitado",
+        "cancelado",
+      ],
     },
   },
 } as const
