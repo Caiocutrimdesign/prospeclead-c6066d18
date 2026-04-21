@@ -82,13 +82,11 @@ export default function LeadNew() {
   };
 
   const validate = (): boolean => {
-    if (!form.name.trim()) return !!toast.error("Informe o nome");
-    if (!form.phone.trim()) return !!toast.error("Informe o WhatsApp");
-    if (!form.vehicle_model.trim()) return !!toast.error("Informe o veículo");
-    if (!hasTracker) return !!toast.error("Marque se já tem rastreador");
-    if (!form.location.trim()) return !!toast.error("Informe a praça/local");
-    if (!photoBlob) return !!toast.error("Tire a foto da placa");
-    if (!coords) return !!toast.error("Confirme a localização atual");
+    if (!form.name.trim()) { toast.error("Informe o nome"); return false; }
+    if (!form.phone.trim()) { toast.error("Informe o WhatsApp"); return false; }
+    if (!form.vehicle_model.trim()) { toast.error("Informe o veículo"); return false; }
+    if (!hasTracker) { toast.error("Marque se já tem rastreador"); return false; }
+    if (!form.location.trim()) { toast.error("Informe a praça/local"); return false; }
     return true;
   };
 
