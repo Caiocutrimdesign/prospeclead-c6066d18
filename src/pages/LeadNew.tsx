@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useProspectingTimer } from "@/hooks/useProspectingTimer";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +16,7 @@ type LeadInsert = Database["public"]["Tables"]["leads"]["Insert"];
 
 export default function LeadNew() {
   const { user } = useAuth();
+  const { registerActivity } = useProspectingTimer();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const initial = (params.get("tipo") as "b2c" | "b2b") || "b2c";
@@ -45,7 +47,11 @@ export default function LeadNew() {
     const { error } = await supabase.from("leads").insert(payload);
     setBusy(false);
     if (error) toast.error(error.message);
-    else { toast.success("Lead cadastrado!"); navigate(`/leads?tab=${kind}`); }
+    else {
+      registerActivity();
+      toast.success("Lead cadastrado!");
+      navigate(`/leads?tab=${kind}`);
+    }
   };
 
   return (
