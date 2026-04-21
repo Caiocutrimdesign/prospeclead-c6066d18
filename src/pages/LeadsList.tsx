@@ -126,27 +126,29 @@ export default function LeadsList() {
         ) : (
           <div className="space-y-2">
             {filtered.map((l) => (
-              <Card key={l.id} className="p-3 flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${statusColors[l.status]}`}>
-                  {l.kind === "b2c" ? <Car className="w-5 h-5" /> : <Truck className="w-5 h-5" />}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold truncate">{l.name}</p>
-                  {l.kind === "b2c" ? (
-                    <p className="text-xs text-muted-foreground truncate">
-                      {[l.vehicle_model, l.vehicle_plate, l.phone].filter(Boolean).join(" · ")}
-                    </p>
-                  ) : (
-                    <p className="text-xs text-muted-foreground truncate">
-                      {[l.company_cnpj, l.fleet_size ? `${l.fleet_size} veículos` : null, l.city].filter(Boolean).join(" · ")}
-                    </p>
-                  )}
-                </div>
-                <div className="text-right shrink-0">
-                  <Badge className={`${statusColors[l.status]} border-0 capitalize`}>{l.status}</Badge>
-                  {l.value ? <p className="text-xs font-semibold mt-1">{formatBRL(l.value)}</p> : null}
-                </div>
-              </Card>
+              <Link key={l.id} to={`/leads/${l.id}`} className="block">
+                <Card className="p-3 flex items-center gap-3 hover:bg-muted/40 active:scale-[0.99] transition">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${statusColors[l.status]}`}>
+                    {l.kind === "b2c" ? <Car className="w-5 h-5" /> : <Truck className="w-5 h-5" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold truncate">{l.name}</p>
+                    {l.kind === "b2c" ? (
+                      <p className="text-xs text-muted-foreground truncate">
+                        {[l.vehicle_model, l.vehicle_plate, l.phone].filter(Boolean).join(" · ")}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground truncate">
+                        {[l.company_cnpj, l.fleet_size ? `${l.fleet_size} veículos` : null, l.city].filter(Boolean).join(" · ")}
+                      </p>
+                    )}
+                  </div>
+                  <div className="text-right shrink-0">
+                    <Badge className={`${statusColors[l.status]} border-0 capitalize`}>{l.status}</Badge>
+                    {l.value ? <p className="text-xs font-semibold mt-1">{formatBRL(l.value)}</p> : null}
+                  </div>
+                </Card>
+              </Link>
             ))}
           </div>
         )}
