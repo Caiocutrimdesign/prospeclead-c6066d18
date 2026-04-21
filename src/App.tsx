@@ -18,6 +18,9 @@ import CheckIn from "./pages/CheckIn";
 import Agenda from "./pages/Agenda";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
+import Rede from "./pages/Rede";
+import RedeNovo from "./pages/RedeNovo";
+import PdvCapture from "./pages/PdvCapture";
 import AdminLayout from "./components/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminPromoters from "./pages/admin/AdminPromoters";
@@ -47,6 +50,9 @@ const App = () => (
               <Route path="/checkin" element={<AppLayout><CheckIn /></AppLayout>} />
               <Route path="/agenda" element={<AppLayout><Agenda /></AppLayout>} />
               <Route path="/perfil" element={<AppLayout><Profile /></AppLayout>} />
+              <Route path="/rede" element={<AppLayout wide><Rede /></AppLayout>} />
+              <Route path="/rede/novo" element={<AppLayout wide><RedeNovo /></AppLayout>} />
+              <Route path="/pdv/:code" element={<PdvCapture />} />
               <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<AdminDashboard />} />
                 <Route path="promoters" element={<AdminPromoters />} />
