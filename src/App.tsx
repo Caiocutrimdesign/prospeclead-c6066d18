@@ -12,6 +12,7 @@ import LeadsList from "./pages/LeadsList";
 import LeadNew from "./pages/LeadNew";
 import LeadDetail from "./pages/LeadDetail";
 import Frentista from "./pages/Frentista";
+import ProspeccaoB2B from "./pages/ProspeccaoB2B";
 import CheckIn from "./pages/CheckIn";
 import Agenda from "./pages/Agenda";
 import Profile from "./pages/Profile";
@@ -34,6 +35,7 @@ const App = () => (
               <Route path="/leads/novo" element={<AppLayout wide><LeadNew /></AppLayout>} />
               <Route path="/leads/:id" element={<AppLayout><LeadDetail /></AppLayout>} />
               <Route path="/frentista" element={<Frentista />} />
+              <Route path="/prospeccao-b2b" element={<AppLayout wide><ProspeccaoB2B /></AppLayout>} />
               <Route path="/checkin" element={<AppLayout><CheckIn /></AppLayout>} />
               <Route path="/agenda" element={<AppLayout><Agenda /></AppLayout>} />
               <Route path="/perfil" element={<AppLayout><Profile /></AppLayout>} />
