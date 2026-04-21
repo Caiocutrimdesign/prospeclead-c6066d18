@@ -220,7 +220,7 @@ export default function Frentista() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
+      <div className="flex-1 overflow-y-auto flex flex-col items-center px-6 pb-6 text-center">
         {step === 1 ? (
           <>
             <h2 className="text-2xl font-bold tracking-wide">
