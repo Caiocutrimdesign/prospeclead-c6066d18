@@ -82,13 +82,11 @@ export default function LeadNew() {
   };
 
   const validate = (): boolean => {
-    if (!form.name.trim()) return !!toast.error("Informe o nome");
-    if (!form.phone.trim()) return !!toast.error("Informe o WhatsApp");
-    if (!form.vehicle_model.trim()) return !!toast.error("Informe o veículo");
-    if (!hasTracker) return !!toast.error("Marque se já tem rastreador");
-    if (!form.location.trim()) return !!toast.error("Informe a praça/local");
-    if (!photoBlob) return !!toast.error("Tire a foto da placa");
-    if (!coords) return !!toast.error("Confirme a localização atual");
+    if (!form.name.trim()) { toast.error("Informe o nome"); return false; }
+    if (!form.phone.trim()) { toast.error("Informe o WhatsApp"); return false; }
+    if (!form.vehicle_model.trim()) { toast.error("Informe o veículo"); return false; }
+    if (!hasTracker) { toast.error("Marque se já tem rastreador"); return false; }
+    if (!form.location.trim()) { toast.error("Informe a praça/local"); return false; }
     return true;
   };
 
@@ -97,11 +95,15 @@ export default function LeadNew() {
     if (!validate()) return;
     setBusy(true);
     try {
-      const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
-      const { error: upErr } = await supabase.storage
-        .from("lead-photos")
-        .upload(path, photoBlob!, { contentType: "image/jpeg", upsert: false });
-      if (upErr) throw upErr;
+      let photoPath: string | null = null;
+      if (photoBlob) {
+        const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+        const { error: upErr } = await supabase.storage
+          .from("lead-photos")
+          .upload(path, photoBlob, { contentType: "image/jpeg", upsert: false });
+        if (upErr) throw upErr;
+        photoPath = path;
+      }
 
       const payload: LeadInsert = {
         user_id: user.id,
@@ -111,11 +113,11 @@ export default function LeadNew() {
         vehicle_model: form.vehicle_model || null,
         vehicle_plate: form.plate?.toUpperCase() || null,
         status: action === "save" ? "vendido" : "contatado",
-        photo_url: path,
-        latitude: coords!.lat,
-        longitude: coords!.lng,
-        location_accuracy: coords!.accuracy,
-        captured_at: coords!.capturedAt,
+        photo_url: photoPath,
+        latitude: coords?.lat ?? null,
+        longitude: coords?.lng ?? null,
+        location_accuracy: coords?.accuracy ?? null,
+        captured_at: coords?.capturedAt ?? null,
         city: form.location,
       };
       const { error } = await supabase.from("leads").insert(payload);
@@ -131,9 +133,10 @@ export default function LeadNew() {
         window.open(`https://wa.me/55${phone}?text=${msg}`, "_blank");
       }
 
-      toast.success(action === "save" ? "Lead salvo como vendido!" : "Mensagem disparada!");
+      toast.success(action === "save" ? "Lead salvo como vendido!" : "Lead cadastrado!");
       navigate("/leads?tab=b2c");
     } catch (e: any) {
+      console.error("Erro ao salvar lead:", e);
       toast.error(e.message ?? "Erro ao salvar");
     } finally {
       setBusy(false);
