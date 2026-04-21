@@ -121,7 +121,7 @@ export default function LeadsList() {
           <div className="text-center py-16 space-y-3">
             <ContactRound className="w-12 h-12 mx-auto text-muted-foreground/50" />
             <p className="text-muted-foreground">Nenhum lead aqui ainda</p>
-            <Button asChild size="sm"><Link to={`/leads/novo?tipo=${tab}`}>Cadastrar primeiro</Link></Button>
+            <Button asChild size="sm"><Link to={tab === "b2b" ? "/prospeccao-b2b" : `/leads/novo?tipo=${tab}`}>Cadastrar primeiro</Link></Button>
           </div>
         ) : (
           <div className="space-y-2">
@@ -156,7 +156,7 @@ export default function LeadsList() {
 
       {/* FAB */}
       <Link
-        to={`/leads/novo?tipo=${tab}`}
+        to={tab === "b2b" ? "/prospeccao-b2b" : `/leads/novo?tipo=${tab}`}
         className={`fixed bottom-24 right-1/2 translate-x-[calc(14rem-1rem)] md:translate-x-[calc(14rem-1rem)] z-30 ${tab === "b2c" ? "bg-gradient-leads" : "bg-gradient-b2b"} text-primary-foreground rounded-full px-5 h-14 flex items-center gap-2 shadow-lg active:scale-95 transition`}
       >
         <Plus className="w-5 h-5" />
