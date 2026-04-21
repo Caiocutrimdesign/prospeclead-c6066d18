@@ -49,14 +49,19 @@ export type Database = {
       }
       leads: {
         Row: {
+          captured_at: string | null
           city: string | null
           company_cnpj: string | null
           created_at: string
           fleet_size: number | null
           id: string
           kind: Database["public"]["Enums"]["lead_kind"]
+          latitude: number | null
+          location_accuracy: number | null
+          longitude: number | null
           name: string
           phone: string | null
+          photo_url: string | null
           status: Database["public"]["Enums"]["lead_status"]
           updated_at: string
           user_id: string
@@ -65,14 +70,19 @@ export type Database = {
           vehicle_plate: string | null
         }
         Insert: {
+          captured_at?: string | null
           city?: string | null
           company_cnpj?: string | null
           created_at?: string
           fleet_size?: number | null
           id?: string
           kind: Database["public"]["Enums"]["lead_kind"]
+          latitude?: number | null
+          location_accuracy?: number | null
+          longitude?: number | null
           name: string
           phone?: string | null
+          photo_url?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
           updated_at?: string
           user_id: string
@@ -81,14 +91,19 @@ export type Database = {
           vehicle_plate?: string | null
         }
         Update: {
+          captured_at?: string | null
           city?: string | null
           company_cnpj?: string | null
           created_at?: string
           fleet_size?: number | null
           id?: string
           kind?: Database["public"]["Enums"]["lead_kind"]
+          latitude?: number | null
+          location_accuracy?: number | null
+          longitude?: number | null
           name?: string
           phone?: string | null
+          photo_url?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
           updated_at?: string
           user_id?: string
