@@ -268,7 +268,7 @@ function QrPanel({ pdv }: { pdv: PDV }) {
   };
 
   const download = () => {
-    const svg = document.getElementById("pdv-qr-svg") as SVGSVGElement | null;
+    const svg = document.getElementById("pdv-qr-svg") as unknown as SVGSVGElement | null;
     if (!svg) return;
     const xml = new XMLSerializer().serializeToString(svg);
     const blob = new Blob([xml], { type: "image/svg+xml" });

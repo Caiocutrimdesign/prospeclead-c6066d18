@@ -39,6 +39,7 @@ export default function RedeNovo() {
       .from("pdvs")
       .insert({
         user_id: user.id,
+        short_code: "", // trigger gera_pdv_short_code preenche automaticamente
         name: name.trim(),
         cnpj: cnpj.trim() || null,
         manager_name: manager.trim() || null,
