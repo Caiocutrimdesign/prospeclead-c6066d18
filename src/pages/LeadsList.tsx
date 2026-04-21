@@ -121,7 +121,7 @@ export default function LeadsList() {
           <div className="text-center py-16 space-y-3">
             <ContactRound className="w-12 h-12 mx-auto text-muted-foreground/50" />
             <p className="text-muted-foreground">Nenhum lead aqui ainda</p>
-            <Button asChild size="sm"><Link to={`/leads/novo?tipo=${tab}`}>Cadastrar primeiro</Link></Button>
+            <Button asChild size="sm"><Link to={tab === "b2b" ? "/prospeccao-b2b" : `/leads/novo?tipo=${tab}`}>Cadastrar primeiro</Link></Button>
           </div>
         ) : (
           <div className="space-y-2">
