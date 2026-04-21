@@ -37,7 +37,6 @@ const App = () => (
             </Routes>
           </ProspectingTimerProvider>
         </AuthProvider>
-      </Routes>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
