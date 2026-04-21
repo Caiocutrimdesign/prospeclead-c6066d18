@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Shield } from "lucide-react";
+import { Shield, HeartHandshake } from "lucide-react";
 import logo from "@/assets/prospeclead-logo.png";
 
 export default function Auth() {
@@ -24,6 +24,12 @@ export default function Auth() {
   const [admPassword, setAdmPassword] = useState("");
   const [admName, setAdmName] = useState("");
   const [admToken, setAdmToken] = useState("");
+
+  // Estado próprio para a aba RH
+  const [rhEmail, setRhEmail] = useState("");
+  const [rhPassword, setRhPassword] = useState("");
+  const [rhName, setRhName] = useState("");
+  const [rhToken, setRhToken] = useState("");
 
   useEffect(() => {
     if (!loading && user) navigate("/", { replace: true });
