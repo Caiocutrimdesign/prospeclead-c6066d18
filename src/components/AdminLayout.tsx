@@ -113,25 +113,31 @@ export default function AdminLayout({ children }: Props) {
       <div className="min-h-screen flex w-full bg-muted/30">
         <AdminSidebar />
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-14 bg-background border-b flex items-center justify-between px-4 sticky top-0 z-30">
-            <div className="flex items-center gap-2">
+          <header className="h-14 bg-background border-b flex items-center justify-between gap-2 px-3 md:px-4 sticky top-0 z-30">
+            <div className="flex items-center gap-1 md:gap-2 min-w-0">
               <SidebarTrigger />
-              <Button asChild variant="ghost" size="sm" className="gap-1">
+              <Button asChild variant="ghost" size="sm" className="gap-1 px-2">
                 <NavLink to="/">
-                  <ArrowLeft className="w-4 h-4" /> App
+                  <ArrowLeft className="w-4 h-4" />
+                  <span className="hidden sm:inline">App</span>
                 </NavLink>
               </Button>
+              <div className="flex items-center gap-1.5 md:hidden min-w-0">
+                <Shield className="w-4 h-4 text-primary shrink-0" />
+                <span className="font-bold text-sm truncate">ADM</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground hidden sm:block">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-xs text-muted-foreground hidden lg:block max-w-[220px] truncate">
                 {user.email}
               </span>
-              <Button onClick={signOut} variant="outline" size="sm">
-                <LogOut className="w-4 h-4 mr-1" /> Sair
+              <Button onClick={signOut} variant="outline" size="sm" className="px-2 sm:px-3">
+                <LogOut className="w-4 h-4 sm:mr-1" />
+                <span className="hidden sm:inline">Sair</span>
               </Button>
             </div>
           </header>
-          <main className="flex-1 p-4 md:p-6 overflow-x-hidden">
+          <main className="flex-1 p-3 sm:p-4 md:p-6 overflow-x-hidden">
             {children ?? <Outlet />}
           </main>
         </div>
