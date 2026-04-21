@@ -1,0 +1,109 @@
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
+import { Target } from "lucide-react";
+
+export default function Auth() {
+  const navigate = useNavigate();
+  const { user, loading } = useAuth();
+  const [busy, setBusy] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+
+  useEffect(() => {
+    if (!loading && user) navigate("/", { replace: true });
+  }, [user, loading, navigate]);
+
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    setBusy(false);
+    if (error) toast.error(error.message);
+    else navigate("/", { replace: true });
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/`,
+        data: { full_name: name },
+      },
+    });
+    setBusy(false);
+    if (error) toast.error(error.message);
+    else {
+      toast.success("Conta criada!");
+      navigate("/", { replace: true });
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-promoter">
+      <Card className="w-full max-w-md p-6 space-y-6">
+        <div className="text-center space-y-2">
+          <div className="mx-auto w-14 h-14 rounded-2xl bg-gradient-promoter flex items-center justify-center">
+            <Target className="w-7 h-7 text-primary-foreground" />
+          </div>
+          <h1 className="text-2xl font-bold">ProspecLead</h1>
+          <p className="text-sm text-muted-foreground">CRM gamificado para promoters</p>
+        </div>
+
+        <Tabs defaultValue="signin">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="signin">Entrar</TabsTrigger>
+            <TabsTrigger value="signup">Cadastrar</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="signin">
+            <form onSubmit={handleSignIn} className="space-y-4 mt-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">E-mail</Label>
+                <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Senha</Label>
+                <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+              </div>
+              <Button type="submit" className="w-full" disabled={busy}>
+                {busy ? "Entrando..." : "Entrar"}
+              </Button>
+            </form>
+          </TabsContent>
+
+          <TabsContent value="signup">
+            <form onSubmit={handleSignUp} className="space-y-4 mt-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nome completo</Label>
+                <Input id="name" required value={name} onChange={(e) => setName(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email2">E-mail</Label>
+                <Input id="email2" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password2">Senha</Label>
+                <Input id="password2" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
+              </div>
+              <Button type="submit" className="w-full" disabled={busy}>
+                {busy ? "Criando..." : "Criar conta"}
+              </Button>
+            </form>
+          </TabsContent>
+        </Tabs>
+      </Card>
+    </div>
+  );
+}
