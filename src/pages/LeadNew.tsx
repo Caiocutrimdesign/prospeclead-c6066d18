@@ -1,341 +1,368 @@
-import { useRef, useState } from "react";
-import { useNavigate, useSearchParams, Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProspectingTimer } from "@/hooks/useProspectingTimer";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Car, Truck, Camera, MapPin, CheckCircle2, Loader2, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import CameraCapture from "@/components/CameraCapture";
+import {
+  ArrowLeft, Search, Camera, MapPin, Loader2, CheckCircle2,
+  Wallet, Eye, Siren, MessageCircle, CheckCheck,
+} from "lucide-react";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
 
 type LeadInsert = Database["public"]["Tables"]["leads"]["Insert"];
+const ACCURACY_LIMIT_M = 100;
 
-interface Coords {
-  lat: number;
-  lng: number;
-  accuracy: number;
-  capturedAt: string;
-}
-
-const ACCURACY_LIMIT_M = 100; // precisão mínima aceita
+const PAINS = [
+  { id: "patrimonio", icon: "💰", title: "Perder patrimônio", subtitle: "Medo de ter o carro roubado sem recuperação" },
+  { id: "controle", icon: "👁", title: "Não saber quem dirige", subtitle: "Quer controlar filhos, funcionários e frota" },
+  { id: "panico", icon: "🆘", title: "Acidente / Sequestro (Pânico)", subtitle: "Precisa de botão de emergência e suporte 24h" },
+] as const;
 
 export default function LeadNew() {
   const { user } = useAuth();
   const { registerActivity } = useProspectingTimer();
   const navigate = useNavigate();
-  const [params] = useSearchParams();
-  const initial = (params.get("tipo") as "b2c" | "b2b") || "b2c";
-  const [kind, setKind] = useState<"b2c" | "b2b">(initial);
-  const [busy, setBusy] = useState(false);
 
   const [form, setForm] = useState({
-    name: "", phone: "", vehicle_model: "", vehicle_plate: "", value: "",
-    company_cnpj: "", fleet_size: "", city: "",
+    name: "",
+    phone: "",
+    vehicle_model: "",
+    plate: "",
+    location: "",
+    profession: "",
   });
   const set = (k: keyof typeof form, v: string) => setForm((s) => ({ ...s, [k]: v }));
 
-  // Foto da placa
-  const fileRef = useRef<HTMLInputElement | null>(null);
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [hasTracker, setHasTracker] = useState<"sim" | "nao" | null>(null);
+  const [pain, setPain] = useState<string | null>(null);
 
-  // Localização em tempo real
-  const [coords, setCoords] = useState<Coords | null>(null);
+  const [photoBlob, setPhotoBlob] = useState<Blob | null>(null);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [cameraOpen, setCameraOpen] = useState(false);
+
+  const [coords, setCoords] = useState<{ lat: number; lng: number; accuracy: number; capturedAt: string } | null>(null);
   const [locating, setLocating] = useState(false);
 
-  const onPickPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    if (f.size > 8 * 1024 * 1024) {
-      toast.error("Foto muito grande (máx 8MB)");
+  const [busy, setBusy] = useState(false);
+
+  const onPhoto = (blob: Blob) => {
+    if (photoUrl) URL.revokeObjectURL(photoUrl);
+    setPhotoBlob(blob);
+    setPhotoUrl(URL.createObjectURL(blob));
+  };
+
+  const captureGPS = () => {
+    if (!navigator.geolocation) {
+      toast.error("GPS indisponível");
       return;
     }
-    setPhotoFile(f);
-    setPhotoPreview(URL.createObjectURL(f));
-  };
-
-  const clearPhoto = () => {
-    setPhotoFile(null);
-    if (photoPreview) URL.revokeObjectURL(photoPreview);
-    setPhotoPreview(null);
-    if (fileRef.current) fileRef.current.value = "";
-  };
-
-  const captureLocation = (): Promise<Coords> =>
-    new Promise((resolve, reject) => {
-      if (!navigator.geolocation) {
-        reject(new Error("Geolocalização indisponível neste dispositivo"));
-        return;
-      }
-      navigator.geolocation.getCurrentPosition(
-        (pos) =>
-          resolve({
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude,
-            accuracy: pos.coords.accuracy,
-            capturedAt: new Date().toISOString(),
-          }),
-        (err) => {
-          if (err.code === err.PERMISSION_DENIED)
-            reject(new Error("Permita o acesso à localização para cadastrar"));
-          else if (err.code === err.POSITION_UNAVAILABLE)
-            reject(new Error("Não foi possível determinar sua localização"));
-          else if (err.code === err.TIMEOUT)
-            reject(new Error("Tempo esgotado capturando localização"));
-          else reject(new Error("Erro ao obter localização"));
-        },
-        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-      );
-    });
-
-  const handleCaptureLocation = async () => {
     setLocating(true);
-    try {
-      const c = await captureLocation();
-      setCoords(c);
-      if (c.accuracy > ACCURACY_LIMIT_M) {
-        toast.warning(`Precisão baixa (~${Math.round(c.accuracy)}m). Tente em local aberto.`);
-      } else {
-        toast.success(`Local capturado (~${Math.round(c.accuracy)}m)`);
-      }
-    } catch (e: any) {
-      toast.error(e.message);
-    } finally {
-      setLocating(false);
-    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setCoords({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          accuracy: pos.coords.accuracy,
+          capturedAt: new Date().toISOString(),
+        });
+        setLocating(false);
+        toast.success(`Local capturado (~${Math.round(pos.coords.accuracy)}m)`);
+      },
+      () => {
+        setLocating(false);
+        toast.error("Não foi possível obter localização");
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
   };
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const validate = (): boolean => {
+    if (!form.name.trim()) return !!toast.error("Informe o nome");
+    if (!form.phone.trim()) return !!toast.error("Informe o WhatsApp");
+    if (!form.vehicle_model.trim()) return !!toast.error("Informe o veículo");
+    if (!hasTracker) return !!toast.error("Marque se já tem rastreador");
+    if (!form.location.trim()) return !!toast.error("Informe a praça/local");
+    if (!photoBlob) return !!toast.error("Tire a foto da placa");
+    if (!coords) return !!toast.error("Confirme a localização atual");
+    return true;
+  };
+
+  const save = async (action: "whatsapp" | "save") => {
     if (!user) return;
-
-    // Regras obrigatórias para B2C: foto + GPS fresco
-    if (kind === "b2c") {
-      if (!photoFile) {
-        toast.error("Tire a foto da placa para cadastrar");
-        return;
-      }
-      if (!coords) {
-        toast.error("Capture sua localização atual antes de cadastrar");
-        return;
-      }
-      // Garante que o GPS é recente (até 5min)
-      const ageMs = Date.now() - new Date(coords.capturedAt).getTime();
-      if (ageMs > 5 * 60 * 1000) {
-        toast.error("Localização expirou. Capture novamente.");
-        return;
-      }
-    }
-
+    if (!validate()) return;
     setBusy(true);
     try {
-      let photoUrl: string | null = null;
-
-      if (photoFile) {
-        const ext = photoFile.name.split(".").pop()?.toLowerCase() || "jpg";
-        const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-        const { error: upErr } = await supabase.storage
-          .from("lead-photos")
-          .upload(path, photoFile, { contentType: photoFile.type, upsert: false });
-        if (upErr) throw upErr;
-        photoUrl = path;
-      }
+      const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+      const { error: upErr } = await supabase.storage
+        .from("lead-photos")
+        .upload(path, photoBlob!, { contentType: "image/jpeg", upsert: false });
+      if (upErr) throw upErr;
 
       const payload: LeadInsert = {
         user_id: user.id,
-        kind,
+        kind: "b2c",
         name: form.name,
         phone: form.phone || null,
-        value: form.value ? Number(form.value.replace(",", ".")) : null,
-        status: kind === "b2c" ? "coletado" : "prospectado",
-        photo_url: photoUrl,
-        latitude: coords?.lat ?? null,
-        longitude: coords?.lng ?? null,
-        location_accuracy: coords?.accuracy ?? null,
-        captured_at: coords?.capturedAt ?? null,
-        ...(kind === "b2c"
-          ? { vehicle_model: form.vehicle_model || null, vehicle_plate: form.vehicle_plate?.toUpperCase() || null }
-          : {
-              company_cnpj: form.company_cnpj || null,
-              fleet_size: form.fleet_size ? Number(form.fleet_size) : null,
-              city: form.city || null,
-            }),
+        vehicle_model: form.vehicle_model || null,
+        vehicle_plate: form.plate?.toUpperCase() || null,
+        status: action === "save" ? "vendido" : "contatado",
+        photo_url: path,
+        latitude: coords!.lat,
+        longitude: coords!.lng,
+        location_accuracy: coords!.accuracy,
+        captured_at: coords!.capturedAt,
+        city: form.location,
       };
-
       const { error } = await supabase.from("leads").insert(payload);
       if (error) throw error;
 
       registerActivity();
-      toast.success("Lead cadastrado!");
-      navigate(`/leads?tab=${kind}`);
-    } catch (err: any) {
-      toast.error(err.message ?? "Erro ao cadastrar lead");
+
+      if (action === "whatsapp" && form.phone) {
+        const msg = encodeURIComponent(
+          `Olá ${form.name.split(" ")[0]}! Vi seu ${form.vehicle_model} e tenho uma proposta de proteção veicular. Posso te explicar?`
+        );
+        const phone = form.phone.replace(/\D/g, "");
+        window.open(`https://wa.me/55${phone}?text=${msg}`, "_blank");
+      }
+
+      toast.success(action === "save" ? "Lead salvo como vendido!" : "Mensagem disparada!");
+      navigate("/leads?tab=b2c");
+    } catch (e: any) {
+      toast.error(e.message ?? "Erro ao salvar");
     } finally {
       setBusy(false);
     }
   };
 
-  const accuracyOk = coords && coords.accuracy <= ACCURACY_LIMIT_M;
-
   return (
-    <div className="pb-6">
-      <div className="px-4 pt-6 pb-4 flex items-center gap-3">
-        <Button asChild variant="ghost" size="icon">
+    <div className="pb-8">
+      {/* Header azul (igual referência) */}
+      <div className="bg-[hsl(var(--brand-blue))] text-white px-4 py-4 flex items-center gap-3">
+        <Button asChild variant="ghost" size="icon" className="text-white hover:bg-white/10">
           <Link to="/leads"><ArrowLeft className="w-5 h-5" /></Link>
         </Button>
-        <h1 className="text-xl font-bold">Novo lead</h1>
+        <h1 className="text-lg font-bold">📋 Novo Lead</h1>
       </div>
 
-      <div className="px-4 space-y-4">
-        <Tabs value={kind} onValueChange={(v) => setKind(v as "b2c" | "b2b")}>
-          <TabsList className="w-full">
-            <TabsTrigger value="b2c" className="flex-1 gap-2"><Car className="w-4 h-4" /> B2C</TabsTrigger>
-            <TabsTrigger value="b2b" className="flex-1 gap-2"><Truck className="w-4 h-4" /> B2B</TabsTrigger>
-          </TabsList>
-        </Tabs>
+      <div className="px-4 pt-5 space-y-5">
+        {/* Nome Completo */}
+        <Field label="Nome Completo" icon="👤" required>
+          <Input value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="Ex: João Silva" className="h-12" />
+        </Field>
 
-        <Card className="p-4">
-          <form onSubmit={submit} className="space-y-4">
-            <Field label={kind === "b2c" ? "Nome completo" : "Nome da empresa"} required value={form.name} onChange={(v) => set("name", v)} />
-            <Field label="Telefone / WhatsApp" value={form.phone} onChange={(v) => set("phone", v)} />
-
-            {kind === "b2c" ? (
-              <>
-                <Field label="Modelo do veículo" value={form.vehicle_model} onChange={(v) => set("vehicle_model", v)} />
-                <Field label="Placa" value={form.vehicle_plate} onChange={(v) => set("vehicle_plate", v)} placeholder="ABC1D23" maxLength={8} />
-              </>
-            ) : (
-              <>
-                <Field label="CNPJ" value={form.company_cnpj} onChange={(v) => set("company_cnpj", v)} placeholder="00.000.000/0000-00" />
-                <Field label="Tamanho da frota" type="number" value={form.fleet_size} onChange={(v) => set("fleet_size", v)} />
-                <Field label="Cidade / UF" value={form.city} onChange={(v) => set("city", v)} />
-              </>
-            )}
-
-            <Field label="Valor estimado (R$)" type="text" inputMode="decimal" value={form.value} onChange={(v) => set("value", v)} />
-
-            {/* Foto da placa */}
-            <div className="space-y-2">
-              <Label>
-                Foto da placa {kind === "b2c" && <span className="text-destructive">*</span>}
-              </Label>
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                onChange={onPickPhoto}
-                className="hidden"
-              />
-              {!photoPreview ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full h-24 border-dashed"
-                  onClick={() => fileRef.current?.click()}
-                >
-                  <Camera className="w-5 h-5 mr-2" />
-                  {kind === "b2c" ? "Tirar foto da placa (obrigatório)" : "Tirar foto da placa"}
-                </Button>
-              ) : (
-                <div className="relative rounded-xl overflow-hidden border">
-                  <img src={photoPreview} alt="Placa" className="w-full h-48 object-cover" />
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="secondary"
-                    className="absolute top-2 right-2 h-8 w-8 rounded-full"
-                    onClick={clearPhoto}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                  <div className="absolute bottom-2 left-2 inline-flex items-center gap-1 px-2 py-1 rounded-full bg-success/90 text-success-foreground text-xs font-semibold">
-                    <CheckCircle2 className="w-3 h-3" /> Foto pronta
-                  </div>
-                </div>
-              )}
-              {kind === "b2c" && (
-                <p className="text-[11px] text-muted-foreground">
-                  Câmera ao vivo — foto deve ser tirada na hora do cadastro.
-                </p>
-              )}
-            </div>
-
-            {/* Localização em tempo real */}
-            <div className="space-y-2">
-              <Label>
-                Local atual {kind === "b2c" && <span className="text-destructive">*</span>}
-              </Label>
-              {!coords ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full h-12"
-                  onClick={handleCaptureLocation}
-                  disabled={locating}
-                >
-                  {locating ? (
-                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Capturando GPS…</>
-                  ) : (
-                    <><MapPin className="w-4 h-4 mr-2" /> Confirmar localização agora</>
-                  )}
-                </Button>
-              ) : (
-                <div className={`rounded-xl border p-3 space-y-2 ${accuracyOk ? "border-success/40 bg-success/5" : "border-warning/40 bg-warning/5"}`}>
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2 font-semibold">
-                      <CheckCircle2 className={`w-4 h-4 ${accuracyOk ? "text-success" : "text-warning"}`} />
-                      Local confirmado
-                    </div>
-                    <span className="text-xs text-muted-foreground">
-                      ~{Math.round(coords.accuracy)}m
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground tabular-nums">
-                    {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}
-                  </p>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    className="h-8 px-2"
-                    onClick={handleCaptureLocation}
-                    disabled={locating}
-                  >
-                    {locating ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <MapPin className="w-3 h-3 mr-1" />}
-                    Recapturar
-                  </Button>
-                </div>
-              )}
-              {kind === "b2c" && (
-                <p className="text-[11px] text-muted-foreground">
-                  GPS capturado em tempo real. Precisão ideal: até {ACCURACY_LIMIT_M}m.
-                </p>
-              )}
-            </div>
-
-            <Button type="submit" className="w-full h-12" disabled={busy}>
-              {busy ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Salvando…</>) : "Cadastrar lead"}
+        {/* WhatsApp + botão buscar */}
+        <Field label="WhatsApp" icon="📱" required>
+          <div className="flex gap-2">
+            <Input
+              value={form.phone}
+              onChange={(e) => set("phone", e.target.value)}
+              placeholder="(11) 99999-9999"
+              inputMode="tel"
+              className="h-12 flex-1"
+            />
+            <Button
+              type="button"
+              size="icon"
+              className="h-12 w-12 bg-[hsl(var(--brand-blue))] hover:bg-[hsl(var(--brand-blue))]/90"
+              onClick={() => toast.info("Busca de contato em breve")}
+            >
+              <Search className="w-5 h-5" />
             </Button>
-          </form>
-        </Card>
+          </div>
+        </Field>
+
+        {/* Veículo */}
+        <Field label="Veículo" icon="🚗" required>
+          <Input
+            value={form.vehicle_model}
+            onChange={(e) => set("vehicle_model", e.target.value)}
+            placeholder="Ex: Gol, Civic, HB20"
+            className="h-12"
+          />
+        </Field>
+
+        {/* Já tem rastreador? */}
+        <Field label="Já tem rastreador?" icon="🔒" required>
+          <div className="grid grid-cols-2 gap-3">
+            {(["sim", "nao"] as const).map((opt) => (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => setHasTracker(opt)}
+                className={`h-14 rounded-xl border-2 font-semibold capitalize transition ${
+                  hasTracker === opt
+                    ? "border-[hsl(var(--brand-blue))] bg-[hsl(var(--brand-blue))]/10 text-[hsl(var(--brand-blue))]"
+                    : "border-border bg-background text-muted-foreground hover:border-foreground/30"
+                }`}
+              >
+                {opt === "nao" ? "Não" : "Sim"}
+              </button>
+            ))}
+          </div>
+        </Field>
+
+        {/* Placa do Veículo + foto */}
+        <Field label="Placa do Veículo" icon="🚘">
+          <div className="rounded-xl bg-warning/10 border border-warning/30 px-3 py-2 mb-2 text-xs text-foreground/80">
+            📸 <strong>Tire foto AGORA</strong> — disponível em qualquer lead! 100 interações com foto no dia ={" "}
+            <strong>R$ 2,00/lead retroativo</strong>
+          </div>
+          <div className="flex gap-2">
+            <Input
+              value={form.plate}
+              onChange={(e) => set("plate", e.target.value.toUpperCase())}
+              placeholder="Placa (opcional)"
+              maxLength={8}
+              className="h-14 flex-1 font-mono tracking-widest"
+            />
+            <button
+              type="button"
+              onClick={() => setCameraOpen(true)}
+              className={`h-14 w-20 rounded-xl flex flex-col items-center justify-center text-white shadow-md transition active:scale-95 ${
+                photoBlob ? "bg-success" : "bg-[hsl(150,55%,28%)] hover:bg-[hsl(150,55%,32%)]"
+              }`}
+            >
+              {photoBlob ? <CheckCheck className="w-5 h-5" /> : <Camera className="w-5 h-5" />}
+              <span className="text-[10px] font-bold mt-0.5">{photoBlob ? "OK" : "FOTO"}</span>
+            </button>
+          </div>
+          {photoUrl && (
+            <div className="mt-2 rounded-xl overflow-hidden border">
+              <img src={photoUrl} alt="Placa" className="w-full max-h-48 object-cover" />
+            </div>
+          )}
+        </Field>
+
+        {/* Praça/Local */}
+        <Field label="Praça/Local" icon="📍" required>
+          <Input
+            value={form.location}
+            onChange={(e) => set("location", e.target.value)}
+            placeholder="Mercado Extra - Centro"
+            className="h-12"
+          />
+          {!coords ? (
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full h-11 mt-2"
+              onClick={captureGPS}
+              disabled={locating}
+            >
+              {locating ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Capturando GPS…</>
+              ) : (
+                <><MapPin className="w-4 h-4 mr-2" /> Confirmar localização agora</>
+              )}
+            </Button>
+          ) : (
+            <div className={`mt-2 rounded-xl border p-3 flex items-center justify-between ${coords.accuracy <= ACCURACY_LIMIT_M ? "border-success/40 bg-success/5" : "border-warning/40 bg-warning/5"}`}>
+              <div className="flex items-center gap-2 text-sm">
+                <CheckCircle2 className={`w-4 h-4 ${coords.accuracy <= ACCURACY_LIMIT_M ? "text-success" : "text-warning"}`} />
+                <span className="font-medium">Local confirmado</span>
+                <span className="text-xs text-muted-foreground">~{Math.round(coords.accuracy)}m</span>
+              </div>
+              <Button type="button" size="sm" variant="ghost" className="h-7 px-2" onClick={captureGPS}>
+                Recapturar
+              </Button>
+            </div>
+          )}
+        </Field>
+
+        {/* Profissão */}
+        <Field label="Profissão do cliente" icon="💼">
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">💼</span>
+            <Input
+              value={form.profession}
+              onChange={(e) => set("profession", e.target.value)}
+              placeholder="Ex: Policial, Médico, Empresário..."
+              className="h-12 pl-9"
+            />
+          </div>
+        </Field>
+
+        {/* Maior dor */}
+        <Field label="Maior dor do cliente" icon="🎯">
+          <div className="space-y-2">
+            {PAINS.map((p) => {
+              const active = pain === p.id;
+              const Icon = p.id === "patrimonio" ? Wallet : p.id === "controle" ? Eye : Siren;
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setPain(active ? null : p.id)}
+                  className={`w-full text-left rounded-xl border-2 p-3 flex items-start gap-3 transition ${
+                    active
+                      ? "border-[hsl(var(--brand-blue))] bg-[hsl(var(--brand-blue))]/5"
+                      : "border-border bg-background hover:border-foreground/20"
+                  }`}
+                >
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
+                    p.id === "panico" ? "bg-destructive/10 text-destructive" :
+                    p.id === "controle" ? "bg-[hsl(var(--brand-blue))]/10 text-[hsl(var(--brand-blue))]" :
+                    "bg-warning/10 text-warning"
+                  }`}>
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-sm">{p.title}</p>
+                    <p className="text-xs text-muted-foreground">{p.subtitle}</p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </Field>
+
+        {/* CTAs */}
+        <div className="space-y-3 pt-2">
+          <Button
+            type="button"
+            onClick={() => save("whatsapp")}
+            disabled={busy}
+            className="w-full h-14 text-base font-bold bg-success hover:bg-success/90 text-success-foreground rounded-xl"
+          >
+            {busy ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <MessageCircle className="w-5 h-5 mr-2" />}
+            ENVIAR PRIMEIRA MENSAGEM
+          </Button>
+          <Button
+            type="button"
+            onClick={() => save("save")}
+            disabled={busy}
+            className="w-full h-14 text-base font-bold bg-warning hover:bg-warning/90 text-warning-foreground rounded-xl"
+          >
+            {busy ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : "✅"}
+            <span className="ml-2">SALVAR E VENDER AGORA</span>
+          </Button>
+        </div>
       </div>
+
+      <CameraCapture open={cameraOpen} onClose={() => setCameraOpen(false)} onCapture={onPhoto} />
     </div>
   );
 }
 
-function Field({ label, value, onChange, required, type = "text", placeholder, maxLength, inputMode }: {
-  label: string; value: string; onChange: (v: string) => void;
-  required?: boolean; type?: string; placeholder?: string; maxLength?: number; inputMode?: "decimal" | "numeric" | "text";
+function Field({
+  label, icon, required, children,
+}: {
+  label: string; icon?: string; required?: boolean; children: React.ReactNode;
 }) {
   return (
-    <div className="space-y-1.5">
-      <Label>{label}{required && <span className="text-destructive"> *</span>}</Label>
-      <Input value={value} onChange={(e) => onChange(e.target.value)} required={required} type={type} placeholder={placeholder} maxLength={maxLength} inputMode={inputMode} />
+    <div className="space-y-2">
+      <label className="flex items-center gap-1.5 text-sm font-semibold">
+        {icon && <span>{icon}</span>}
+        <span>{label}</span>
+        {required && <span className="text-destructive">*</span>}
+      </label>
+      {children}
     </div>
   );
 }
