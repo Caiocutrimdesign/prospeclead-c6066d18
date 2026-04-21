@@ -29,6 +29,7 @@ interface Stats {
 export default function Dashboard() {
   const { user } = useAuth();
   const { profile } = useProfile();
+  const { isAdmin } = useRole();
   const timer = useProspectingTimer();
   const [stats, setStats] = useState<Stats>({ total: 0, converted: 0, todayEarnings: 0, todayLeads: 0, b2cCount: 0, b2bCount: 0 });
   const [activeCheckin, setActiveCheckin] = useState<{ location_name: string } | null>(null);
