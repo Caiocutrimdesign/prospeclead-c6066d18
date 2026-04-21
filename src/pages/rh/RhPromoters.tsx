@@ -89,7 +89,7 @@ export default function RhPromoters() {
       </div>
 
       {/* Mobile cards */}
-      <div className="md:hidden space-y-2">
+      <div className="lg:hidden space-y-2">
         {loading && (
           <div className="text-center py-6">
             <Loader2 className="w-5 h-5 animate-spin inline" />
@@ -131,7 +131,7 @@ export default function RhPromoters() {
       </div>
 
       {/* Desktop table */}
-      <Card className="hidden md:block overflow-x-auto">
+      <Card className="hidden lg:block overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
