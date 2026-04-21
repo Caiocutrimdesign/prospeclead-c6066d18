@@ -261,6 +261,44 @@ export default function Auth() {
               </Button>
             </form>
           </TabsContent>
+
+          <TabsContent value="rh">
+            <form onSubmit={handleRhSignUp} className="space-y-4 mt-4">
+              <div className="rounded-md border border-success/30 bg-success/5 p-3 flex items-start gap-2">
+                <HeartHandshake className="w-4 h-4 text-success mt-0.5 shrink-0" />
+                <p className="text-xs text-muted-foreground">
+                  Cadastro restrito. Informe o <strong>token de RH</strong> fornecido pela gestão para criar uma conta com acesso ao painel RH (somente leitura + pagamentos PIX).
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="rh-name">Nome completo</Label>
+                <Input id="rh-name" required value={rhName} onChange={(e) => setRhName(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="rh-email">E-mail</Label>
+                <Input id="rh-email" type="email" required value={rhEmail} onChange={(e) => setRhEmail(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="rh-password">Senha</Label>
+                <Input id="rh-password" type="password" required minLength={6} value={rhPassword} onChange={(e) => setRhPassword(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="rh-token">Token de RH</Label>
+                <Input
+                  id="rh-token"
+                  type="password"
+                  required
+                  placeholder="••••••"
+                  value={rhToken}
+                  onChange={(e) => setRhToken(e.target.value)}
+                  autoComplete="off"
+                />
+              </div>
+              <Button type="submit" className="w-full bg-success hover:bg-success/90 text-white" disabled={busy}>
+                {busy ? "Validando token..." : "Criar conta de RH"}
+              </Button>
+            </form>
+          </TabsContent>
         </Tabs>
       </Card>
     </div>
