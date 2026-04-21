@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
+import { useRole } from "@/hooks/useRole";
 import { useProspectingTimer, formatTimer } from "@/hooks/useProspectingTimer";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { formatBRL } from "@/lib/format";
 import {
   MapPin, Pause, Play, Square, Target, Flame, Medal, Plus, Building2, ContactRound,
-  Wallet, Fuel, Store, Calendar,
+  Wallet, Fuel, Store, Calendar, Shield,
 } from "lucide-react";
 
 interface Stats {
@@ -28,6 +29,7 @@ interface Stats {
 export default function Dashboard() {
   const { user } = useAuth();
   const { profile } = useProfile();
+  const { isAdmin } = useRole();
   const timer = useProspectingTimer();
   const [stats, setStats] = useState<Stats>({ total: 0, converted: 0, todayEarnings: 0, todayLeads: 0, b2cCount: 0, b2bCount: 0 });
   const [activeCheckin, setActiveCheckin] = useState<{ location_name: string } | null>(null);
@@ -181,6 +183,9 @@ export default function Dashboard() {
           <ActionCard to="/carteira" icon={Wallet} title="Carteira" subtitle="Extrato · Saque PIX" gradient="bg-gradient-wallet" badge={formatBRL(profile?.monthly_earnings ?? 0)} />
           <ActionCard to="/frentista" icon={Fuel} title="Modo Frentista" subtitle="PDV · Foto da placa" gradient="bg-gradient-gas" />
           <ActionCard to="/perfil" icon={Store} title="Parceiros PDV" subtitle="Lojas · QR Code" gradient="bg-gradient-pdv" />
+          {isAdmin && (
+            <ActionCard to="/admin" icon={Shield} title="Painel ADM" subtitle="Gerenciar tudo" gradient="bg-gradient-promoter" tag="ADMIN" full />
+          )}
         </div>
       </div>
 
