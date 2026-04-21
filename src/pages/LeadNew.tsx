@@ -95,11 +95,15 @@ export default function LeadNew() {
     if (!validate()) return;
     setBusy(true);
     try {
-      const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
-      const { error: upErr } = await supabase.storage
-        .from("lead-photos")
-        .upload(path, photoBlob!, { contentType: "image/jpeg", upsert: false });
-      if (upErr) throw upErr;
+      let photoPath: string | null = null;
+      if (photoBlob) {
+        const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+        const { error: upErr } = await supabase.storage
+          .from("lead-photos")
+          .upload(path, photoBlob, { contentType: "image/jpeg", upsert: false });
+        if (upErr) throw upErr;
+        photoPath = path;
+      }
 
       const payload: LeadInsert = {
         user_id: user.id,
@@ -109,11 +113,11 @@ export default function LeadNew() {
         vehicle_model: form.vehicle_model || null,
         vehicle_plate: form.plate?.toUpperCase() || null,
         status: action === "save" ? "vendido" : "contatado",
-        photo_url: path,
-        latitude: coords!.lat,
-        longitude: coords!.lng,
-        location_accuracy: coords!.accuracy,
-        captured_at: coords!.capturedAt,
+        photo_url: photoPath,
+        latitude: coords?.lat ?? null,
+        longitude: coords?.lng ?? null,
+        location_accuracy: coords?.accuracy ?? null,
+        captured_at: coords?.capturedAt ?? null,
         city: form.location,
       };
       const { error } = await supabase.from("leads").insert(payload);
@@ -129,9 +133,10 @@ export default function LeadNew() {
         window.open(`https://wa.me/55${phone}?text=${msg}`, "_blank");
       }
 
-      toast.success(action === "save" ? "Lead salvo como vendido!" : "Mensagem disparada!");
+      toast.success(action === "save" ? "Lead salvo como vendido!" : "Lead cadastrado!");
       navigate("/leads?tab=b2c");
     } catch (e: any) {
+      console.error("Erro ao salvar lead:", e);
       toast.error(e.message ?? "Erro ao salvar");
     } finally {
       setBusy(false);
