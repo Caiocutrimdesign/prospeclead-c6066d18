@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Target } from "lucide-react";
+import logo from "@/assets/prospeclead-logo.png";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -51,13 +51,14 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-promoter">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-prospeclead">
       <Card className="w-full max-w-md p-6 space-y-6">
-        <div className="text-center space-y-2">
-          <div className="mx-auto w-14 h-14 rounded-2xl bg-gradient-promoter flex items-center justify-center">
-            <Target className="w-7 h-7 text-primary-foreground" />
-          </div>
-          <h1 className="text-2xl font-bold">ProspecLead</h1>
+        <div className="text-center space-y-3">
+          <img
+            src={logo}
+            alt="ProspecLead - CRM gamificado para promoters"
+            className="mx-auto w-40 h-auto object-contain"
+          />
           <p className="text-sm text-muted-foreground">CRM gamificado para promoters</p>
         </div>
 
