@@ -4,7 +4,13 @@ import { useAuth } from "@/hooks/useAuth";
 import BottomNav from "./BottomNav";
 import InactivityOverlay from "./InactivityOverlay";
 
-export default function AppLayout({ children }: { children: ReactNode }) {
+interface Props {
+  children: ReactNode;
+  /** Quando true, usa um container mais largo (max-w-2xl) para formulários no desktop. */
+  wide?: boolean;
+}
+
+export default function AppLayout({ children, wide = false }: Props) {
   const { user, loading } = useAuth();
   const location = useLocation();
 
@@ -17,9 +23,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   }
   if (!user) return <Navigate to="/auth" replace state={{ from: location }} />;
 
+  const containerWidth = wide ? "max-w-md md:max-w-2xl" : "max-w-md";
+
   return (
     <div className="min-h-screen bg-muted/30">
-      <div className="max-w-md mx-auto bg-background min-h-screen pb-20 relative">
+      <div className={`${containerWidth} mx-auto bg-background min-h-screen pb-20 relative`}>
         {children}
         <BottomNav />
       </div>
@@ -27,4 +35,3 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     </div>
   );
 }
-
