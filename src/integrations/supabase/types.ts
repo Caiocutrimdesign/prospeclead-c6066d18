@@ -425,6 +425,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      is_rh: { Args: never; Returns: boolean }
       wallet_balance: {
         Args: { _user_id: string }
         Returns: {
