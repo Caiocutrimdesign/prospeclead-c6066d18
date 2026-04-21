@@ -52,10 +52,10 @@ export default function AdminRanking() {
   return (
     <div className="space-y-4 max-w-4xl">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Trophy className="w-6 h-6 text-warning" /> Ranking de Promoters
+        <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
+          <Trophy className="w-5 h-5 sm:w-6 sm:h-6 text-warning" /> Ranking de Promoters
         </h1>
-        <p className="text-sm text-muted-foreground">Ordenado por ganhos no mês.</p>
+        <p className="text-xs sm:text-sm text-muted-foreground">Ordenado por ganhos no mês.</p>
       </div>
 
       {loading ? (
