@@ -179,7 +179,7 @@ export default function Dashboard() {
           <ActionCard to="/leads?tab=b2b" icon={Building2} title="Prospecção B2B" subtitle="Frotas · Empresas" gradient="bg-gradient-b2b" badge={`${stats.b2bCount} empresas`} />
           <ActionCard to="/leads" icon={ContactRound} title="Meus Leads" subtitle="B2C e B2B · Histórico" gradient="bg-gradient-leads" badge={`B2C ${stats.b2cCount} · B2B ${stats.b2bCount}`} />
           <ActionCard to="/perfil" icon={Wallet} title="Carteira" subtitle="Extrato · Saque PIX" gradient="bg-gradient-wallet" badge={formatBRL(profile?.monthly_earnings ?? 0)} />
-          <ActionCard to="/leads/novo?modo=frentista" icon={Fuel} title="Modo Frentista" subtitle="PDV · Foto da placa" gradient="bg-gradient-gas" />
+          <ActionCard to="/frentista" icon={Fuel} title="Modo Frentista" subtitle="PDV · Foto da placa" gradient="bg-gradient-gas" />
           <ActionCard to="/perfil" icon={Store} title="Parceiros PDV" subtitle="Lojas · QR Code" gradient="bg-gradient-pdv" />
         </div>
       </div>
