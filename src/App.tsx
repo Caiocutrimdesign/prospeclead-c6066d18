@@ -27,6 +27,10 @@ import AdminPromoters from "./pages/admin/AdminPromoters";
 import AdminLeads from "./pages/admin/AdminLeads";
 import AdminSaques from "./pages/admin/AdminSaques";
 import AdminRanking from "./pages/admin/AdminRanking";
+import RhLayout from "./components/RhLayout";
+import RhDashboard from "./pages/rh/RhDashboard";
+import RhPromoters from "./pages/rh/RhPromoters";
+import RhPagamentos from "./pages/rh/RhPagamentos";
 
 const queryClient = new QueryClient();
 
@@ -59,6 +63,11 @@ const App = () => (
                 <Route path="leads" element={<AdminLeads />} />
                 <Route path="saques" element={<AdminSaques />} />
                 <Route path="ranking" element={<AdminRanking />} />
+              </Route>
+              <Route path="/rh" element={<RhLayout />}>
+                <Route index element={<RhDashboard />} />
+                <Route path="promoters" element={<RhPromoters />} />
+                <Route path="pagamentos" element={<RhPagamentos />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
