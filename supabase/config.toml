@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.rh-bootstrap]
 verify_jwt = false
+
+[functions.rh-signup]
+verify_jwt = false
