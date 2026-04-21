@@ -18,6 +18,12 @@ import CheckIn from "./pages/CheckIn";
 import Agenda from "./pages/Agenda";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
+import AdminLayout from "./components/AdminLayout";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminPromoters from "./pages/admin/AdminPromoters";
+import AdminLeads from "./pages/admin/AdminLeads";
+import AdminSaques from "./pages/admin/AdminSaques";
+import AdminRanking from "./pages/admin/AdminRanking";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +47,13 @@ const App = () => (
               <Route path="/checkin" element={<AppLayout><CheckIn /></AppLayout>} />
               <Route path="/agenda" element={<AppLayout><Agenda /></AppLayout>} />
               <Route path="/perfil" element={<AppLayout><Profile /></AppLayout>} />
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<AdminDashboard />} />
+                <Route path="promoters" element={<AdminPromoters />} />
+                <Route path="leads" element={<AdminLeads />} />
+                <Route path="saques" element={<AdminSaques />} />
+                <Route path="ranking" element={<AdminRanking />} />
+              </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
           </ProspectingTimerProvider>
