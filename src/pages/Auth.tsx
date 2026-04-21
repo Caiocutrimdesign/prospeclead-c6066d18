@@ -29,13 +29,48 @@ export default function Auth() {
     if (!loading && user) navigate("/", { replace: true });
   }, [user, loading, navigate]);
 
+  const RH_EMAIL = "rh@facilitcorp.com";
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const isRhEmail = email.trim().toLowerCase() === RH_EMAIL;
+
+    // Se for o e-mail padrão de RH, garante que a conta exista (idempotente)
+    if (isRhEmail) {
+      await supabase.functions.invoke("rh-bootstrap").catch(() => {});
+    }
+
+    const { data: signed, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (error) {
+      setBusy(false);
+      toast.error(error.message);
+      return;
+    }
+
+    // Verifica papéis e redireciona para o painel correto
+    const uid = signed.user?.id;
+    if (uid) {
+      const { data: roles } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", uid);
+      const list = (roles ?? []).map((r) => r.role as string);
+      setBusy(false);
+      if (list.includes("admin")) {
+        navigate("/admin", { replace: true });
+        return;
+      }
+      if (list.includes("rh")) {
+        navigate("/rh", { replace: true });
+        return;
+      }
+    }
     setBusy(false);
-    if (error) toast.error(error.message);
-    else navigate("/", { replace: true });
+    navigate("/", { replace: true });
   };
 
   const handleSignUp = async (e: React.FormEvent) => {

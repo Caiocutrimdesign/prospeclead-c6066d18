@@ -5,6 +5,7 @@ import { useAuth } from "./useAuth";
 export function useRole() {
   const { user } = useAuth();
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [isRh, setIsRh] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -12,6 +13,7 @@ export function useRole() {
     (async () => {
       if (!user) {
         setIsAdmin(false);
+        setIsRh(false);
         setLoading(false);
         return;
       }
@@ -19,11 +21,11 @@ export function useRole() {
       const { data } = await supabase
         .from("user_roles")
         .select("role")
-        .eq("user_id", user.id)
-        .eq("role", "admin")
-        .maybeSingle();
+        .eq("user_id", user.id);
       if (!cancelled) {
-        setIsAdmin(!!data);
+        const roles = (data ?? []).map((r) => r.role as string);
+        setIsAdmin(roles.includes("admin"));
+        setIsRh(roles.includes("rh"));
         setLoading(false);
       }
     })();
@@ -32,5 +34,5 @@ export function useRole() {
     };
   }, [user]);
 
-  return { isAdmin, loading };
+  return { isAdmin, isRh, loading };
 }
