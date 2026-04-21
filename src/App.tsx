@@ -13,6 +13,7 @@ import LeadNew from "./pages/LeadNew";
 import LeadDetail from "./pages/LeadDetail";
 import Frentista from "./pages/Frentista";
 import ProspeccaoB2B from "./pages/ProspeccaoB2B";
+import Carteira from "./pages/Carteira";
 import CheckIn from "./pages/CheckIn";
 import Agenda from "./pages/Agenda";
 import Profile from "./pages/Profile";
