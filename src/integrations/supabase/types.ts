@@ -14,7 +14,156 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      checkins: {
+        Row: {
+          created_at: string
+          ended_at: string | null
+          id: string
+          latitude: number | null
+          location_name: string
+          longitude: number | null
+          started_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          latitude?: number | null
+          location_name: string
+          longitude?: number | null
+          started_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          latitude?: number | null
+          location_name?: string
+          longitude?: number | null
+          started_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      leads: {
+        Row: {
+          city: string | null
+          company_cnpj: string | null
+          created_at: string
+          fleet_size: number | null
+          id: string
+          kind: Database["public"]["Enums"]["lead_kind"]
+          name: string
+          phone: string | null
+          status: Database["public"]["Enums"]["lead_status"]
+          updated_at: string
+          user_id: string
+          value: number | null
+          vehicle_model: string | null
+          vehicle_plate: string | null
+        }
+        Insert: {
+          city?: string | null
+          company_cnpj?: string | null
+          created_at?: string
+          fleet_size?: number | null
+          id?: string
+          kind: Database["public"]["Enums"]["lead_kind"]
+          name: string
+          phone?: string | null
+          status?: Database["public"]["Enums"]["lead_status"]
+          updated_at?: string
+          user_id: string
+          value?: number | null
+          vehicle_model?: string | null
+          vehicle_plate?: string | null
+        }
+        Update: {
+          city?: string | null
+          company_cnpj?: string | null
+          created_at?: string
+          fleet_size?: number | null
+          id?: string
+          kind?: Database["public"]["Enums"]["lead_kind"]
+          name?: string
+          phone?: string | null
+          status?: Database["public"]["Enums"]["lead_status"]
+          updated_at?: string
+          user_id?: string
+          value?: number | null
+          vehicle_model?: string | null
+          vehicle_plate?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          current_location: string | null
+          daily_goal: number
+          full_name: string | null
+          id: string
+          level: Database["public"]["Enums"]["user_level"]
+          monthly_earnings: number
+          streak_days: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_location?: string | null
+          daily_goal?: number
+          full_name?: string | null
+          id: string
+          level?: Database["public"]["Enums"]["user_level"]
+          monthly_earnings?: number
+          streak_days?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_location?: string | null
+          daily_goal?: number
+          full_name?: string | null
+          id?: string
+          level?: Database["public"]["Enums"]["user_level"]
+          monthly_earnings?: number
+          streak_days?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      visits: {
+        Row: {
+          address: string | null
+          created_at: string
+          id: string
+          place_name: string
+          scheduled_at: string
+          status: Database["public"]["Enums"]["visit_status"]
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          place_name: string
+          scheduled_at: string
+          status?: Database["public"]["Enums"]["visit_status"]
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          place_name?: string
+          scheduled_at?: string
+          status?: Database["public"]["Enums"]["visit_status"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +172,17 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      lead_kind: "b2c" | "b2b"
+      lead_status:
+        | "coletado"
+        | "contatado"
+        | "respondido"
+        | "vendido"
+        | "prospectado"
+        | "negociando"
+        | "fechado"
+      user_level: "BRONZE" | "PRATA" | "OURO"
+      visit_status: "pendente" | "em_andamento" | "concluida"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +309,19 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      lead_kind: ["b2c", "b2b"],
+      lead_status: [
+        "coletado",
+        "contatado",
+        "respondido",
+        "vendido",
+        "prospectado",
+        "negociando",
+        "fechado",
+      ],
+      user_level: ["BRONZE", "PRATA", "OURO"],
+      visit_status: ["pendente", "em_andamento", "concluida"],
+    },
   },
 } as const
