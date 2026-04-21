@@ -125,14 +125,14 @@ export default function AdminLeads() {
   return (
     <div className="space-y-4 max-w-7xl">
       <div>
-        <h1 className="text-2xl font-bold">Todos os Leads</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="text-xl sm:text-2xl font-bold">Todos os Leads</h1>
+        <p className="text-xs sm:text-sm text-muted-foreground">
           Visualize, edite ou exclua qualquer lead da base ({leads.length} no total).
         </p>
       </div>
 
-      <div className="flex gap-2 flex-wrap">
-        <div className="relative flex-1 min-w-[200px]">
+      <div className="flex flex-col sm:flex-row gap-2">
+        <div className="relative flex-1 min-w-0">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Buscar nome, telefone ou placa…"
@@ -141,32 +141,106 @@ export default function AdminLeads() {
             className="pl-9"
           />
         </div>
-        <Select value={filterKind} onValueChange={setFilterKind}>
-          <SelectTrigger className="w-32">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="b2c">B2C</SelectItem>
-            <SelectItem value="b2b">B2B</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-40">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos status</SelectItem>
-            {STATUSES.map((s) => (
-              <SelectItem key={s} value={s}>
-                {s}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2">
+          <Select value={filterKind} onValueChange={setFilterKind}>
+            <SelectTrigger className="flex-1 sm:w-32 sm:flex-none">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="b2c">B2C</SelectItem>
+              <SelectItem value="b2b">B2B</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="flex-1 sm:w-40 sm:flex-none">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos status</SelectItem>
+              {STATUSES.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {s}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
-      <Card className="overflow-x-auto">
+      {/* Mobile cards */}
+      <div className="md:hidden space-y-2">
+        {loading && (
+          <div className="text-center py-6">
+            <Loader2 className="w-5 h-5 animate-spin inline" />
+          </div>
+        )}
+        {!loading && filtered.length === 0 && (
+          <p className="text-center py-6 text-muted-foreground text-sm">Nenhum lead</p>
+        )}
+        {filtered.map((l) => (
+          <Card key={l.id} className="p-3 space-y-2">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-sm truncate">{l.name}</p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {l.phone ?? l.vehicle_plate ?? "—"} · {profiles[l.user_id] ?? "—"}
+                </p>
+              </div>
+              <Badge variant={l.kind === "b2b" ? "default" : "secondary"} className="shrink-0">
+                {l.kind.toUpperCase()}
+              </Badge>
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <Select value={l.status} onValueChange={(v) => updateStatus(l.id, v)}>
+                <SelectTrigger className="h-8 flex-1 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUSES.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-sm font-bold tabular-nums shrink-0">
+                {l.value ? formatBRL(l.value) : "—"}
+              </p>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button size="sm" variant="ghost" className="text-destructive shrink-0">
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Excluir lead "{l.name}"?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Esta ação não pode ser desfeita.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => removeLead(l.id)}
+                      className="bg-destructive text-destructive-foreground"
+                    >
+                      Excluir
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+            <p className="text-[10px] text-muted-foreground">
+              {new Date(l.created_at).toLocaleDateString("pt-BR")}
+            </p>
+          </Card>
+        ))}
+      </div>
+
+      {/* Desktop table */}
+      <Card className="hidden md:block overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
