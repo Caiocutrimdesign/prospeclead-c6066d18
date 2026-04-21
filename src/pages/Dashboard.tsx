@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
+import { useRole } from "@/hooks/useRole";
 import { useProspectingTimer, formatTimer } from "@/hooks/useProspectingTimer";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { formatBRL } from "@/lib/format";
 import {
   MapPin, Pause, Play, Square, Target, Flame, Medal, Plus, Building2, ContactRound,
-  Wallet, Fuel, Store, Calendar,
+  Wallet, Fuel, Store, Calendar, Shield,
 } from "lucide-react";
 
 interface Stats {
