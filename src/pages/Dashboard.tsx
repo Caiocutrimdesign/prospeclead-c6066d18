@@ -183,6 +183,9 @@ export default function Dashboard() {
           <ActionCard to="/carteira" icon={Wallet} title="Carteira" subtitle="Extrato · Saque PIX" gradient="bg-gradient-wallet" badge={formatBRL(profile?.monthly_earnings ?? 0)} />
           <ActionCard to="/frentista" icon={Fuel} title="Modo Frentista" subtitle="PDV · Foto da placa" gradient="bg-gradient-gas" />
           <ActionCard to="/perfil" icon={Store} title="Parceiros PDV" subtitle="Lojas · QR Code" gradient="bg-gradient-pdv" />
+          {isAdmin && (
+            <ActionCard to="/admin" icon={Shield} title="Painel ADM" subtitle="Gerenciar tudo" gradient="bg-gradient-promoter" tag="ADMIN" full />
+          )}
         </div>
       </div>
 
