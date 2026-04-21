@@ -73,10 +73,10 @@ export default function RhDashboard() {
   }, []);
 
   return (
-    <div className="space-y-6 max-w-6xl">
+    <div className="space-y-4 sm:space-y-6 max-w-6xl">
       <div>
-        <h1 className="text-2xl font-bold">Dashboard RH</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="text-xl sm:text-2xl font-bold">Dashboard RH</h1>
+        <p className="text-xs sm:text-sm text-muted-foreground">
           Visão geral de promoters, resultados e pagamentos.
         </p>
       </div>

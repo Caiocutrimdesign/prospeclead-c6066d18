@@ -132,17 +132,19 @@ export default function AdminPromoters() {
 
   return (
     <div className="space-y-4 max-w-6xl">
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold">Promoters & Admins</h1>
-          <p className="text-sm text-muted-foreground">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold">Promoters & Admins</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground">
             Crie, edite, promova ou exclua usuários do sistema.
           </p>
         </div>
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" /> Novo promoter
+            <Button size="sm" className="sm:size-default">
+              <Plus className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Novo promoter</span>
+              <span className="sm:hidden ml-1">Novo</span>
             </Button>
           </DialogTrigger>
           <CreateUserDialog onClose={() => setCreateOpen(false)} onCreated={load} />
@@ -159,7 +161,91 @@ export default function AdminPromoters() {
         />
       </div>
 
-      <Card className="overflow-x-auto">
+      {/* Mobile cards */}
+      <div className="md:hidden space-y-2">
+        {loading && (
+          <div className="text-center py-6">
+            <Loader2 className="w-5 h-5 animate-spin inline" />
+          </div>
+        )}
+        {!loading && filtered.length === 0 && (
+          <p className="text-center py-6 text-muted-foreground text-sm">Nenhum usuário</p>
+        )}
+        {filtered.map((u) => (
+          <Card key={u.id} className="p-3 space-y-2">
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                {u.is_admin ? (
+                  <Crown className="w-4 h-4 text-primary" />
+                ) : (
+                  <UserIcon className="w-4 h-4 text-primary" />
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-sm truncate">{u.profile?.full_name ?? "—"}</p>
+                <p className="text-xs text-muted-foreground truncate">{u.email}</p>
+                <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                  {u.is_admin ? (
+                    <Badge className="bg-primary text-primary-foreground text-[10px]">ADMIN</Badge>
+                  ) : (
+                    <Badge variant="secondary" className="text-[10px]">PROMOTER</Badge>
+                  )}
+                  <Badge variant="outline" className="text-[10px]">
+                    {u.profile?.level ?? "BRONZE"}
+                  </Badge>
+                </div>
+              </div>
+              <p className="text-sm font-bold tabular-nums shrink-0">
+                {formatBRL(u.profile?.monthly_earnings ?? 0)}
+              </p>
+            </div>
+            <div className="flex items-center justify-end gap-1 border-t pt-2">
+              <EditProfileButton u={u} onSaved={load} />
+              <ResetPwButton u={u} />
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => toggleAdmin(u)}
+                title={u.is_admin ? "Remover admin" : "Tornar admin"}
+              >
+                <Shield className={`w-4 h-4 ${u.is_admin ? "text-primary" : ""}`} />
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-destructive"
+                    disabled={u.id === user?.id}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Excluir {u.email}?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Esta ação remove o usuário, perfil, leads e carteira de forma permanente.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => deleteUser(u)}
+                      className="bg-destructive text-destructive-foreground"
+                    >
+                      Excluir
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      {/* Desktop table */}
+      <Card className="hidden md:block overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>

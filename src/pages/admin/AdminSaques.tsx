@@ -87,24 +87,24 @@ export default function AdminSaques() {
   return (
     <div className="space-y-4 max-w-6xl">
       <div className="flex items-start justify-between gap-3 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold">Saques PIX</h1>
-          <p className="text-sm text-muted-foreground">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold">Saques PIX</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground">
             Aprovar, marcar como pago ou rejeitar saques solicitados pelos promoters.
           </p>
         </div>
-        <Card className="px-4 py-2 flex items-center gap-2 bg-warning/10 border-warning/30">
-          <Wallet className="w-4 h-4 text-warning" />
+        <Card className="px-3 sm:px-4 py-2 flex items-center gap-2 bg-warning/10 border-warning/30">
+          <Wallet className="w-4 h-4 text-warning shrink-0" />
           <div>
             <p className="text-[10px] uppercase text-muted-foreground">A pagar</p>
-            <p className="font-bold tabular-nums">{formatBRL(totalPending)}</p>
+            <p className="font-bold tabular-nums text-sm sm:text-base">{formatBRL(totalPending)}</p>
           </div>
         </Card>
       </div>
 
       <div className="flex gap-2">
         <Select value={filter} onValueChange={setFilter}>
-          <SelectTrigger className="w-48">
+          <SelectTrigger className="w-full sm:w-48">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -118,7 +118,76 @@ export default function AdminSaques() {
         </Select>
       </div>
 
-      <Card className="overflow-x-auto">
+      {/* Mobile: cards */}
+      <div className="md:hidden space-y-2">
+        {loading && (
+          <div className="text-center py-6">
+            <Loader2 className="w-5 h-5 animate-spin inline" />
+          </div>
+        )}
+        {!loading && filtered.length === 0 && (
+          <p className="text-center py-6 text-muted-foreground text-sm">Nenhum saque</p>
+        )}
+        {filtered.map((w) => (
+          <Card key={w.id} className="p-3 space-y-2">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="font-medium text-sm truncate">
+                  {profiles[w.user_id] ?? w.user_id.slice(0, 8)}
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  {new Date(w.requested_at).toLocaleString("pt-BR")}
+                </p>
+              </div>
+              <p className="font-bold tabular-nums text-base">
+                {formatBRL(Number(w.amount))}
+              </p>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <StatusBadge status={w.status} />
+              <Badge variant="outline" className="text-[10px]">
+                {w.pix_key_kind}
+              </Badge>
+            </div>
+            <div className="text-xs space-y-0.5">
+              <p className="break-all"><span className="text-muted-foreground">Chave:</span> {w.pix_key}</p>
+              <p className="truncate"><span className="text-muted-foreground">Titular:</span> {w.holder_name}</p>
+            </div>
+            {(w.status === "pendente" || w.status === "aprovado") && (
+              <div className="flex items-center gap-1.5 pt-1">
+                {w.status === "pendente" && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => setStatus(w.id, "aprovado")}
+                  >
+                    Aprovar
+                  </Button>
+                )}
+                <Button
+                  size="sm"
+                  className="bg-success hover:bg-success/90 text-white flex-1"
+                  onClick={() => setStatus(w.id, "pago")}
+                >
+                  <CheckCircle2 className="w-4 h-4 mr-1" /> Pago
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-destructive"
+                  onClick={() => setStatus(w.id, "rejeitado")}
+                >
+                  <XCircle className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
+          </Card>
+        ))}
+      </div>
+
+      {/* Desktop: table */}
+      <Card className="hidden md:block overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>

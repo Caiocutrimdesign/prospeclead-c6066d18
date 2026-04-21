@@ -66,8 +66,8 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-4 max-w-6xl">
       <div>
-        <h1 className="text-2xl font-bold">Visão Geral</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="text-xl sm:text-2xl font-bold">Visão Geral</h1>
+        <p className="text-xs sm:text-sm text-muted-foreground">
           Painel administrativo do sistema ProspecLead.
         </p>
       </div>

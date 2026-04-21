@@ -67,9 +67,9 @@ export default function RhPromoters() {
   return (
     <div className="space-y-4 max-w-6xl">
       <div className="flex items-start justify-between gap-3 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold">Promoters</h1>
-          <p className="text-sm text-muted-foreground">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold">Promoters</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground">
             Visualização de todas as promoters cadastradas e seus resultados.
           </p>
         </div>
@@ -88,7 +88,50 @@ export default function RhPromoters() {
         />
       </div>
 
-      <Card className="overflow-x-auto">
+      {/* Mobile cards */}
+      <div className="md:hidden space-y-2">
+        {loading && (
+          <div className="text-center py-6">
+            <Loader2 className="w-5 h-5 animate-spin inline" />
+          </div>
+        )}
+        {!loading && filtered.length === 0 && (
+          <p className="text-center py-6 text-muted-foreground text-sm">Nenhuma promoter</p>
+        )}
+        {filtered.map((p) => (
+          <Card key={p.id} className="p-3 space-y-2">
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                <UserIcon className="w-4 h-4 text-primary" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-sm truncate">{p.full_name ?? "—"}</p>
+                <Badge variant="outline" className="text-[10px] mt-0.5">{p.level}</Badge>
+              </div>
+              <p className="text-sm font-bold tabular-nums shrink-0">
+                {formatBRL(p.monthly_earnings)}
+              </p>
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-center border-t pt-2">
+              <div>
+                <p className="text-base font-bold tabular-nums">{p.leads_count ?? 0}</p>
+                <p className="text-[10px] text-muted-foreground">Leads</p>
+              </div>
+              <div>
+                <p className="text-base font-bold tabular-nums">{p.daily_goal}</p>
+                <p className="text-[10px] text-muted-foreground">Meta diária</p>
+              </div>
+              <div>
+                <p className="text-base font-bold tabular-nums">{p.streak_days}d</p>
+                <p className="text-[10px] text-muted-foreground">Streak</p>
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      {/* Desktop table */}
+      <Card className="hidden md:block overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
