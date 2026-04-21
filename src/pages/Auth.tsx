@@ -133,6 +133,41 @@ export default function Auth() {
     }
   };
 
+  const handleRhSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (rhToken.trim().length === 0) {
+      toast.error("Informe o token de RH");
+      return;
+    }
+    setBusy(true);
+    const { data, error } = await supabase.functions.invoke("rh-signup", {
+      body: {
+        email: rhEmail,
+        password: rhPassword,
+        full_name: rhName,
+        token: rhToken,
+      },
+    });
+    if (error || (data as any)?.error) {
+      setBusy(false);
+      const msg = (data as any)?.error ?? error?.message ?? "Erro ao cadastrar RH";
+      toast.error(msg);
+      return;
+    }
+    // Loga automaticamente o novo usuário de RH
+    const { error: signErr } = await supabase.auth.signInWithPassword({
+      email: rhEmail,
+      password: rhPassword,
+    });
+    setBusy(false);
+    if (signErr) {
+      toast.success("Conta de RH criada! Faça login.");
+    } else {
+      toast.success("RH criado e logado!");
+      navigate("/rh", { replace: true });
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-prospeclead">
       <Card className="w-full max-w-md p-6 space-y-6">
@@ -146,10 +181,11 @@ export default function Auth() {
         </div>
 
         <Tabs defaultValue="signin">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="signin">Entrar</TabsTrigger>
             <TabsTrigger value="signup">Cadastrar</TabsTrigger>
             <TabsTrigger value="adm">ADM</TabsTrigger>
+            <TabsTrigger value="rh">RH</TabsTrigger>
           </TabsList>
 
           <TabsContent value="signin">
