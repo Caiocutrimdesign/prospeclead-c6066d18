@@ -70,10 +70,11 @@ export default function Missoes() {
   const missionsDone = [m1Done, m2Done, m3Done, m4Done].filter(Boolean).length;
   const overallPct = Math.round((missionsDone / 4) * 100);
 
-  // Ganhos
+  // Ganhos (ocultos enquanto valores não estão definidos)
   const m1Reward = m1Done ? respondidos * 1 : 0;
   const m2Reward = m2Done ? respondidos * 2 : 0; // retroativo dobra
   const totalEarnings = m1Reward + m2Reward;
+  const PRICE_PLACEHOLDER = "A definir";
 
   return (
     <div className="pb-24 bg-muted/20 min-h-screen">
@@ -120,12 +121,11 @@ export default function Missoes() {
             </div>
             <div className="min-w-0">
               <p className="text-xs text-muted-foreground">Ganho Acumulado Hoje</p>
-              <p className="text-2xl font-extrabold leading-none mt-0.5">
-                {formatBRL(totalEarnings)}
-              </p>
-              <p className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1">
-                <span>⏳</span>{" "}
-                {m1Done ? "Pagamentos liberados!" : "Complete M1 para liberar pagamento"}
+              <span className="inline-block mt-1 text-[11px] font-bold px-2 py-1 rounded bg-warning/20 text-warning-foreground border border-warning/40 uppercase tracking-wider">
+                Valores a definir
+              </span>
+              <p className="text-[11px] text-muted-foreground mt-1.5 flex items-center gap-1">
+                <span>⏳</span> Política de pagamento em definição
               </p>
             </div>
           </div>
@@ -141,13 +141,13 @@ export default function Missoes() {
           tag="🥉 BRONZE"
           tagColor="text-[hsl(25_70%_45%)] bg-[hsl(35_85%_94%)]"
           title="50 Contatos Respondidos"
-          description="Faça 50 leads responderem sua mensagem no WhatsApp. Ao atingir esta marca, cada resposta passa a valer R$ 1,00 imediatamente."
+          description="Faça 50 leads responderem sua mensagem no WhatsApp. Ao atingir esta marca, a recompensa por resposta será liberada (valor a definir)."
           current={respondidos}
           goal={m1Goal}
           unit=""
           pct={m1Pct}
           progressColor="bg-[hsl(25_85%_55%)]"
-          rewardLabel="🎁 🔒 Libera R$ 1,00 / lead respondido"
+          rewardLabel="🎁 🔒 Recompensa por lead respondido — valor a definir"
           rewardColor="bg-[hsl(35_85%_94%)] border-[hsl(35_85%_80%)] text-[hsl(25_70%_35%)]"
           footerNote="50 respostas para desbloquear"
           accent="bg-[hsl(35_100%_98%)] border-[hsl(35_85%_88%)]"
@@ -159,13 +159,13 @@ export default function Missoes() {
           tag="🏆 OURO — TRAVA DE QUALIDADE"
           tagColor="text-[hsl(45_85%_35%)] bg-[hsl(45_100%_92%)]"
           title="100 Interações com Foto da Placa"
-          description="Tire foto da placa em QUALQUER lead — sem precisar atingir a Missão 01 antes. A barra conta todos os leads respondidos que têm foto da placa registrada. Ao acumular 100 interações com foto, o valor DOBRA para R$ 2,00/lead e é aplicado de forma RETROATIVA em todos os respondidos do dia."
+          description="Tire foto da placa em QUALQUER lead — sem precisar atingir a Missão 01 antes. A barra conta todos os leads respondidos que têm foto da placa registrada. Ao acumular 100 interações com foto, a recompensa DOBRA e é aplicada de forma RETROATIVA em todos os respondidos do dia (valores a definir)."
           current={comFoto}
           goal={m2Goal}
           unit=""
           pct={m2Pct}
           progressColor="bg-[hsl(45_90%_55%)]"
-          rewardLabel="🎁 🚀 R$ 2,00 / lead — RETROATIVO ao atingir 100"
+          rewardLabel="🎁 🚀 Recompensa em dobro RETROATIVA — valor a definir"
           rewardColor="bg-[hsl(45_100%_92%)] border-[hsl(45_90%_80%)] text-[hsl(35_85%_30%)]"
           footerNote="📸 Tire foto da placa agora → 0/100 respondidos com foto"
           accent="bg-[hsl(45_100%_98%)] border-[hsl(45_90%_85%)]"
@@ -238,8 +238,8 @@ export default function Missoes() {
               />
               <MiniStat
                 label="Ganho"
-                value={`R$ ${totalEarnings.toFixed(0)}`}
-                subtitle={`${(totalEarnings / Math.max(1, respondidos)).toFixed(2)}/lead`}
+                value="—"
+                subtitle="a definir"
                 highlight
               />
             </div>
@@ -256,12 +256,12 @@ export default function Missoes() {
             <RuleItem
               tag="M1"
               tagColor="bg-[hsl(35_85%_88%)] text-[hsl(25_70%_35%)]"
-              text="Bronze: 50 respondidos → libera R$1,00/lead"
+              text="Bronze: 50 respondidos → libera recompensa por lead (valor a definir)"
             />
             <RuleItem
               tag="M2"
               tagColor="bg-[hsl(45_90%_85%)] text-[hsl(40_85%_30%)]"
-              text="Ouro: 100 c/ platePhoto → R$2,00/lead retroativo"
+              text="Ouro: 100 c/ platePhoto → recompensa em dobro retroativa (valor a definir)"
             />
             <RuleItem
               tag="M3"
