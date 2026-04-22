@@ -221,6 +221,15 @@ export default function AdminLeads() {
               <p className="text-sm font-bold tabular-nums shrink-0">
                 {l.value ? formatBRL(l.value) : "—"}
               </p>
+              <Button
+                size="sm"
+                onClick={() => sendWhats(l)}
+                disabled={!normalizePhoneBR(l.phone)}
+                className="shrink-0 h-8 px-2 bg-[hsl(142_70%_45%)] hover:bg-[hsl(142_70%_40%)] text-white disabled:opacity-40"
+                title="Enviar WhatsApp"
+              >
+                <MessageCircle className="w-4 h-4" />
+              </Button>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button size="sm" variant="ghost" className="text-destructive shrink-0">
