@@ -561,7 +561,7 @@ export default function Dashboard() {
               <ArrowRight className="w-4 h-4" />
             </div>
           </div>
-        </Link>
+        </a>
 
         {/* MISSÕES FIXAS DO DIA */}
         <Card className="p-4 bg-[hsl(210_40%_96%)] border-[hsl(217_91%_85%)] mt-3">
