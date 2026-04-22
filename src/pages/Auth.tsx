@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Shield, HeartHandshake } from "lucide-react";
+import { Shield } from "lucide-react";
 import logo from "@/assets/prospeclead-logo.png";
 
 export default function Auth() {
@@ -24,12 +24,6 @@ export default function Auth() {
   const [admPassword, setAdmPassword] = useState("");
   const [admName, setAdmName] = useState("");
   const [admToken, setAdmToken] = useState("");
-
-  // Estado próprio para a aba RH
-  const [rhEmail, setRhEmail] = useState("");
-  const [rhPassword, setRhPassword] = useState("");
-  const [rhName, setRhName] = useState("");
-  const [rhToken, setRhToken] = useState("");
 
   useEffect(() => {
     if (!loading && user) navigate("/", { replace: true });
@@ -133,41 +127,6 @@ export default function Auth() {
     }
   };
 
-  const handleRhSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (rhToken.trim().length === 0) {
-      toast.error("Informe o token de RH");
-      return;
-    }
-    setBusy(true);
-    const { data, error } = await supabase.functions.invoke("rh-signup", {
-      body: {
-        email: rhEmail,
-        password: rhPassword,
-        full_name: rhName,
-        token: rhToken,
-      },
-    });
-    if (error || (data as any)?.error) {
-      setBusy(false);
-      const msg = (data as any)?.error ?? error?.message ?? "Erro ao cadastrar RH";
-      toast.error(msg);
-      return;
-    }
-    // Loga automaticamente o novo usuário de RH
-    const { error: signErr } = await supabase.auth.signInWithPassword({
-      email: rhEmail,
-      password: rhPassword,
-    });
-    setBusy(false);
-    if (signErr) {
-      toast.success("Conta de RH criada! Faça login.");
-    } else {
-      toast.success("RH criado e logado!");
-      navigate("/rh", { replace: true });
-    }
-  };
-
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-prospeclead">
       <Card className="w-full max-w-md p-6 space-y-6">
@@ -181,11 +140,10 @@ export default function Auth() {
         </div>
 
         <Tabs defaultValue="signin">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="signin">Entrar</TabsTrigger>
             <TabsTrigger value="signup">Cadastrar</TabsTrigger>
             <TabsTrigger value="adm">ADM</TabsTrigger>
-            <TabsTrigger value="rh">RH</TabsTrigger>
           </TabsList>
 
           <TabsContent value="signin">
@@ -258,44 +216,6 @@ export default function Auth() {
               </div>
               <Button type="submit" className="w-full" disabled={busy}>
                 {busy ? "Validando token..." : "Criar Administrador"}
-              </Button>
-            </form>
-          </TabsContent>
-
-          <TabsContent value="rh">
-            <form onSubmit={handleRhSignUp} className="space-y-4 mt-4">
-              <div className="rounded-md border border-success/30 bg-success/5 p-3 flex items-start gap-2">
-                <HeartHandshake className="w-4 h-4 text-success mt-0.5 shrink-0" />
-                <p className="text-xs text-muted-foreground">
-                  Cadastro restrito. Informe o <strong>token de RH</strong> fornecido pela gestão para criar uma conta com acesso ao painel RH (somente leitura + pagamentos PIX).
-                </p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="rh-name">Nome completo</Label>
-                <Input id="rh-name" required value={rhName} onChange={(e) => setRhName(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="rh-email">E-mail</Label>
-                <Input id="rh-email" type="email" required value={rhEmail} onChange={(e) => setRhEmail(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="rh-password">Senha</Label>
-                <Input id="rh-password" type="password" required minLength={6} value={rhPassword} onChange={(e) => setRhPassword(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="rh-token">Token de RH</Label>
-                <Input
-                  id="rh-token"
-                  type="password"
-                  required
-                  placeholder="••••••"
-                  value={rhToken}
-                  onChange={(e) => setRhToken(e.target.value)}
-                  autoComplete="off"
-                />
-              </div>
-              <Button type="submit" className="w-full bg-success hover:bg-success/90 text-white" disabled={busy}>
-                {busy ? "Validando token..." : "Criar conta de RH"}
               </Button>
             </form>
           </TabsContent>
