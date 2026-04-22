@@ -45,6 +45,7 @@ import {
   User as UserIcon,
   Building2,
 } from "lucide-react";
+import prospecleadLogo from "@/assets/prospeclead-logo.png";
 
 interface Stats {
   total: number;
@@ -147,14 +148,23 @@ export default function Dashboard() {
     <div className="pb-4 bg-muted/20 min-h-screen">
       {/* Header azul ProspecLead */}
       <header className="bg-[hsl(217_91%_55%)] text-white px-4 py-3 sticky top-0 z-30 shadow-sm">
-        <div className="flex items-start justify-between gap-2">
+        <div className="relative flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
-            <h1 className="font-bold text-lg leading-tight">ProspecLead</h1>
-            <button className="flex items-center gap-1 text-xs mt-0.5 hover:opacity-90">
+            <button className="flex items-center gap-1 text-xs hover:opacity-90">
               <span className="text-sm leading-none">📍</span>
               <span className="truncate max-w-[160px] font-medium">{locationName}</span>
               <Pencil className="w-3 h-3 opacity-90" />
             </button>
+          </div>
+
+          {/* Logo centralizada */}
+          <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 pointer-events-none">
+            <img
+              src={prospecleadLogo}
+              alt="ProspecLead"
+              className="h-8 w-auto object-contain"
+              loading="lazy"
+            />
           </div>
 
           <DropdownMenu>
