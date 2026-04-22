@@ -540,8 +540,10 @@ export default function Dashboard() {
           <div className="flex-1 h-px bg-border" />
         </div>
 
-        <Link
-          to="/agenda"
+        <a
+          href={`https://calendly.com/comercialtelensat/30min?name=${encodeURIComponent(profile?.full_name ?? firstName)}&utm_source=prospec_lead&utm_content=${encodeURIComponent("Francisco Vale Jr")}`}
+          target="_blank"
+          rel="noopener noreferrer"
           className="block bg-gradient-to-br from-[hsl(217_91%_55%)] to-[hsl(220_91%_45%)] text-white rounded-2xl p-4 hover:opacity-95 active:scale-[0.98] transition shadow-md"
         >
           <div className="flex items-center gap-3">
@@ -559,7 +561,7 @@ export default function Dashboard() {
               <ArrowRight className="w-4 h-4" />
             </div>
           </div>
-        </Link>
+        </a>
 
         {/* MISSÕES FIXAS DO DIA */}
         <Card className="p-4 bg-[hsl(210_40%_96%)] border-[hsl(217_91%_85%)] mt-3">
