@@ -118,7 +118,6 @@ export default function LeadNew() {
     if (!form.phone.trim()) { toast.error("Informe o WhatsApp"); return false; }
     if (!form.vehicle_model.trim()) { toast.error("Informe o veículo"); return false; }
     if (!hasTracker) { toast.error("Marque se já tem rastreador"); return false; }
-    if (!form.location.trim()) { toast.error("Informe a praça/local"); return false; }
     return true;
   };
 
