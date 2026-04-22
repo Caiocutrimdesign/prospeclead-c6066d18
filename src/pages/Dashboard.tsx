@@ -241,137 +241,166 @@ export default function Dashboard() {
         </div>
       </header>
 
-      <div className="px-4 pt-4 space-y-4">
+      <div className="px-4 pt-4 space-y-3">
         {/* Saudação */}
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-muted-foreground">Olá,</p>
-            <h1 className="text-2xl font-bold">{firstName}! 👋</h1>
-          </div>
-        </div>
+        <h1 className="text-2xl font-extrabold tracking-tight">
+          Olá, {firstName}! <span className="inline-block">👋</span>
+        </h1>
 
-        {/* Local atual */}
-        <Card className="p-4 flex items-center justify-between">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center shrink-0">
-              <MapPin className="w-5 h-5 text-accent-foreground" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs text-muted-foreground">Local atual</p>
-              <p className="font-semibold truncate">{locationName}</p>
-            </div>
+        {/* Local atual - barra verde clara */}
+        <div className="bg-[hsl(145_55%_94%)] border border-[hsl(145_50%_82%)] rounded-xl px-3 py-2.5 flex items-center justify-between">
+          <div className="flex items-center gap-2 min-w-0">
+            <MapPin className="w-4 h-4 text-[hsl(145_60%_35%)] shrink-0" fill="currentColor" />
+            <span className="font-semibold text-sm truncate">{locationName}</span>
           </div>
-          <Button asChild variant="outline" size="sm">
+          <Button
+            asChild
+            size="sm"
+            className="h-7 px-4 rounded-full bg-[hsl(145_60%_42%)] hover:bg-[hsl(145_60%_38%)] text-white text-xs font-semibold shadow-none"
+          >
             <Link to="/checkin">Trocar</Link>
           </Button>
-        </Card>
-
-        {/* Timer */}
-        <Card className="p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span
-                className={`w-2.5 h-2.5 rounded-full ${
-                  timer.running ? "bg-success animate-pulse-dot" : "bg-muted-foreground"
-                }`}
-              />
-              <span className="text-sm font-medium">
-                {timer.running ? "Em prospecção" : "Parado"}
-              </span>
-            </div>
-            <span className="text-2xl font-mono font-bold tabular-nums">
-              {formatTimer(timer.seconds)}
-            </span>
-          </div>
-          <div className="flex gap-2">
-            {!timer.running && timer.seconds === 0 && (
-              <Button onClick={timer.start} className="flex-1" size="sm">
-                <Play className="w-4 h-4" /> Iniciar
-              </Button>
-            )}
-            {timer.running && (
-              <Button onClick={timer.pause} variant="secondary" className="flex-1" size="sm">
-                <Pause className="w-4 h-4" /> Pausar
-              </Button>
-            )}
-            {!timer.running && timer.seconds > 0 && (
-              <Button onClick={timer.resume} className="flex-1" size="sm">
-                <Play className="w-4 h-4" /> Retomar
-              </Button>
-            )}
-            {timer.seconds > 0 && (
-              <Button onClick={timer.stop} variant="outline" className="flex-1" size="sm">
-                <Square className="w-4 h-4" /> Encerrar
-              </Button>
-            )}
-          </div>
-        </Card>
-
-        {/* Meta + streak */}
-        <div className="grid grid-cols-3 gap-3">
-          <Card className="p-4 col-span-2 space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-destructive/10 flex items-center justify-center">
-                  <Target className="w-4 h-4 text-destructive" />
-                </div>
-                <span className="text-sm font-medium">Meta do dia</span>
-              </div>
-              <span className="text-sm text-muted-foreground">
-                {stats.todayLeads}/{dailyGoal}
-              </span>
-            </div>
-            <Progress value={goalPct} className="h-2" />
-            <p className="text-xs text-muted-foreground">{goalPct}% concluído</p>
-          </Card>
-          <Card className="p-4 flex flex-col items-center justify-center text-center">
-            <Flame className="w-6 h-6 text-warning" />
-            <p className="text-2xl font-bold mt-1">{profile?.streak_days ?? 0}</p>
-            <p className="text-xs text-muted-foreground">dias seguidos</p>
-          </Card>
         </div>
 
-        {/* Ganho hoje */}
-        <Card className="p-6 bg-gradient-promoter text-primary-foreground space-y-1 text-center border-0">
-          <p className="text-sm opacity-90">GANHO HOJE</p>
-          <p className="text-4xl font-bold">{formatBRL(stats.todayEarnings)}</p>
-          <p className="text-sm opacity-90">Continue assim, {firstName}! 🚀</p>
-        </Card>
-
-        {/* Acumulado do mês */}
-        <Card className="p-4 flex items-center justify-between">
-          <div>
-            <p className="text-xs text-muted-foreground">Acumulado do mês</p>
-            <p className="text-xl font-bold">{formatBRL(profile?.monthly_earnings ?? 0)}</p>
+        {/* Timer - card âmbar/laranja claro */}
+        <div className="bg-[hsl(35_100%_96%)] border border-[hsl(35_90%_85%)] rounded-xl p-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-col min-w-0">
+              <div className="flex items-center gap-1.5 text-[hsl(35_85%_45%)] text-xs font-semibold">
+                <Pause className="w-3.5 h-3.5" fill="currentColor" />
+                <span>{timer.running ? "Em prospecção" : timer.seconds > 0 ? "Em pausa" : "Parado"}</span>
+              </div>
+              <span className="text-3xl font-mono font-extrabold tabular-nums text-foreground leading-tight mt-0.5">
+                {formatTimer(timer.seconds)}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              {!timer.running && timer.seconds === 0 && (
+                <button
+                  onClick={timer.start}
+                  className="h-8 px-3 rounded-full bg-[hsl(145_60%_92%)] text-[hsl(145_60%_30%)] text-xs font-semibold inline-flex items-center gap-1 hover:bg-[hsl(145_60%_88%)] transition"
+                >
+                  <Play className="w-3.5 h-3.5" fill="currentColor" /> Iniciar
+                </button>
+              )}
+              {timer.running && (
+                <button
+                  onClick={timer.pause}
+                  className="h-8 px-3 rounded-full bg-[hsl(35_90%_88%)] text-[hsl(35_85%_35%)] text-xs font-semibold inline-flex items-center gap-1 hover:bg-[hsl(35_90%_84%)] transition"
+                >
+                  <Pause className="w-3.5 h-3.5" fill="currentColor" /> Pausar
+                </button>
+              )}
+              {!timer.running && timer.seconds > 0 && (
+                <button
+                  onClick={timer.resume}
+                  className="h-8 px-3 rounded-full bg-[hsl(145_60%_92%)] text-[hsl(145_60%_30%)] text-xs font-semibold inline-flex items-center gap-1 hover:bg-[hsl(145_60%_88%)] transition"
+                >
+                  <Play className="w-3.5 h-3.5" fill="currentColor" /> Retomar
+                </button>
+              )}
+              {timer.seconds > 0 && (
+                <button
+                  onClick={timer.stop}
+                  className="h-8 px-3 rounded-full bg-[hsl(0_85%_94%)] text-[hsl(0_75%_45%)] text-xs font-semibold inline-flex items-center gap-1 hover:bg-[hsl(0_85%_90%)] transition"
+                >
+                  <Square className="w-3.5 h-3.5" fill="currentColor" /> Encerrar
+                </button>
+              )}
+              <button
+                className="h-8 w-8 rounded-full bg-white border border-[hsl(35_90%_85%)] inline-flex items-center justify-center text-[hsl(35_85%_45%)] hover:bg-[hsl(35_100%_98%)] transition"
+                aria-label="Estatísticas"
+              >
+                <Activity className="w-4 h-4" />
+              </button>
+            </div>
           </div>
-          <Badge variant="secondary" className="gap-1">
-            <Medal
-              className={`w-4 h-4 ${
-                profile?.level === "OURO"
-                  ? "text-gold"
-                  : profile?.level === "PRATA"
-                    ? "text-silver"
-                    : "text-bronze"
-              }`}
-            />
-            {profile?.level ?? "BRONZE"}
-          </Badge>
+        </div>
+
+        {/* Card unificado: Meta + Ganho + Acumulado */}
+        <Card className="p-0 overflow-hidden border border-border shadow-sm">
+          {/* Meta do dia */}
+          <div className="px-4 py-3 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-full bg-[hsl(0_0%_96%)] border border-border flex items-center justify-center shrink-0">
+                <Target className="w-5 h-5 text-[hsl(0_75%_55%)]" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs text-muted-foreground">Meta do Dia</p>
+                <p className="text-sm font-semibold">
+                  <span className="text-[hsl(0_75%_55%)] font-bold text-base">{stats.todayLeads}</span>
+                  <span className="text-muted-foreground"> / {dailyGoal} leads</span>
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gradient-to-br from-[hsl(20_95%_55%)] to-[hsl(15_90%_45%)] text-white shrink-0">
+              <Flame className="w-4 h-4" fill="currentColor" />
+              <span className="text-xs font-bold">{profile?.streak_days ?? 0} dias</span>
+            </div>
+          </div>
+
+          {/* Ganho hoje - faixa verde clara */}
+          <div className="bg-[hsl(145_55%_95%)] border-y border-[hsl(145_50%_85%)] px-4 py-4 text-center">
+            <p className="text-[11px] font-bold text-[hsl(145_60%_35%)] tracking-wider flex items-center justify-center gap-1.5">
+              <span>⚡</span> GANHO HOJE <span>⚡</span>
+            </p>
+            <p className="text-4xl font-extrabold text-[hsl(145_65%_38%)] mt-1 tracking-tight">
+              {formatBRL(stats.todayEarnings)}
+            </p>
+            <p className="text-xs text-[hsl(145_40%_45%)] italic mt-1">
+              {stats.todayEarnings > 0
+                ? `Continue assim, ${firstName}! 🚀`
+                : "Comece a prospectar para ganhar!"}
+            </p>
+          </div>
+
+          {/* Acumulado do mês */}
+          <div className="px-4 py-3 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-full bg-[hsl(145_50%_95%)] flex items-center justify-center shrink-0 text-xl">
+                💰
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs text-muted-foreground">Acumulado do Mês</p>
+                <p className="text-lg font-extrabold">{formatBRL(profile?.monthly_earnings ?? 0)}</p>
+              </div>
+            </div>
+            <div className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg bg-[hsl(145_45%_92%)] border border-[hsl(145_40%_80%)] shrink-0">
+              <Medal
+                className={`w-4 h-4 ${
+                  profile?.level === "OURO"
+                    ? "text-gold"
+                    : profile?.level === "PRATA"
+                      ? "text-silver"
+                      : "text-[hsl(25_70%_45%)]"
+                }`}
+              />
+              <span className="text-[10px] font-bold text-[hsl(25_70%_35%)] tracking-wider">
+                {profile?.level ?? "BRONZE"}
+              </span>
+            </div>
+          </div>
         </Card>
 
-        {/* Stats grid */}
-        <div className="grid grid-cols-3 gap-3">
-          <Card className="p-3 text-center">
-            <p className="text-2xl font-bold">{stats.total}</p>
-            <p className="text-xs text-muted-foreground">Total leads</p>
-          </Card>
-          <Card className="p-3 text-center">
-            <p className="text-2xl font-bold">{stats.converted}</p>
-            <p className="text-xs text-muted-foreground">Convertidos</p>
-          </Card>
-          <Card className="p-3 text-center">
-            <p className="text-2xl font-bold">{conversionRate}%</p>
-            <p className="text-xs text-muted-foreground">Conversão</p>
-          </Card>
+        {/* Stats grid - 3 cards pastel */}
+        <div className="grid grid-cols-3 gap-2.5">
+          <div className="bg-[hsl(145_55%_94%)] border border-[hsl(145_50%_82%)] rounded-xl p-3 flex flex-col items-center justify-center text-center">
+            <IdCard className="w-5 h-5 text-[hsl(145_60%_35%)]" />
+            <p className="text-2xl font-extrabold mt-1 leading-none">{stats.total}</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Total Leads</p>
+          </div>
+          <div className="bg-[hsl(145_60%_92%)] border border-[hsl(145_55%_78%)] rounded-xl p-3 flex flex-col items-center justify-center text-center">
+            <CheckCircle2 className="w-5 h-5 text-[hsl(145_65%_35%)]" fill="hsl(145 60% 88%)" />
+            <p className="text-2xl font-extrabold mt-1 leading-none">{stats.converted}</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Convertidos</p>
+          </div>
+          <div className="bg-[hsl(35_100%_94%)] border border-[hsl(35_90%_82%)] rounded-xl p-3 flex flex-col items-center justify-center text-center">
+            <TrendingUp className="w-5 h-5 text-[hsl(35_85%_45%)]" />
+            <p className="text-2xl font-extrabold mt-1 leading-none text-[hsl(35_85%_45%)]">
+              {conversionRate}%
+            </p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Conversão</p>
+          </div>
         </div>
 
         {/* AÇÕES RÁPIDAS */}
