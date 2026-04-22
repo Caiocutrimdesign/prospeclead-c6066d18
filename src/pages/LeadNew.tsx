@@ -245,8 +245,7 @@ export default function LeadNew() {
         {/* Placa do Veículo + foto */}
         <Field label="Placa do Veículo" icon="🚘">
           <div className="rounded-xl bg-warning/10 border border-warning/30 px-3 py-2 mb-2 text-xs text-foreground/80">
-            📸 <strong>Tire foto AGORA</strong> — disponível em qualquer lead! 100 interações com foto no dia ={" "}
-            <strong>R$ 2,00/lead retroativo</strong>
+            📸 <strong>Tire foto AGORA</strong> — registro fotográfico melhora a qualidade do lead.
           </div>
           <div className="flex gap-2">
             <Input
