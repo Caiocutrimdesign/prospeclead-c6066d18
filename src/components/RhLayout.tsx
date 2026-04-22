@@ -117,8 +117,8 @@ export default function RhLayout({ children }: Props) {
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-muted/30">
         <RhSidebar />
-        <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-14 bg-background border-b flex items-center justify-between gap-2 px-3 md:px-4 sticky top-0 z-30">
+        <div className="flex-1 flex flex-col min-w-0 bg-background">
+          <header className="h-14 md:h-16 bg-background/95 backdrop-blur border-b flex items-center justify-between gap-2 px-3 md:px-5 xl:px-6 sticky top-0 z-30">
             <div className="flex items-center gap-2 min-w-0">
               <SidebarTrigger />
               <Badge
@@ -142,8 +142,10 @@ export default function RhLayout({ children }: Props) {
               </Button>
             </div>
           </header>
-          <main className="flex-1 p-3 sm:p-4 md:p-6 overflow-x-hidden">
-            {children ?? <Outlet />}
+          <main className="flex-1 overflow-x-hidden bg-muted/20">
+            <div className="mx-auto w-full max-w-[1480px] p-3 sm:p-4 md:p-6 xl:p-8">
+              {children ?? <Outlet />}
+            </div>
           </main>
         </div>
       </div>
