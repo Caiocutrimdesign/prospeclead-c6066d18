@@ -47,6 +47,7 @@ export default function LeadNew() {
 
   const [coords, setCoords] = useState<{ lat: number; lng: number; accuracy: number; capturedAt: string } | null>(null);
   const [locating, setLocating] = useState(false);
+  const [resolving, setResolving] = useState(false);
 
   const [busy, setBusy] = useState(false);
 
@@ -54,6 +55,30 @@ export default function LeadNew() {
     if (photoUrl) URL.revokeObjectURL(photoUrl);
     setPhotoBlob(blob);
     setPhotoUrl(URL.createObjectURL(blob));
+  };
+
+  // Reverse geocoding via Nominatim (OpenStreetMap) — gratuito, sem chave
+  const reverseGeocode = async (lat: number, lng: number) => {
+    setResolving(true);
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1&accept-language=pt-BR`,
+        { headers: { Accept: "application/json" } }
+      );
+      const data = await res.json();
+      const a = data?.address ?? {};
+      const road = a.road || a.pedestrian || a.path || "";
+      const number = a.house_number ? `, ${a.house_number}` : "";
+      const suburb = a.suburb || a.neighbourhood || a.quarter || "";
+      const city = a.city || a.town || a.village || a.municipality || "";
+      const parts = [[road + number].filter(Boolean).join(""), suburb, city].filter(Boolean);
+      const pretty = parts.join(" - ") || data?.display_name || "";
+      if (pretty) set("location", pretty);
+    } catch {
+      // silencioso
+    } finally {
+      setResolving(false);
+    }
   };
 
   const captureGPS = () => {
@@ -72,6 +97,7 @@ export default function LeadNew() {
         });
         setLocating(false);
         toast.success(`Local capturado (~${Math.round(pos.coords.accuracy)}m)`);
+        reverseGeocode(pos.coords.latitude, pos.coords.longitude);
       },
       () => {
         setLocating(false);
