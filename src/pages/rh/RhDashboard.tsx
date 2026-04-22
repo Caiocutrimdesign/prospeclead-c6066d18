@@ -73,15 +73,24 @@ export default function RhDashboard() {
   }, []);
 
   return (
-    <div className="space-y-4 sm:space-y-6 max-w-6xl">
-      <div>
-        <h1 className="text-xl sm:text-2xl font-bold">Dashboard RH</h1>
-        <p className="text-xs sm:text-sm text-muted-foreground">
-          Visão geral de promoters, resultados e pagamentos.
-        </p>
-      </div>
+    <div className="space-y-5 sm:space-y-6">
+      <section className="rounded-lg border bg-card px-4 py-4 shadow-sm md:px-6 md:py-5">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Recursos humanos</p>
+            <h1 className="text-2xl font-bold md:text-3xl">Dashboard RH</h1>
+            <p className="mt-1 text-sm text-muted-foreground md:text-base">
+              Visão geral de promoters, resultados e pagamentos.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-3 xl:w-[520px]">
+            <MetricHighlight label="Promoters" value={String(stats.promoters)} />
+            <MetricHighlight label="Leads totais" value={String(stats.totalLeads)} />
+          </div>
+        </div>
+      </section>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-3 xl:gap-4">
         <StatCard
           icon={<Users className="w-5 h-5 text-primary" />}
           label="Promoters cadastradas"
@@ -123,7 +132,7 @@ export default function RhDashboard() {
         />
       </div>
 
-      <Card className="p-4 bg-muted/40">
+      <Card className="p-4 md:p-5 bg-muted/40">
         <p className="text-sm text-muted-foreground">
           <strong className="text-foreground">Permissões deste perfil:</strong>{" "}
           você pode visualizar todas as promoters e resultados, e processar
@@ -155,14 +164,23 @@ function StatCard({
         ? "bg-success/5 border-success/30"
         : "";
   return (
-    <Card className={`p-4 ${accentCls}`}>
+    <Card className={`p-4 md:p-5 ${accentCls}`}>
       <div className="flex items-center gap-2 mb-2">
         {icon}
         <p className="text-xs text-muted-foreground">{label}</p>
       </div>
-      <p className="text-2xl font-bold tabular-nums">
+      <p className="text-2xl font-bold tabular-nums md:text-3xl">
         {loading ? "…" : value}
       </p>
+    </Card>
+  );
+}
+
+function MetricHighlight({ label, value }: { label: string; value: string }) {
+  return (
+    <Card className="p-4 md:p-5">
+      <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className="mt-2 text-2xl font-bold tabular-nums md:text-3xl">{value}</p>
     </Card>
   );
 }
