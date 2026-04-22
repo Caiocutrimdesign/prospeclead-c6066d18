@@ -2,13 +2,16 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatBRL } from "@/lib/format";
-import { Car, Truck, Search, Plus, ContactRound } from "lucide-react";
+import { openWhatsApp, normalizePhoneBR } from "@/lib/whatsapp";
+import { toast } from "sonner";
+import { Car, Truck, Search, Plus, ContactRound, MessageCircle } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 
 type Lead = Database["public"]["Tables"]["leads"]["Row"];
@@ -28,6 +31,7 @@ const statusColors: Record<string, string> = {
 
 export default function LeadsList() {
   const { user } = useAuth();
+  const { profile } = useProfile();
   const [params, setParams] = useSearchParams();
   const tab = (params.get("tab") as "b2c" | "b2b") || "b2c";
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -125,31 +129,54 @@ export default function LeadsList() {
           </div>
         ) : (
           <div className="space-y-2">
-            {filtered.map((l) => (
-              <Link key={l.id} to={`/leads/${l.id}`} className="block">
-                <Card className="p-3 flex items-center gap-3 hover:bg-muted/40 active:scale-[0.99] transition">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${statusColors[l.status]}`}>
-                    {l.kind === "b2c" ? <Car className="w-5 h-5" /> : <Truck className="w-5 h-5" />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold truncate">{l.name}</p>
-                    {l.kind === "b2c" ? (
-                      <p className="text-xs text-muted-foreground truncate">
-                        {[l.vehicle_model, l.vehicle_plate, l.phone].filter(Boolean).join(" · ")}
-                      </p>
-                    ) : (
-                      <p className="text-xs text-muted-foreground truncate">
-                        {[l.company_cnpj, l.fleet_size ? `${l.fleet_size} veículos` : null, l.city].filter(Boolean).join(" · ")}
-                      </p>
-                    )}
-                  </div>
-                  <div className="text-right shrink-0">
-                    <Badge className={`${statusColors[l.status]} border-0 capitalize`}>{l.status}</Badge>
-                    {l.value ? <p className="text-xs font-semibold mt-1">{formatBRL(l.value)}</p> : null}
-                  </div>
+            {filtered.map((l) => {
+              const hasPhone = !!normalizePhoneBR(l.phone);
+              return (
+                <Card key={l.id} className="p-3 flex items-center gap-3 hover:bg-muted/40 transition">
+                  <Link to={`/leads/${l.id}`} className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${statusColors[l.status]}`}>
+                      {l.kind === "b2c" ? <Car className="w-5 h-5" /> : <Truck className="w-5 h-5" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold truncate">{l.name}</p>
+                      {l.kind === "b2c" ? (
+                        <p className="text-xs text-muted-foreground truncate">
+                          {[l.vehicle_model, l.vehicle_plate, l.phone].filter(Boolean).join(" · ")}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-muted-foreground truncate">
+                          {[l.company_cnpj, l.fleet_size ? `${l.fleet_size} veículos` : null, l.city].filter(Boolean).join(" · ")}
+                        </p>
+                      )}
+                    </div>
+                    <div className="text-right shrink-0">
+                      <Badge className={`${statusColors[l.status]} border-0 capitalize`}>{l.status}</Badge>
+                      {l.value ? <p className="text-xs font-semibold mt-1">{formatBRL(l.value)}</p> : null}
+                    </div>
+                  </Link>
+                  <Button
+                    type="button"
+                    size="icon"
+                    disabled={!hasPhone}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const ok = openWhatsApp(l.phone, {
+                        leadName: l.name,
+                        senderName: profile?.full_name,
+                        vehicleModel: l.vehicle_model,
+                        kind: l.kind,
+                      });
+                      if (!ok) toast.error("Telefone inválido para WhatsApp");
+                    }}
+                    className="shrink-0 h-10 w-10 rounded-full bg-[hsl(142_70%_45%)] hover:bg-[hsl(142_70%_40%)] text-white disabled:opacity-40"
+                    title={hasPhone ? "Enviar WhatsApp" : "Sem telefone"}
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                  </Button>
                 </Card>
-              </Link>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

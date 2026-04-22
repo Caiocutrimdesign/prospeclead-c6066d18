@@ -19,7 +19,9 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { ArrowLeft, Car, Truck, Phone, Trash2, Save, Check } from "lucide-react";
+import { ArrowLeft, Car, Truck, Phone, Trash2, Save, Check, MessageCircle } from "lucide-react";
+import { openWhatsApp, normalizePhoneBR } from "@/lib/whatsapp";
+import { useProfile } from "@/hooks/useProfile";
 import { formatBRL } from "@/lib/format";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -43,6 +45,7 @@ export default function LeadDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { profile } = useProfile();
   const [lead, setLead] = useState<Lead | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -308,6 +311,25 @@ export default function LeadDetail() {
         </Card>
 
         {/* Actions */}
+        {/* WhatsApp em destaque */}
+        <Button
+          type="button"
+          disabled={!normalizePhoneBR(lead.phone)}
+          onClick={() => {
+            const ok = openWhatsApp(lead.phone, {
+              leadName: lead.name,
+              senderName: profile?.full_name,
+              vehicleModel: lead.vehicle_model,
+              kind: lead.kind,
+            });
+            if (!ok) toast.error("Telefone inválido para WhatsApp");
+          }}
+          className="w-full h-12 bg-[hsl(142_70%_45%)] hover:bg-[hsl(142_70%_40%)] text-white"
+        >
+          <MessageCircle className="w-5 h-5 mr-2" />
+          Enviar WhatsApp
+        </Button>
+
         <div className="grid grid-cols-2 gap-3">
           {lead.phone ? (
             <Button asChild variant="outline" className="h-12">
