@@ -113,7 +113,7 @@ export default function LeadNew() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-
+  const validate = (): boolean => {
     if (!form.name.trim()) { toast.error("Informe o nome"); return false; }
     if (!form.phone.trim()) { toast.error("Informe o WhatsApp"); return false; }
     if (!form.vehicle_model.trim()) { toast.error("Informe o veículo"); return false; }
