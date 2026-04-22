@@ -336,12 +336,10 @@ export default function Dashboard() {
               <span>⚡</span> GANHO HOJE <span>⚡</span>
             </p>
             <p className="text-4xl font-extrabold text-[hsl(145_65%_38%)] mt-1 tracking-tight">
-              {formatBRL(stats.todayEarnings)}
+              —
             </p>
             <p className="text-xs text-[hsl(145_40%_45%)] italic mt-1">
-              {stats.todayEarnings > 0
-                ? `Continue assim, ${firstName}! 🚀`
-                : "Comece a prospectar para ganhar!"}
+              Em breve disponível
             </p>
           </div>
 
