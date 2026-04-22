@@ -81,41 +81,42 @@ export default function RhPagamentos() {
     .reduce((s, x) => s + Number(x.amount), 0);
 
   return (
-    <div className="space-y-4 max-w-6xl">
-      <div className="flex items-start justify-between gap-3 flex-wrap">
-        <div className="min-w-0">
-          <h1 className="text-xl sm:text-2xl font-bold">Pagamentos PIX</h1>
-          <p className="text-xs sm:text-sm text-muted-foreground">
-            Aprovar, marcar como pago ou rejeitar saques solicitados pelas
-            promoters.
-          </p>
-        </div>
-        <Card className="px-3 sm:px-4 py-2 flex items-center gap-2 bg-warning/10 border-warning/30">
-          <Wallet className="w-4 h-4 text-warning shrink-0" />
-          <div>
-            <p className="text-[10px] uppercase text-muted-foreground">
-              A pagar
+    <div className="space-y-5 lg:space-y-6">
+      <section className="rounded-lg border bg-card px-4 py-4 shadow-sm md:px-6 md:py-5">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+          <div className="min-w-0">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Financeiro RH
             </p>
-            <p className="font-bold tabular-nums text-sm sm:text-base">{formatBRL(totalPending)}</p>
+            <h1 className="text-2xl font-bold md:text-3xl">Pagamentos PIX</h1>
+            <p className="mt-1 text-sm text-muted-foreground md:text-base">
+              Aprovar, marcar como pago ou rejeitar saques solicitados pelas promoters.
+            </p>
           </div>
-        </Card>
-      </div>
-
-      <div className="flex gap-2">
-        <Select value={filter} onValueChange={setFilter}>
-          <SelectTrigger className="w-full sm:w-48">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="pendente">Pendentes</SelectItem>
-            <SelectItem value="aprovado">Aprovados</SelectItem>
-            <SelectItem value="pago">Pagos</SelectItem>
-            <SelectItem value="rejeitado">Rejeitados</SelectItem>
-            <SelectItem value="cancelado">Cancelados</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+          <div className="flex w-full flex-col gap-3 xl:w-[520px] xl:flex-row xl:items-center xl:justify-end">
+            <Select value={filter} onValueChange={setFilter}>
+              <SelectTrigger className="w-full xl:w-48">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="pendente">Pendentes</SelectItem>
+                <SelectItem value="aprovado">Aprovados</SelectItem>
+                <SelectItem value="pago">Pagos</SelectItem>
+                <SelectItem value="rejeitado">Rejeitados</SelectItem>
+                <SelectItem value="cancelado">Cancelados</SelectItem>
+              </SelectContent>
+            </Select>
+            <Card className="px-4 py-3 flex items-center gap-3 bg-warning/10 border-warning/30 xl:min-w-[220px]">
+              <Wallet className="w-4 h-4 text-warning shrink-0" />
+              <div>
+                <p className="text-[10px] uppercase text-muted-foreground">A pagar</p>
+                <p className="font-bold tabular-nums text-sm sm:text-base">{formatBRL(totalPending)}</p>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </section>
 
       {/* Mobile: cards */}
       <div className="lg:hidden space-y-2">
@@ -186,7 +187,7 @@ export default function RhPagamentos() {
       </div>
 
       {/* Desktop: table */}
-      <Card className="hidden lg:block overflow-x-auto">
+      <Card className="hidden lg:block overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
