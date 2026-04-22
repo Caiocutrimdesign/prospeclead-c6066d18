@@ -30,9 +30,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Loader2, Search, Trash2 } from "lucide-react";
+import { Loader2, MessageCircle, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL } from "@/lib/format";
+import { openWhatsApp, normalizePhoneBR } from "@/lib/whatsapp";
+import { useProfile } from "@/hooks/useProfile";
 
 type Lead = {
   id: string;
@@ -40,6 +42,7 @@ type Lead = {
   kind: "b2c" | "b2b";
   name: string;
   phone: string | null;
+  vehicle_model: string | null;
   vehicle_plate: string | null;
   status: string;
   value: number | null;
@@ -58,6 +61,7 @@ const STATUSES = [
 ];
 
 export default function AdminLeads() {
+  const { profile } = useProfile();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
@@ -65,12 +69,22 @@ export default function AdminLeads() {
   const [filterKind, setFilterKind] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
 
+  const sendWhats = (l: Lead) => {
+    const ok = openWhatsApp(l.phone, {
+      leadName: l.name,
+      senderName: profile?.full_name ?? "Telensat",
+      vehicleModel: l.vehicle_model,
+      kind: l.kind,
+    });
+    if (!ok) toast.error("Telefone inválido para WhatsApp");
+  };
+
   const load = async () => {
     setLoading(true);
     const [{ data: ls }, { data: ps }] = await Promise.all([
       supabase
         .from("leads")
-        .select("id,user_id,kind,name,phone,vehicle_plate,status,value,created_at,city")
+        .select("id,user_id,kind,name,phone,vehicle_model,vehicle_plate,status,value,created_at,city")
         .order("created_at", { ascending: false })
         .limit(500),
       supabase.from("profiles").select("id, full_name"),
