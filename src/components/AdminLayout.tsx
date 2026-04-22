@@ -63,9 +63,14 @@ export default function AdminLayout({ children }: Props) {
   const initials = (user.email ?? "AD").slice(0, 2).toUpperCase();
   const displayName = user.email?.split("@")[0] ?? "Admin";
 
+  // Dashboard usa container estreito (estilo do print). Demais telas com tabelas
+  // ficam um pouco mais largas para acomodar conteúdo, mas mantém estética mobile.
+  const isDashboard = location.pathname === "/admin" || location.pathname === "/admin/";
+  const containerClass = isDashboard ? "max-w-md" : "max-w-md md:max-w-3xl";
+
   return (
     <div className="min-h-screen bg-muted/30">
-      <div className="max-w-md mx-auto bg-background min-h-screen relative shadow-xl">
+      <div className={`${containerClass} mx-auto bg-background min-h-screen relative shadow-xl`}>
         {/* Header azul estilo ProspecLead */}
         <header className="bg-gradient-prospeclead text-primary-foreground sticky top-0 z-30">
           <div className="px-4 py-3 flex items-center gap-3">
