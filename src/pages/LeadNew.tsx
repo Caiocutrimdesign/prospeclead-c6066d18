@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -47,6 +47,7 @@ export default function LeadNew() {
 
   const [coords, setCoords] = useState<{ lat: number; lng: number; accuracy: number; capturedAt: string } | null>(null);
   const [locating, setLocating] = useState(false);
+  const [resolving, setResolving] = useState(false);
 
   const [busy, setBusy] = useState(false);
 
@@ -54,6 +55,30 @@ export default function LeadNew() {
     if (photoUrl) URL.revokeObjectURL(photoUrl);
     setPhotoBlob(blob);
     setPhotoUrl(URL.createObjectURL(blob));
+  };
+
+  // Reverse geocoding via Nominatim (OpenStreetMap) — gratuito, sem chave
+  const reverseGeocode = async (lat: number, lng: number) => {
+    setResolving(true);
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1&accept-language=pt-BR`,
+        { headers: { Accept: "application/json" } }
+      );
+      const data = await res.json();
+      const a = data?.address ?? {};
+      const road = a.road || a.pedestrian || a.path || "";
+      const number = a.house_number ? `, ${a.house_number}` : "";
+      const suburb = a.suburb || a.neighbourhood || a.quarter || "";
+      const city = a.city || a.town || a.village || a.municipality || "";
+      const parts = [[road + number].filter(Boolean).join(""), suburb, city].filter(Boolean);
+      const pretty = parts.join(" - ") || data?.display_name || "";
+      if (pretty) set("location", pretty);
+    } catch {
+      // silencioso
+    } finally {
+      setResolving(false);
+    }
   };
 
   const captureGPS = () => {
@@ -72,6 +97,7 @@ export default function LeadNew() {
         });
         setLocating(false);
         toast.success(`Local capturado (~${Math.round(pos.coords.accuracy)}m)`);
+        reverseGeocode(pos.coords.latitude, pos.coords.longitude);
       },
       () => {
         setLocating(false);
@@ -80,6 +106,12 @@ export default function LeadNew() {
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
   };
+
+  // Captura GPS + endereço automaticamente ao abrir a tela
+  useEffect(() => {
+    captureGPS();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const validate = (): boolean => {
     if (!form.name.trim()) { toast.error("Informe o nome"); return false; }
@@ -245,10 +277,11 @@ export default function LeadNew() {
         {/* Praça/Local */}
         <Field label="Praça/Local" icon="📍" required>
           <Input
-            value={form.location}
+            value={resolving ? "Detectando endereço…" : form.location}
             onChange={(e) => set("location", e.target.value)}
             placeholder="Mercado Extra - Centro"
             className="h-12"
+            disabled={resolving}
           />
           {!coords ? (
             <Button
@@ -271,8 +304,8 @@ export default function LeadNew() {
                 <span className="font-medium">Local confirmado</span>
                 <span className="text-xs text-muted-foreground">~{Math.round(coords.accuracy)}m</span>
               </div>
-              <Button type="button" size="sm" variant="ghost" className="h-7 px-2" onClick={captureGPS}>
-                Recapturar
+              <Button type="button" size="sm" variant="ghost" className="h-7 px-2" onClick={captureGPS} disabled={locating || resolving}>
+                {locating || resolving ? <Loader2 className="w-3 h-3 animate-spin" /> : "Recapturar"}
               </Button>
             </div>
           )}
