@@ -169,7 +169,7 @@ function StatCard({
         {icon}
         <p className="text-xs text-muted-foreground">{label}</p>
       </div>
-      <p className="text-2xl font-bold tabular-nums">
+      <p className="text-2xl font-bold tabular-nums md:text-3xl">
         {loading ? "…" : value}
       </p>
     </Card>
