@@ -184,7 +184,6 @@ export default function Carteira() {
 
 function MiniCard({
   label,
-  value,
   icon,
   color,
 }: {
