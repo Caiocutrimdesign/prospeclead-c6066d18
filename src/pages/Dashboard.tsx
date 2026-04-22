@@ -351,7 +351,7 @@ export default function Dashboard() {
               </div>
               <div className="min-w-0">
                 <p className="text-xs text-muted-foreground">Acumulado do Mês</p>
-                <p className="text-lg font-extrabold">{formatBRL(profile?.monthly_earnings ?? 0)}</p>
+                <p className="text-lg font-extrabold">—</p>
               </div>
             </div>
             <div className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg bg-[hsl(145_45%_92%)] border border-[hsl(145_40%_80%)] shrink-0">
