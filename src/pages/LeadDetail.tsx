@@ -84,7 +84,6 @@ export default function LeadDetail() {
         company_cnpj: form.company_cnpj,
         fleet_size: form.fleet_size,
         city: form.city,
-        value: form.value,
       })
       .eq("id", lead.id);
     setSaving(false);
