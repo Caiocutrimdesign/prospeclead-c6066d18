@@ -195,7 +195,7 @@ function MiniCard({
   return (
     <Card className="p-3 text-center">
       <div className="flex justify-center mb-1">{icon}</div>
-      <p className={`text-sm font-bold tabular-nums ${color}`}>{formatBRL(value)}</p>
+      <p className={`text-sm font-bold tabular-nums ${color}`}>—</p>
       <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight">{label}</p>
     </Card>
   );
