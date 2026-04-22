@@ -143,7 +143,7 @@ export default function Dashboard() {
     setMissions((m) => m.map((v, idx) => (idx === i ? !v : v)));
   const missionsList = [
     { label: `M1: Coletar ${dailyGoal} contatos`, progress: 5 },
-    { label: "M2: 100 fotos de placa → R$ 2,00/lead", progress: 0 },
+    { label: "M2: 100 fotos de placa cadastradas", progress: 0 },
     { label: "M3: Converter 10% da lista em vendas", progress: 0 },
   ];
   const missionsDone = missions.filter(Boolean).length;
@@ -336,12 +336,10 @@ export default function Dashboard() {
               <span>⚡</span> GANHO HOJE <span>⚡</span>
             </p>
             <p className="text-4xl font-extrabold text-[hsl(145_65%_38%)] mt-1 tracking-tight">
-              {formatBRL(stats.todayEarnings)}
+              —
             </p>
             <p className="text-xs text-[hsl(145_40%_45%)] italic mt-1">
-              {stats.todayEarnings > 0
-                ? `Continue assim, ${firstName}! 🚀`
-                : "Comece a prospectar para ganhar!"}
+              Em breve disponível
             </p>
           </div>
 
@@ -353,7 +351,7 @@ export default function Dashboard() {
               </div>
               <div className="min-w-0">
                 <p className="text-xs text-muted-foreground">Acumulado do Mês</p>
-                <p className="text-lg font-extrabold">{formatBRL(profile?.monthly_earnings ?? 0)}</p>
+                <p className="text-lg font-extrabold">—</p>
               </div>
             </div>
             <div className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg bg-[hsl(145_45%_92%)] border border-[hsl(145_40%_80%)] shrink-0">
@@ -467,7 +465,7 @@ export default function Dashboard() {
           className="relative bg-gradient-to-br from-[hsl(35_55%_35%)] via-[hsl(35_60%_25%)] to-[hsl(35_70%_18%)] text-white rounded-2xl p-4 flex items-center gap-3 hover:opacity-95 active:scale-[0.98] transition shadow-md"
         >
           <span className="absolute -top-2 right-3 bg-[hsl(38_92%_55%)] text-white text-[10px] font-bold px-2.5 py-0.5 rounded-md shadow-md">
-            {formatBRL(stats.walletAmount)}
+            —
           </span>
           <div className="w-12 h-12 rounded-xl bg-white/15 flex items-center justify-center shrink-0">
             <Wallet className="w-6 h-6" />

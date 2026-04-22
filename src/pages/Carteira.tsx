@@ -80,26 +80,17 @@ export default function Carteira() {
         <div className="mt-6 text-center">
           <p className="text-xs uppercase tracking-wider opacity-80">Saldo disponível</p>
           <p className="text-4xl font-extrabold tabular-nums mt-1">
-            {loading ? "—" : formatBRL(balance.available)}
+            —
           </p>
           <div className="mt-4 flex justify-center">
-            <Dialog open={open} onOpenChange={setOpen}>
-              <DialogTrigger asChild>
-                <Button
-                  size="lg"
-                  className="bg-white text-primary hover:bg-white/90 font-bold shadow-lg"
-                  disabled={balance.available <= 0}
-                >
-                  <ArrowDownToLine className="w-5 h-5 mr-2" />
-                  Sacar via PIX
-                </Button>
-              </DialogTrigger>
-              <WithdrawDialog
-                available={balance.available}
-                onClose={() => setOpen(false)}
-                onSuccess={refresh}
-              />
-            </Dialog>
+            <Button
+              size="lg"
+              className="bg-white text-primary hover:bg-white/90 font-bold shadow-lg opacity-70"
+              disabled
+            >
+              <ArrowDownToLine className="w-5 h-5 mr-2" />
+              Saque em breve
+            </Button>
           </div>
         </div>
       </div>
@@ -147,7 +138,7 @@ export default function Carteira() {
           </div>
           <Progress value={progressPct} className="h-2" />
           <p className="text-xs text-muted-foreground">
-            {formatBRL(monthly)} de {formatBRL(target)} no mês
+            Progresso do mês
           </p>
         </Card>
 
@@ -155,9 +146,9 @@ export default function Carteira() {
         <Card className="p-4 space-y-3">
           <h3 className="font-semibold text-sm">Como ganhar mais</h3>
           <div className="grid grid-cols-1 gap-2">
-            <EarnRow icon={Fuel} title="Foto de placa (B2C)" value="R$ 2,00 por lead convertido" />
-            <EarnRow icon={Building2} title="Lead B2B fechado" value="R$ 10,00 + 1% do TCV" />
-            <EarnRow icon={Plus} title="Reunião agendada" value="Bônus por meta diária" />
+            <EarnRow icon={Fuel} title="Foto de placa (B2C)" value="Em breve" />
+            <EarnRow icon={Building2} title="Lead B2B fechado" value="Em breve" />
+            <EarnRow icon={Plus} title="Reunião agendada" value="Em breve" />
           </div>
         </Card>
 
@@ -193,7 +184,6 @@ export default function Carteira() {
 
 function MiniCard({
   label,
-  value,
   icon,
   color,
 }: {
@@ -205,7 +195,7 @@ function MiniCard({
   return (
     <Card className="p-3 text-center">
       <div className="flex justify-center mb-1">{icon}</div>
-      <p className={`text-sm font-bold tabular-nums ${color}`}>{formatBRL(value)}</p>
+      <p className={`text-sm font-bold tabular-nums ${color}`}>—</p>
       <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight">{label}</p>
     </Card>
   );
@@ -256,8 +246,7 @@ function TxRow({ tx }: { tx: WalletTx }) {
           isCredit ? "text-success" : "text-destructive"
         }`}
       >
-        {isCredit ? "+" : ""}
-        {formatBRL(Number(tx.amount))}
+        —
       </span>
     </Card>
   );
@@ -281,7 +270,7 @@ function WithdrawalRow({ w }: { w: Withdrawal }) {
             <Icon className="w-4 h-4" />
           </div>
           <div className="min-w-0">
-            <p className="font-bold text-sm tabular-nums">{formatBRL(Number(w.amount))}</p>
+            <p className="font-bold text-sm tabular-nums">—</p>
             <p className="text-[11px] text-muted-foreground truncate">PIX: {w.pix_key}</p>
           </div>
         </div>

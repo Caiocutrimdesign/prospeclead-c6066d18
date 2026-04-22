@@ -22,7 +22,7 @@ import { toast } from "sonner";
 import { ArrowLeft, Car, Truck, Phone, Trash2, Save, Check, MessageCircle } from "lucide-react";
 import { openWhatsApp, normalizePhoneBR } from "@/lib/whatsapp";
 import { useProfile } from "@/hooks/useProfile";
-import { formatBRL } from "@/lib/format";
+
 import type { Database } from "@/integrations/supabase/types";
 
 type Lead = Database["public"]["Tables"]["leads"]["Row"];
@@ -84,7 +84,6 @@ export default function LeadDetail() {
         company_cnpj: form.company_cnpj,
         fleet_size: form.fleet_size,
         city: form.city,
-        value: form.value,
       })
       .eq("id", lead.id);
     setSaving(false);
@@ -290,24 +289,7 @@ export default function LeadDetail() {
             </>
           )}
 
-          <div className="space-y-2">
-            <Label htmlFor="value">Valor estimado (R$)</Label>
-            <Input
-              id="value"
-              type="number"
-              step="0.01"
-              min={0}
-              value={form.value ?? ""}
-              onChange={(e) =>
-                update({ value: e.target.value ? Number(e.target.value) : null })
-              }
-            />
-            {lead.value ? (
-              <p className="text-xs text-muted-foreground">
-                Atual: <strong>{formatBRL(lead.value)}</strong>
-              </p>
-            ) : null}
-          </div>
+          {/* Valor estimado oculto temporariamente */}
         </Card>
 
         {/* Actions */}
