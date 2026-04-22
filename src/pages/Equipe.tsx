@@ -40,44 +40,17 @@ export default function Equipe() {
       monthStart.setDate(1);
       monthStart.setHours(0, 0, 0, 0);
 
-      // ---------- PROMOTORES ----------
-      const [{ data: profilesData }, { data: leadsData }, { data: txData }] =
-        await Promise.all([
-          supabase.from("profiles").select("id, full_name"),
-          supabase
-            .from("leads")
-            .select("user_id")
-            .gte("created_at", monthStart.toISOString()),
-          supabase
-            .from("wallet_transactions")
-            .select("user_id, amount, kind")
-            .gte("created_at", monthStart.toISOString()),
-        ]);
-
-      const leadsByUser = new Map<string, number>();
-      (leadsData ?? []).forEach((l) => {
-        leadsByUser.set(l.user_id, (leadsByUser.get(l.user_id) ?? 0) + 1);
+      // ---------- PROMOTORES (via RPC pública, mostra TODOS) ----------
+      const { data: rankData } = await (supabase.rpc as any)("promoters_ranking", {
+        _month_start: monthStart.toISOString(),
       });
 
-      const earningsByUser = new Map<string, number>();
-      (txData ?? []).forEach((t) => {
-        if (["credit", "bonus", "adjustment"].includes(t.kind as string) && Number(t.amount) > 0) {
-          earningsByUser.set(
-            t.user_id,
-            (earningsByUser.get(t.user_id) ?? 0) + Number(t.amount),
-          );
-        }
-      });
-
-      const promoterList: PromoterRank[] = (profilesData ?? [])
-        .map((p) => ({
-          id: p.id,
-          full_name: p.full_name ?? "Promoter",
-          leads: leadsByUser.get(p.id) ?? 0,
-          earnings: earningsByUser.get(p.id) ?? 0,
-        }))
-        .filter((p) => p.leads > 0 || p.earnings > 0)
-        .sort((a, b) => b.leads - a.leads || b.earnings - a.earnings);
+      const promoterList: PromoterRank[] = (rankData ?? []).map((r: any) => ({
+        id: r.id,
+        full_name: r.full_name ?? "Promoter",
+        leads: Number(r.leads ?? 0),
+        earnings: Number(r.earnings ?? 0),
+      }));
 
       // ---------- PARCEIROS PDV ----------
       const { data: pdvsData } = await supabase
@@ -85,7 +58,7 @@ export default function Equipe() {
         .select("id, name, user_id, leads_count, reward_per_lead");
 
       const profileNameById = new Map(
-        (profilesData ?? []).map((p) => [p.id, p.full_name ?? "—"]),
+        promoterList.map((p) => [p.id, p.full_name]),
       );
 
       const partnerList: PartnerRank[] = (pdvsData ?? [])
@@ -157,7 +130,7 @@ export default function Equipe() {
             {loading ? (
               <SkeletonList />
             ) : promoters.length === 0 ? (
-              <EmptyState icon={Users} text="Nenhum promoter com leads neste mês ainda." />
+              <EmptyState icon={Users} text="Nenhum promoter cadastrado ainda." />
             ) : (
               promoters.map((p, idx) => (
                 <PromoterRow
