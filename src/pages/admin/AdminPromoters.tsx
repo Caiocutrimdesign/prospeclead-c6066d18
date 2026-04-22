@@ -131,35 +131,40 @@ export default function AdminPromoters() {
   };
 
   return (
-    <div className="space-y-4 max-w-6xl">
-      <div className="flex items-start justify-between gap-3 flex-wrap">
-        <div className="min-w-0">
-          <h1 className="text-xl sm:text-2xl font-bold">Promoters & Admins</h1>
-          <p className="text-xs sm:text-sm text-muted-foreground">
-            Crie, edite, promova ou exclua usuários do sistema.
-          </p>
+    <div className="space-y-5 lg:space-y-6">
+      <section className="rounded-lg border bg-card px-4 py-4 shadow-sm md:px-6 md:py-5">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+          <div className="min-w-0">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Gestão de acessos
+            </p>
+            <h1 className="text-2xl font-bold md:text-3xl">Promoters & Admins</h1>
+            <p className="mt-1 text-sm text-muted-foreground md:text-base">
+              Crie, edite, promova ou exclua usuários do sistema.
+            </p>
+          </div>
+          <div className="flex w-full flex-col gap-3 xl:w-[540px] xl:flex-row xl:items-center xl:justify-end">
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por nome ou e-mail…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" className="xl:min-w-[180px]">
+                  <Plus className="w-4 h-4 mr-2" />
+                  <span>Novo promoter</span>
+                </Button>
+              </DialogTrigger>
+              <CreateUserDialog onClose={() => setCreateOpen(false)} onCreated={load} />
+            </Dialog>
+          </div>
         </div>
-        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm" className="sm:size-default">
-              <Plus className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline">Novo promoter</span>
-              <span className="sm:hidden ml-1">Novo</span>
-            </Button>
-          </DialogTrigger>
-          <CreateUserDialog onClose={() => setCreateOpen(false)} onCreated={load} />
-        </Dialog>
-      </div>
-
-      <div className="relative">
-        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          placeholder="Buscar por nome ou e-mail…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-9"
-        />
-      </div>
+      </section>
 
       {/* Mobile cards */}
       <div className="lg:hidden space-y-2">
@@ -245,7 +250,7 @@ export default function AdminPromoters() {
       </div>
 
       {/* Desktop table */}
-      <Card className="hidden lg:block overflow-x-auto">
+      <Card className="hidden lg:block overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
