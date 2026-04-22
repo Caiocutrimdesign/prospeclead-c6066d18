@@ -118,7 +118,6 @@ export default function LeadNew() {
     if (!form.phone.trim()) { toast.error("Informe o WhatsApp"); return false; }
     if (!form.vehicle_model.trim()) { toast.error("Informe o veículo"); return false; }
     if (!hasTracker) { toast.error("Marque se já tem rastreador"); return false; }
-    if (!form.location.trim()) { toast.error("Informe a praça/local"); return false; }
     return true;
   };
 
@@ -273,42 +272,7 @@ export default function LeadNew() {
           )}
         </Field>
 
-        {/* Praça/Local */}
-        <Field label="Praça/Local" icon="📍" required>
-          <Input
-            value={resolving ? "Detectando endereço…" : form.location}
-            onChange={(e) => set("location", e.target.value)}
-            placeholder="Mercado Extra - Centro"
-            className="h-12"
-            disabled={resolving}
-          />
-          {!coords ? (
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full h-11 mt-2"
-              onClick={captureGPS}
-              disabled={locating}
-            >
-              {locating ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Capturando GPS…</>
-              ) : (
-                <><MapPin className="w-4 h-4 mr-2" /> Confirmar localização agora</>
-              )}
-            </Button>
-          ) : (
-            <div className={`mt-2 rounded-xl border p-3 flex items-center justify-between ${coords.accuracy <= ACCURACY_LIMIT_M ? "border-success/40 bg-success/5" : "border-warning/40 bg-warning/5"}`}>
-              <div className="flex items-center gap-2 text-sm">
-                <CheckCircle2 className={`w-4 h-4 ${coords.accuracy <= ACCURACY_LIMIT_M ? "text-success" : "text-warning"}`} />
-                <span className="font-medium">Local confirmado</span>
-                <span className="text-xs text-muted-foreground">~{Math.round(coords.accuracy)}m</span>
-              </div>
-              <Button type="button" size="sm" variant="ghost" className="h-7 px-2" onClick={captureGPS} disabled={locating || resolving}>
-                {locating || resolving ? <Loader2 className="w-3 h-3 animate-spin" /> : "Recapturar"}
-              </Button>
-            </div>
-          )}
-        </Field>
+        {/* Praça/Local removido — GPS continua sendo capturado em background */}
 
         {/* Profissão */}
         <Field label="Profissão do cliente" icon="💼">
@@ -357,25 +321,16 @@ export default function LeadNew() {
           </div>
         </Field>
 
-        {/* CTAs */}
-        <div className="space-y-3 pt-2">
-          <Button
-            type="button"
-            onClick={() => save("whatsapp")}
-            disabled={busy}
-            className="w-full h-14 text-base font-bold bg-success hover:bg-success/90 text-success-foreground rounded-xl"
-          >
-            {busy ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <MessageCircle className="w-5 h-5 mr-2" />}
-            ENVIAR PRIMEIRA MENSAGEM
-          </Button>
+        {/* CTA único */}
+        <div className="pt-2">
           <Button
             type="button"
             onClick={() => save("save")}
             disabled={busy}
-            className="w-full h-14 text-base font-bold bg-warning hover:bg-warning/90 text-warning-foreground rounded-xl"
+            className="w-full h-14 text-base font-bold bg-success hover:bg-success/90 text-success-foreground rounded-xl"
           >
-            {busy ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : "✅"}
-            <span className="ml-2">SALVAR E VENDER AGORA</span>
+            {busy ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : null}
+            SALVAR
           </Button>
         </div>
       </div>
