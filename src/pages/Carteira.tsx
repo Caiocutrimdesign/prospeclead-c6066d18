@@ -146,9 +146,9 @@ export default function Carteira() {
         <Card className="p-4 space-y-3">
           <h3 className="font-semibold text-sm">Como ganhar mais</h3>
           <div className="grid grid-cols-1 gap-2">
-            <EarnRow icon={Fuel} title="Foto de placa (B2C)" value="R$ 2,00 por lead convertido" />
-            <EarnRow icon={Building2} title="Lead B2B fechado" value="R$ 10,00 + 1% do TCV" />
-            <EarnRow icon={Plus} title="Reunião agendada" value="Bônus por meta diária" />
+            <EarnRow icon={Fuel} title="Foto de placa (B2C)" value="Em breve" />
+            <EarnRow icon={Building2} title="Lead B2B fechado" value="Em breve" />
+            <EarnRow icon={Plus} title="Reunião agendada" value="Em breve" />
           </div>
         </Card>
 
