@@ -273,42 +273,7 @@ export default function LeadNew() {
           )}
         </Field>
 
-        {/* Praça/Local */}
-        <Field label="Praça/Local" icon="📍" required>
-          <Input
-            value={resolving ? "Detectando endereço…" : form.location}
-            onChange={(e) => set("location", e.target.value)}
-            placeholder="Mercado Extra - Centro"
-            className="h-12"
-            disabled={resolving}
-          />
-          {!coords ? (
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full h-11 mt-2"
-              onClick={captureGPS}
-              disabled={locating}
-            >
-              {locating ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Capturando GPS…</>
-              ) : (
-                <><MapPin className="w-4 h-4 mr-2" /> Confirmar localização agora</>
-              )}
-            </Button>
-          ) : (
-            <div className={`mt-2 rounded-xl border p-3 flex items-center justify-between ${coords.accuracy <= ACCURACY_LIMIT_M ? "border-success/40 bg-success/5" : "border-warning/40 bg-warning/5"}`}>
-              <div className="flex items-center gap-2 text-sm">
-                <CheckCircle2 className={`w-4 h-4 ${coords.accuracy <= ACCURACY_LIMIT_M ? "text-success" : "text-warning"}`} />
-                <span className="font-medium">Local confirmado</span>
-                <span className="text-xs text-muted-foreground">~{Math.round(coords.accuracy)}m</span>
-              </div>
-              <Button type="button" size="sm" variant="ghost" className="h-7 px-2" onClick={captureGPS} disabled={locating || resolving}>
-                {locating || resolving ? <Loader2 className="w-3 h-3 animate-spin" /> : "Recapturar"}
-              </Button>
-            </div>
-          )}
-        </Field>
+        {/* Praça/Local removido — GPS continua sendo capturado em background */}
 
         {/* Profissão */}
         <Field label="Profissão do cliente" icon="💼">
