@@ -4,11 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useRole } from "@/hooks/useRole";
+import { useProspectingTimer, formatTimer } from "@/hooks/useProspectingTimer";
 import { Card } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { formatBRL } from "@/lib/format";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,7 +18,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { formatBRL } from "@/lib/format";
 import {
+  MapPin,
+  Pause,
+  Play,
+  Square,
+  Target,
+  Flame,
+  Medal,
   Plus,
   Briefcase,
   ContactRound,
@@ -38,6 +48,9 @@ import {
 
 interface Stats {
   total: number;
+  converted: number;
+  todayEarnings: number;
+  todayLeads: number;
   b2cCount: number;
   b2bCount: number;
   walletAmount: number;
@@ -47,27 +60,49 @@ export default function Dashboard() {
   const { user, signOut } = useAuth();
   const { profile } = useProfile();
   const { isAdmin } = useRole();
+  const timer = useProspectingTimer();
   const [stats, setStats] = useState<Stats>({
     total: 0,
+    converted: 0,
+    todayEarnings: 0,
+    todayLeads: 0,
     b2cCount: 0,
     b2bCount: 0,
     walletAmount: 0,
   });
   const [activeCheckin, setActiveCheckin] = useState<{ location_name: string } | null>(null);
+  const [missions, setMissions] = useState([false, false, false]);
 
   useEffect(() => {
     if (!user) return;
     (async () => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
       const { data: leads } = await supabase
         .from("leads")
-        .select("kind")
+        .select("kind,status,value,created_at")
         .eq("user_id", user.id);
       if (leads) {
+        const total = leads.length;
+        const converted = leads.filter(
+          (l) => l.status === "vendido" || l.status === "fechado",
+        ).length;
+        const todays = leads.filter((l) => new Date(l.created_at) >= today);
+        const todayEarnings = todays.reduce(
+          (sum, l) =>
+            l.status === "vendido" || l.status === "fechado"
+              ? sum + Number(l.value || 0)
+              : sum,
+          0,
+        );
         const b2cCount = leads.filter((l) => l.kind === "b2c").length;
         const b2bCount = leads.filter((l) => l.kind === "b2b").length;
         setStats((s) => ({
           ...s,
-          total: leads.length,
+          total,
+          converted,
+          todayEarnings,
+          todayLeads: todays.length,
           b2cCount,
           b2bCount,
         }));
@@ -82,7 +117,6 @@ export default function Dashboard() {
         .maybeSingle();
       setActiveCheckin(ck);
 
-      // Saldo carteira (somatório de transações)
       const { data: txs } = await supabase
         .from("wallet_transactions")
         .select("amount")
@@ -93,13 +127,13 @@ export default function Dashboard() {
   }, [user]);
 
   const dailyGoal = profile?.daily_goal ?? 100;
+  const goalPct = Math.min(100, Math.round((stats.todayLeads / dailyGoal) * 100));
+  const conversionRate = stats.total ? Math.round((stats.converted / stats.total) * 100) : 0;
   const firstName = (profile?.full_name ?? "Promoter").split(" ")[0];
   const initials = firstName.slice(0, 2).toUpperCase();
   const locationName =
     activeCheckin?.location_name ?? profile?.current_location ?? "Estacionamento Carrefour";
 
-  // Missões
-  const [missions, setMissions] = useState([false, false, false]);
   const toggleMission = (i: number) =>
     setMissions((m) => m.map((v, idx) => (idx === i ? !v : v)));
   const missionsList = [
@@ -111,10 +145,9 @@ export default function Dashboard() {
 
   return (
     <div className="pb-4 bg-muted/20 min-h-screen">
-      {/* Header azul "ProspecLead" */}
+      {/* Header azul ProspecLead */}
       <header className="bg-[hsl(217_91%_55%)] text-white px-4 py-3 sticky top-0 z-30 shadow-sm">
         <div className="flex items-start justify-between gap-2">
-          {/* Lado esquerdo - logo + local */}
           <div className="flex-1 min-w-0">
             <h1 className="font-bold text-lg leading-tight">ProspecLead</h1>
             <button className="flex items-center gap-1 text-xs mt-0.5 hover:opacity-90">
@@ -124,7 +157,6 @@ export default function Dashboard() {
             </button>
           </div>
 
-          {/* Avatar + nome */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-1.5 hover:opacity-90 transition shrink-0">
@@ -159,7 +191,6 @@ export default function Dashboard() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Calendário */}
           <Link
             to="/agenda"
             className="w-9 h-9 rounded-lg hover:bg-white/15 transition flex items-center justify-center shrink-0"
@@ -168,7 +199,6 @@ export default function Dashboard() {
             <Calendar className="w-5 h-5" />
           </Link>
 
-          {/* Menu 3 pontos */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
@@ -197,7 +227,139 @@ export default function Dashboard() {
         </div>
       </header>
 
-      <div className="px-4 pt-3 space-y-3">
+      <div className="px-4 pt-4 space-y-4">
+        {/* Saudação */}
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-muted-foreground">Olá,</p>
+            <h1 className="text-2xl font-bold">{firstName}! 👋</h1>
+          </div>
+        </div>
+
+        {/* Local atual */}
+        <Card className="p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center shrink-0">
+              <MapPin className="w-5 h-5 text-accent-foreground" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs text-muted-foreground">Local atual</p>
+              <p className="font-semibold truncate">{locationName}</p>
+            </div>
+          </div>
+          <Button asChild variant="outline" size="sm">
+            <Link to="/checkin">Trocar</Link>
+          </Button>
+        </Card>
+
+        {/* Timer */}
+        <Card className="p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span
+                className={`w-2.5 h-2.5 rounded-full ${
+                  timer.running ? "bg-success animate-pulse-dot" : "bg-muted-foreground"
+                }`}
+              />
+              <span className="text-sm font-medium">
+                {timer.running ? "Em prospecção" : "Parado"}
+              </span>
+            </div>
+            <span className="text-2xl font-mono font-bold tabular-nums">
+              {formatTimer(timer.seconds)}
+            </span>
+          </div>
+          <div className="flex gap-2">
+            {!timer.running && timer.seconds === 0 && (
+              <Button onClick={timer.start} className="flex-1" size="sm">
+                <Play className="w-4 h-4" /> Iniciar
+              </Button>
+            )}
+            {timer.running && (
+              <Button onClick={timer.pause} variant="secondary" className="flex-1" size="sm">
+                <Pause className="w-4 h-4" /> Pausar
+              </Button>
+            )}
+            {!timer.running && timer.seconds > 0 && (
+              <Button onClick={timer.resume} className="flex-1" size="sm">
+                <Play className="w-4 h-4" /> Retomar
+              </Button>
+            )}
+            {timer.seconds > 0 && (
+              <Button onClick={timer.stop} variant="outline" className="flex-1" size="sm">
+                <Square className="w-4 h-4" /> Encerrar
+              </Button>
+            )}
+          </div>
+        </Card>
+
+        {/* Meta + streak */}
+        <div className="grid grid-cols-3 gap-3">
+          <Card className="p-4 col-span-2 space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-destructive/10 flex items-center justify-center">
+                  <Target className="w-4 h-4 text-destructive" />
+                </div>
+                <span className="text-sm font-medium">Meta do dia</span>
+              </div>
+              <span className="text-sm text-muted-foreground">
+                {stats.todayLeads}/{dailyGoal}
+              </span>
+            </div>
+            <Progress value={goalPct} className="h-2" />
+            <p className="text-xs text-muted-foreground">{goalPct}% concluído</p>
+          </Card>
+          <Card className="p-4 flex flex-col items-center justify-center text-center">
+            <Flame className="w-6 h-6 text-warning" />
+            <p className="text-2xl font-bold mt-1">{profile?.streak_days ?? 0}</p>
+            <p className="text-xs text-muted-foreground">dias seguidos</p>
+          </Card>
+        </div>
+
+        {/* Ganho hoje */}
+        <Card className="p-6 bg-gradient-promoter text-primary-foreground space-y-1 text-center border-0">
+          <p className="text-sm opacity-90">GANHO HOJE</p>
+          <p className="text-4xl font-bold">{formatBRL(stats.todayEarnings)}</p>
+          <p className="text-sm opacity-90">Continue assim, {firstName}! 🚀</p>
+        </Card>
+
+        {/* Acumulado do mês */}
+        <Card className="p-4 flex items-center justify-between">
+          <div>
+            <p className="text-xs text-muted-foreground">Acumulado do mês</p>
+            <p className="text-xl font-bold">{formatBRL(profile?.monthly_earnings ?? 0)}</p>
+          </div>
+          <Badge variant="secondary" className="gap-1">
+            <Medal
+              className={`w-4 h-4 ${
+                profile?.level === "OURO"
+                  ? "text-gold"
+                  : profile?.level === "PRATA"
+                    ? "text-silver"
+                    : "text-bronze"
+              }`}
+            />
+            {profile?.level ?? "BRONZE"}
+          </Badge>
+        </Card>
+
+        {/* Stats grid */}
+        <div className="grid grid-cols-3 gap-3">
+          <Card className="p-3 text-center">
+            <p className="text-2xl font-bold">{stats.total}</p>
+            <p className="text-xs text-muted-foreground">Total leads</p>
+          </Card>
+          <Card className="p-3 text-center">
+            <p className="text-2xl font-bold">{stats.converted}</p>
+            <p className="text-xs text-muted-foreground">Convertidos</p>
+          </Card>
+          <Card className="p-3 text-center">
+            <p className="text-2xl font-bold">{conversionRate}%</p>
+            <p className="text-xs text-muted-foreground">Conversão</p>
+          </Card>
+        </div>
+
         {/* AÇÕES RÁPIDAS */}
         <p className="text-[11px] font-semibold tracking-[0.25em] text-muted-foreground text-center pt-1">
           AÇÕES RÁPIDAS
