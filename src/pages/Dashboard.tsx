@@ -44,6 +44,10 @@ import {
   Info,
   User as UserIcon,
   Building2,
+  Activity,
+  IdCard,
+  CheckCircle2,
+  TrendingUp,
 } from "lucide-react";
 import prospecleadLogo from "@/assets/prospeclead-logo.png";
 
