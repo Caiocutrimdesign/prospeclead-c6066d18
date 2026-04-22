@@ -426,6 +426,15 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_rh: { Args: never; Returns: boolean }
+      promoters_ranking: {
+        Args: { _month_start?: string }
+        Returns: {
+          earnings: number
+          full_name: string
+          id: string
+          leads: number
+        }[]
+      }
       wallet_balance: {
         Args: { _user_id: string }
         Returns: {
