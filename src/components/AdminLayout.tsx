@@ -116,12 +116,6 @@ export default function AdminLayout({ children }: Props) {
           <header className="h-14 md:h-16 bg-background/95 backdrop-blur border-b flex items-center justify-between gap-2 px-3 md:px-5 xl:px-6 sticky top-0 z-30">
             <div className="flex items-center gap-1 md:gap-2 min-w-0">
               <SidebarTrigger />
-              <Button asChild variant="ghost" size="sm" className="gap-1 px-2">
-                <NavLink to="/">
-                  <ArrowLeft className="w-4 h-4" />
-                  <span className="hidden sm:inline">App</span>
-                </NavLink>
-              </Button>
               <div className="flex items-center gap-1.5 md:hidden min-w-0">
                 <Shield className="w-4 h-4 text-primary shrink-0" />
                 <span className="font-bold text-sm truncate">ADM</span>
