@@ -246,8 +246,7 @@ function TxRow({ tx }: { tx: WalletTx }) {
           isCredit ? "text-success" : "text-destructive"
         }`}
       >
-        {isCredit ? "+" : ""}
-        {formatBRL(Number(tx.amount))}
+        —
       </span>
     </Card>
   );
