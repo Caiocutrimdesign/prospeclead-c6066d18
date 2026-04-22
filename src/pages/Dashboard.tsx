@@ -465,7 +465,7 @@ export default function Dashboard() {
           className="relative bg-gradient-to-br from-[hsl(35_55%_35%)] via-[hsl(35_60%_25%)] to-[hsl(35_70%_18%)] text-white rounded-2xl p-4 flex items-center gap-3 hover:opacity-95 active:scale-[0.98] transition shadow-md"
         >
           <span className="absolute -top-2 right-3 bg-[hsl(38_92%_55%)] text-white text-[10px] font-bold px-2.5 py-0.5 rounded-md shadow-md">
-            {formatBRL(stats.walletAmount)}
+            —
           </span>
           <div className="w-12 h-12 rounded-xl bg-white/15 flex items-center justify-center shrink-0">
             <Wallet className="w-6 h-6" />
