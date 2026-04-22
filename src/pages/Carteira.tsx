@@ -80,7 +80,7 @@ export default function Carteira() {
         <div className="mt-6 text-center">
           <p className="text-xs uppercase tracking-wider opacity-80">Saldo disponível</p>
           <p className="text-4xl font-extrabold tabular-nums mt-1">
-            {loading ? "—" : formatBRL(balance.available)}
+            —
           </p>
           <div className="mt-4 flex justify-center">
             <Dialog open={open} onOpenChange={setOpen}>
