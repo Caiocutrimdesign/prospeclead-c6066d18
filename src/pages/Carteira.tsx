@@ -270,7 +270,7 @@ function WithdrawalRow({ w }: { w: Withdrawal }) {
             <Icon className="w-4 h-4" />
           </div>
           <div className="min-w-0">
-            <p className="font-bold text-sm tabular-nums">{formatBRL(Number(w.amount))}</p>
+            <p className="font-bold text-sm tabular-nums">—</p>
             <p className="text-[11px] text-muted-foreground truncate">PIX: {w.pix_key}</p>
           </div>
         </div>
