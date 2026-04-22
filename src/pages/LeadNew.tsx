@@ -321,25 +321,16 @@ export default function LeadNew() {
           </div>
         </Field>
 
-        {/* CTAs */}
-        <div className="space-y-3 pt-2">
-          <Button
-            type="button"
-            onClick={() => save("whatsapp")}
-            disabled={busy}
-            className="w-full h-14 text-base font-bold bg-success hover:bg-success/90 text-success-foreground rounded-xl"
-          >
-            {busy ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <MessageCircle className="w-5 h-5 mr-2" />}
-            ENVIAR PRIMEIRA MENSAGEM
-          </Button>
+        {/* CTA único */}
+        <div className="pt-2">
           <Button
             type="button"
             onClick={() => save("save")}
             disabled={busy}
-            className="w-full h-14 text-base font-bold bg-warning hover:bg-warning/90 text-warning-foreground rounded-xl"
+            className="w-full h-14 text-base font-bold bg-success hover:bg-success/90 text-success-foreground rounded-xl"
           >
-            {busy ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : "✅"}
-            <span className="ml-2">SALVAR E VENDER AGORA</span>
+            {busy ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : null}
+            SALVAR
           </Button>
         </div>
       </div>
