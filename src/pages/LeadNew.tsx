@@ -271,10 +271,11 @@ export default function LeadNew() {
         {/* Praça/Local */}
         <Field label="Praça/Local" icon="📍" required>
           <Input
-            value={form.location}
+            value={resolving ? "Detectando endereço…" : form.location}
             onChange={(e) => set("location", e.target.value)}
             placeholder="Mercado Extra - Centro"
             className="h-12"
+            disabled={resolving}
           />
           {!coords ? (
             <Button
@@ -297,8 +298,8 @@ export default function LeadNew() {
                 <span className="font-medium">Local confirmado</span>
                 <span className="text-xs text-muted-foreground">~{Math.round(coords.accuracy)}m</span>
               </div>
-              <Button type="button" size="sm" variant="ghost" className="h-7 px-2" onClick={captureGPS}>
-                Recapturar
+              <Button type="button" size="sm" variant="ghost" className="h-7 px-2" onClick={captureGPS} disabled={locating || resolving}>
+                {locating || resolving ? <Loader2 className="w-3 h-3 animate-spin" /> : "Recapturar"}
               </Button>
             </div>
           )}
