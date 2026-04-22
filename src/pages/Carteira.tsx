@@ -83,23 +83,14 @@ export default function Carteira() {
             —
           </p>
           <div className="mt-4 flex justify-center">
-            <Dialog open={open} onOpenChange={setOpen}>
-              <DialogTrigger asChild>
-                <Button
-                  size="lg"
-                  className="bg-white text-primary hover:bg-white/90 font-bold shadow-lg"
-                  disabled={balance.available <= 0}
-                >
-                  <ArrowDownToLine className="w-5 h-5 mr-2" />
-                  Sacar via PIX
-                </Button>
-              </DialogTrigger>
-              <WithdrawDialog
-                available={balance.available}
-                onClose={() => setOpen(false)}
-                onSuccess={refresh}
-              />
-            </Dialog>
+            <Button
+              size="lg"
+              className="bg-white text-primary hover:bg-white/90 font-bold shadow-lg opacity-70"
+              disabled
+            >
+              <ArrowDownToLine className="w-5 h-5 mr-2" />
+              Saque em breve
+            </Button>
           </div>
         </div>
       </div>
