@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.rh-signup]
 verify_jwt = false
+
+[functions.confirm-pending-users]
+verify_jwt = false
