@@ -290,24 +290,7 @@ export default function LeadDetail() {
             </>
           )}
 
-          <div className="space-y-2">
-            <Label htmlFor="value">Valor estimado (R$)</Label>
-            <Input
-              id="value"
-              type="number"
-              step="0.01"
-              min={0}
-              value={form.value ?? ""}
-              onChange={(e) =>
-                update({ value: e.target.value ? Number(e.target.value) : null })
-              }
-            />
-            {lead.value ? (
-              <p className="text-xs text-muted-foreground">
-                Atual: <strong>{formatBRL(lead.value)}</strong>
-              </p>
-            ) : null}
-          </div>
+          {/* Valor estimado oculto temporariamente */}
         </Card>
 
         {/* Actions */}
