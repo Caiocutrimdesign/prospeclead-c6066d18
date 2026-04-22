@@ -143,7 +143,7 @@ export default function Dashboard() {
     setMissions((m) => m.map((v, idx) => (idx === i ? !v : v)));
   const missionsList = [
     { label: `M1: Coletar ${dailyGoal} contatos`, progress: 5 },
-    { label: "M2: 100 fotos de placa → R$ 2,00/lead", progress: 0 },
+    { label: "M2: 100 fotos de placa cadastradas", progress: 0 },
     { label: "M3: Converter 10% da lista em vendas", progress: 0 },
   ];
   const missionsDone = missions.filter(Boolean).length;
