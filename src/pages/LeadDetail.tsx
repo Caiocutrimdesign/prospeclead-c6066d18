@@ -22,7 +22,7 @@ import { toast } from "sonner";
 import { ArrowLeft, Car, Truck, Phone, Trash2, Save, Check, MessageCircle } from "lucide-react";
 import { openWhatsApp, normalizePhoneBR } from "@/lib/whatsapp";
 import { useProfile } from "@/hooks/useProfile";
-import { formatBRL } from "@/lib/format";
+
 import type { Database } from "@/integrations/supabase/types";
 
 type Lead = Database["public"]["Tables"]["leads"]["Row"];
