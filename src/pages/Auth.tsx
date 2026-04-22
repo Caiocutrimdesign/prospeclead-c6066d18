@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Shield, HeartHandshake } from "lucide-react";
-import logo from "@/assets/prospeclead-logo.png";
+import logo from "@/assets/prospeclead-logo-color.png";
 
 export default function Auth() {
   const navigate = useNavigate();
