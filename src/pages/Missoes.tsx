@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Flame, Lock, Target, Info } from "lucide-react";
+import { Flame, Target, Info } from "lucide-react";
 import { formatBRL } from "@/lib/format";
 
 interface LeadRow {
