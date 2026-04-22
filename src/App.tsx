@@ -20,6 +20,7 @@ import Profile from "./pages/Profile";
 import Missoes from "./pages/Missoes";
 import NotFound from "./pages/NotFound";
 import Rede from "./pages/Rede";
+import Equipe from "./pages/Equipe";
 import RedeNovo from "./pages/RedeNovo";
 import PdvCapture from "./pages/PdvCapture";
 import AdminLayout from "./components/AdminLayout";
@@ -57,6 +58,7 @@ const App = () => (
               <Route path="/perfil" element={<AppLayout><Profile /></AppLayout>} />
               <Route path="/missoes" element={<AppLayout><Missoes /></AppLayout>} />
               <Route path="/rede" element={<AppLayout wide><Rede /></AppLayout>} />
+              <Route path="/equipe" element={<AppLayout><Equipe /></AppLayout>} />
               <Route path="/rede/novo" element={<AppLayout wide><RedeNovo /></AppLayout>} />
               <Route path="/pdv/:code" element={<PdvCapture />} />
               <Route path="/admin" element={<AdminLayout />}>
