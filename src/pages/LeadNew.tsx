@@ -107,7 +107,13 @@ export default function LeadNew() {
     );
   };
 
-  const validate = (): boolean => {
+  // Captura GPS + endereço automaticamente ao abrir a tela
+  useEffect(() => {
+    captureGPS();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+
     if (!form.name.trim()) { toast.error("Informe o nome"); return false; }
     if (!form.phone.trim()) { toast.error("Informe o WhatsApp"); return false; }
     if (!form.vehicle_model.trim()) { toast.error("Informe o veículo"); return false; }
