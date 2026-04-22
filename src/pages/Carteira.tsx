@@ -138,7 +138,7 @@ export default function Carteira() {
           </div>
           <Progress value={progressPct} className="h-2" />
           <p className="text-xs text-muted-foreground">
-            {formatBRL(monthly)} de {formatBRL(target)} no mês
+            Progresso do mês
           </p>
         </Card>
 
