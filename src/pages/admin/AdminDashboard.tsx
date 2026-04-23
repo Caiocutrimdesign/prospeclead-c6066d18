@@ -220,6 +220,66 @@ export default function AdminDashboard() {
       .slice(0, 8);
   }, [leads, withdrawals, profiles]);
 
+  /* ---------- Série últimos 7 dias ---------- */
+  const last7Days = useMemo(() => {
+    const days: { label: string; key: string; total: number }[] = [];
+    const base = new Date();
+    base.setHours(0, 0, 0, 0);
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(base);
+      d.setDate(d.getDate() - i);
+      days.push({
+        key: d.toISOString().slice(0, 10),
+        label: d.toLocaleDateString("pt-BR", {
+          day: "2-digit",
+          month: "2-digit",
+        }),
+        total: 0,
+      });
+    }
+    leads.forEach((l) => {
+      const k = l.created_at.slice(0, 10);
+      const slot = days.find((d) => d.key === k);
+      if (slot) slot.total += 1;
+    });
+    return days;
+  }, [leads]);
+
+  /* ---------- Top 5 promotores (mês) ---------- */
+  const top5Promoters = useMemo(() => {
+    const counts = new Map<string, number>();
+    leadsThisMonth.forEach((l) =>
+      counts.set(l.user_id, (counts.get(l.user_id) ?? 0) + 1),
+    );
+    const nameById = new Map(profiles.map((p) => [p.id, p.full_name]));
+    return Array.from(counts.entries())
+      .map(([id, total]) => ({
+        id,
+        name: nameById.get(id) || "Sem nome",
+        total,
+      }))
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 5);
+  }, [leadsThisMonth, profiles]);
+
+  /* ---------- Últimos 10 leads ---------- */
+  const recentLeads = leads.slice(0, 10);
+
+  /* ---------- Métricas extras (Dashboard simples) ---------- */
+  const todayStart = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
+  const leadsToday = leads.filter((l) => new Date(l.created_at) >= todayStart).length;
+  const totalLeads = leads.length;
+  const totalConversions = leads.filter(
+    (l) => l.status === "vendido" || l.status === "fechado",
+  ).length;
+  const conversionRate =
+    totalLeads > 0 ? Math.round((totalConversions / totalLeads) * 100) : 0;
+  const totalPromoters = profiles.length;
+
   const newLeadsPct = pct(leadsThisMonth.length, leadsPrevMonth.length);
   const closedPct = pct(closedThisMonth, closedPrevMonth);
 
