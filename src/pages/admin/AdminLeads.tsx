@@ -359,19 +359,19 @@ export default function AdminLeads() {
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="gap-2">
                 <FileDown className="w-4 h-4" />
-                Exportar PDF
+                Exportar Excel
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>Período do relatório</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => exportPDF("today")}>
+              <DropdownMenuItem onClick={() => exportExcel("today")}>
                 Leads de hoje
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => exportPDF("month")}>
+              <DropdownMenuItem onClick={() => exportExcel("month")}>
                 Leads do mês atual
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => exportPDF("all")}>
+              <DropdownMenuItem onClick={() => exportExcel("all")}>
                 Todos os leads
               </DropdownMenuItem>
             </DropdownMenuContent>
