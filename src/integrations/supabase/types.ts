@@ -467,10 +467,13 @@ export type Database = {
       products: {
         Row: {
           active: boolean
+          adhesion_fee: number
+          billing_cycle: Database["public"]["Enums"]["billing_cycle"]
           commission_percent: number
           created_at: string
           created_by: string | null
           description: string | null
+          franchise: string | null
           id: string
           image_url: string | null
           kind: Database["public"]["Enums"]["product_kind"]
@@ -480,10 +483,13 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          adhesion_fee?: number
+          billing_cycle?: Database["public"]["Enums"]["billing_cycle"]
           commission_percent?: number
           created_at?: string
           created_by?: string | null
           description?: string | null
+          franchise?: string | null
           id?: string
           image_url?: string | null
           kind?: Database["public"]["Enums"]["product_kind"]
@@ -493,10 +499,13 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          adhesion_fee?: number
+          billing_cycle?: Database["public"]["Enums"]["billing_cycle"]
           commission_percent?: number
           created_at?: string
           created_by?: string | null
           description?: string | null
+          franchise?: string | null
           id?: string
           image_url?: string | null
           kind?: Database["public"]["Enums"]["product_kind"]
@@ -824,6 +833,7 @@ export type Database = {
     Enums: {
       app_role: "admin" | "promoter" | "rh"
       approval_status: "pendente" | "aprovado" | "rejeitado"
+      billing_cycle: "once" | "monthly" | "annual"
       kyc_status: "nao_enviado" | "em_analise" | "aprovado" | "rejeitado"
       lead_kind: "b2c" | "b2b"
       lead_status:
@@ -989,6 +999,7 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "promoter", "rh"],
       approval_status: ["pendente", "aprovado", "rejeitado"],
+      billing_cycle: ["once", "monthly", "annual"],
       kyc_status: ["nao_enviado", "em_analise", "aprovado", "rejeitado"],
       lead_kind: ["b2c", "b2b"],
       lead_status: [
