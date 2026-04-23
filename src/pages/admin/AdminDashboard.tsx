@@ -579,6 +579,216 @@ export default function AdminDashboard() {
           )}
         </Card>
       </div>
+
+      {/* ============================================================ */}
+      {/* DASHBOARD ADICIONAL — visão simplificada                      */}
+      {/* ============================================================ */}
+      <div className="pt-2">
+        <h2 className="text-2xl font-bold tracking-tight">Dashboard</h2>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          {new Date().toLocaleDateString("pt-BR", {
+            weekday: "long",
+            day: "2-digit",
+            month: "long",
+            year: "numeric",
+          })}
+        </p>
+      </div>
+
+      {/* 4 Cards de métricas */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <SimpleMetricCard
+          label="Total de Promotores"
+          value={totalPromoters}
+          icon={Users}
+          tone="bg-success/10 text-success"
+        />
+        <SimpleMetricCard
+          label="Leads Hoje"
+          value={leadsToday}
+          icon={Target}
+          tone="bg-success/10 text-success"
+        />
+        <SimpleMetricCard
+          label="Conversões"
+          value={totalConversions}
+          icon={DollarSign}
+          tone="bg-success/10 text-success"
+        />
+        <SimpleMetricCard
+          label="Taxa de Conversão"
+          value={`${conversionRate}%`}
+          icon={BarChart3}
+          tone="bg-success/10 text-success"
+        />
+      </div>
+
+      {/* Gráfico de área 7 dias + Top 5 promotores */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Card className="p-5 rounded-2xl border border-border bg-card shadow-sm">
+          <div className="mb-4">
+            <h3 className="text-sm font-semibold">Leads — últimos 7 dias</h3>
+            <p className="text-xs text-muted-foreground">Capturados por dia</p>
+          </div>
+          <div className="h-[240px] -ml-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={last7Days}>
+                <defs>
+                  <linearGradient id="leads7d" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis
+                  dataKey="label"
+                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                  tickLine={false}
+                  axisLine={{ stroke: "hsl(var(--border))" }}
+                />
+                <YAxis
+                  allowDecimals={false}
+                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                  tickLine={false}
+                  axisLine={{ stroke: "hsl(var(--border))" }}
+                  width={28}
+                />
+                <Tooltip
+                  contentStyle={{
+                    background: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: 8,
+                    fontSize: 12,
+                  }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="total"
+                  stroke="#10b981"
+                  strokeWidth={2}
+                  fill="url(#leads7d)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+
+        <Card className="p-5 rounded-2xl border border-border bg-card shadow-sm">
+          <div className="mb-4">
+            <h3 className="text-sm font-semibold">Top 5 promotores do mês</h3>
+            <p className="text-xs text-muted-foreground">Por leads capturados</p>
+          </div>
+          {top5Promoters.length === 0 ? (
+            <div className="h-[240px] flex items-center justify-center text-xs text-muted-foreground">
+              Sem dados neste mês.
+            </div>
+          ) : (
+            <div className="h-[240px] -ml-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={top5Promoters}
+                  layout="vertical"
+                  margin={{ left: 8, right: 16, top: 4, bottom: 4 }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="hsl(var(--border))"
+                    horizontal={false}
+                  />
+                  <XAxis
+                    type="number"
+                    allowDecimals={false}
+                    tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                    tickLine={false}
+                    axisLine={{ stroke: "hsl(var(--border))" }}
+                  />
+                  <YAxis
+                    type="category"
+                    dataKey="name"
+                    width={110}
+                    tick={{ fontSize: 11, fill: "hsl(var(--foreground))" }}
+                    tickLine={false}
+                    axisLine={{ stroke: "hsl(var(--border))" }}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      background: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: 8,
+                      fontSize: 12,
+                    }}
+                  />
+                  <Bar dataKey="total" fill="#10b981" radius={[0, 6, 6, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </Card>
+      </div>
+
+      {/* Tabela: 10 últimos leads */}
+      <Card className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+        <div className="p-5 border-b border-border">
+          <h3 className="text-sm font-semibold">Últimos leads</h3>
+          <p className="text-xs text-muted-foreground">10 capturas mais recentes</p>
+        </div>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome</TableHead>
+                <TableHead>Telefone</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Data</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {recentLeads.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={4}
+                    className="text-center text-xs text-muted-foreground py-10"
+                  >
+                    {loading ? "Carregando..." : "Nenhum lead capturado ainda."}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                recentLeads.map((l) => (
+                  <TableRow key={l.id}>
+                    <TableCell className="font-medium">{l.name}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {l.phone ? (
+                        <span className="inline-flex items-center gap-1">
+                          <Phone className="w-3 h-3 opacity-60" />
+                          {l.phone}
+                        </span>
+                      ) : (
+                        "—"
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <StatusBadge status={l.status} />
+                    </TableCell>
+                    <TableCell className="text-right text-xs text-muted-foreground tabular-nums whitespace-nowrap">
+                      {new Date(l.created_at).toLocaleDateString("pt-BR", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "2-digit",
+                      })}{" "}
+                      <span className="opacity-60">
+                        {new Date(l.created_at).toLocaleTimeString("pt-BR", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </Card>
     </div>
   );
 }
