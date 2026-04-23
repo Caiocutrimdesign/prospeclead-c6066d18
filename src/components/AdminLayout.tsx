@@ -245,7 +245,7 @@ function AdminSidebar() {
                         className={({ isActive }) =>
                           `flex items-center gap-2.5 ${
                             isActive
-                              ? "bg-success/10 text-success font-semibold border-l-2 border-success"
+                              ? "bg-foreground/10 text-foreground font-semibold border-l-2 border-foreground"
                               : "hover:bg-muted text-foreground/80"
                           }`
                         }
@@ -317,7 +317,7 @@ function AdminHeader() {
         >
           <Bell className="w-4 h-4" />
           {hasNewNotif && (
-            <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-success ring-2 ring-background" />
+            <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-foreground ring-2 ring-background" />
           )}
         </Button>
 
@@ -326,7 +326,7 @@ function AdminHeader() {
           <DropdownMenuTrigger asChild>
             <button className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-lg border border-border hover:bg-muted transition-colors">
               <Avatar className="h-7 w-7">
-                <AvatarFallback className="bg-success/10 text-success text-[10px] font-bold">
+                <AvatarFallback className="bg-foreground/10 text-foreground text-[10px] font-bold">
                   {getInitials(profile?.full_name, user?.email)}
                 </AvatarFallback>
               </Avatar>
