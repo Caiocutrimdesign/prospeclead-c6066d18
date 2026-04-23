@@ -418,7 +418,7 @@ export default function AdminConfig() {
                   asaas_api_key: settings.asaas_api_key,
                   payment_pix_key: settings.payment_pix_key,
                   asaas_connected: !!settings.asaas_api_key,
-                } as Partial<Settings> & { payment_gateway_connected?: boolean }).then((ok) => {
+                }).then((ok) => {
                   if (ok) update("asaas_connected", !!settings.asaas_api_key);
                 })
               }
