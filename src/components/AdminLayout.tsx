@@ -245,7 +245,7 @@ function AdminSidebar() {
                         className={({ isActive }) =>
                           `flex items-center gap-2.5 ${
                             isActive
-                              ? "bg-success/10 text-success font-semibold border-l-2 border-success"
+                              ? "bg-foreground/10 text-foreground font-semibold border-l-2 border-foreground"
                               : "hover:bg-muted text-foreground/80"
                           }`
                         }
