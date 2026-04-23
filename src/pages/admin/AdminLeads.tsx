@@ -74,6 +74,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { formatBRL } from "@/lib/format";
+import { useReadOnly } from "@/hooks/useReadOnly";
 import type { Database } from "@/integrations/supabase/types";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
@@ -133,6 +134,7 @@ const isConverted = (s: string) => s === "vendido" || s === "fechado";
 /* ======================== Página ======================== */
 
 export default function AdminLeads() {
+  const readOnly = useReadOnly();
   const [leads, setLeads] = useState<LeadRow[]>([]);
   const [pdvLeadIds, setPdvLeadIds] = useState<Set<string>>(new Set());
   const [profiles, setProfiles] = useState<Record<string, string>>({});
@@ -514,10 +516,12 @@ export default function AdminLeads() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button onClick={openCreate} className="gap-2">
-            <Plus className="w-4 h-4" />
-            Novo Lead
-          </Button>
+          {!readOnly && (
+            <Button onClick={openCreate} className="gap-2">
+              <Plus className="w-4 h-4" />
+              Novo Lead
+            </Button>
+          )}
         </div>
       </div>
 
@@ -714,45 +718,49 @@ export default function AdminLeads() {
                       >
                         <Eye className="w-4 h-4" />
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => openEdit(l)}
-                        title="Editar"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
+                      {!readOnly && (
+                        <>
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="text-destructive"
-                            title="Excluir"
+                            onClick={() => openEdit(l)}
+                            title="Editar"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Pencil className="w-4 h-4" />
                           </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>
-                              Excluir lead "{l.name}"?
-                            </AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Esta ação não pode ser desfeita.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => removeLead(l.id)}
-                              className="bg-destructive text-destructive-foreground"
-                            >
-                              Excluir
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-destructive"
+                                title="Excluir"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  Excluir lead "{l.name}"?
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Esta ação não pode ser desfeita.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => removeLead(l.id)}
+                                  className="bg-destructive text-destructive-foreground"
+                                >
+                                  Excluir
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -767,6 +775,7 @@ export default function AdminLeads() {
         lead={detailLead}
         promoterName={detailLead ? profiles[detailLead.user_id] ?? "—" : ""}
         origin={detailLead ? originOf(detailLead) : "manual"}
+        readOnly={readOnly}
         onClose={() => setDetailLead(null)}
         onEdit={(l) => {
           setDetailLead(null);
@@ -875,12 +884,14 @@ function LeadDetailDialog({
   lead,
   promoterName,
   origin,
+  readOnly = false,
   onClose,
   onEdit,
 }: {
   lead: LeadRow | null;
   promoterName: string;
   origin: "manual" | "pdv" | "campanha";
+  readOnly?: boolean;
   onClose: () => void;
   onEdit: (l: LeadRow) => void;
 }) {
@@ -988,10 +999,12 @@ function LeadDetailDialog({
           <Button variant="outline" onClick={onClose}>
             Fechar
           </Button>
-          <Button onClick={() => onEdit(lead)} className="gap-2">
-            <Pencil className="w-4 h-4" />
-            Editar
-          </Button>
+          {!readOnly && (
+            <Button onClick={() => onEdit(lead)} className="gap-2">
+              <Pencil className="w-4 h-4" />
+              Editar
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

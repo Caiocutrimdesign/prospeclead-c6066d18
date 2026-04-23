@@ -52,6 +52,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL } from "@/lib/format";
+import { useReadOnly } from "@/hooks/useReadOnly";
 
 type AdminUser = {
   id: string;
@@ -71,6 +72,7 @@ type AdminUser = {
 
 export default function AdminPromoters() {
   const { user } = useAuth();
+  const readOnly = useReadOnly();
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -140,7 +142,9 @@ export default function AdminPromoters() {
             </p>
             <h1 className="text-2xl font-bold md:text-3xl">Promoters & Admins</h1>
             <p className="mt-1 text-sm text-muted-foreground md:text-base">
-              Crie, edite, promova ou exclua usuários do sistema.
+              {readOnly
+                ? "Consulte os usuários cadastrados na plataforma."
+                : "Crie, edite, promova ou exclua usuários do sistema."}
             </p>
           </div>
           <div className="flex w-full flex-col gap-3 xl:w-[540px] xl:flex-row xl:items-center xl:justify-end">
@@ -153,15 +157,17 @@ export default function AdminPromoters() {
                 className="pl-9"
               />
             </div>
-            <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm" className="xl:min-w-[180px]">
-                  <Plus className="w-4 h-4 mr-2" />
-                  <span>Novo promoter</span>
-                </Button>
-              </DialogTrigger>
-              <CreateUserDialog onClose={() => setCreateOpen(false)} onCreated={load} />
-            </Dialog>
+            {!readOnly && (
+              <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm" className="xl:min-w-[180px]">
+                    <Plus className="w-4 h-4 mr-2" />
+                    <span>Novo promoter</span>
+                  </Button>
+                </DialogTrigger>
+                <CreateUserDialog onClose={() => setCreateOpen(false)} onCreated={load} />
+              </Dialog>
+            )}
           </div>
         </div>
       </section>
@@ -204,47 +210,49 @@ export default function AdminPromoters() {
                 {formatBRL(u.profile?.monthly_earnings ?? 0)}
               </p>
             </div>
-            <div className="flex items-center justify-end gap-1 border-t pt-2">
-              <EditProfileButton u={u} onSaved={load} />
-              <ResetPwButton u={u} />
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => toggleAdmin(u)}
-                title={u.is_admin ? "Remover admin" : "Tornar admin"}
-              >
-                <Shield className={`w-4 h-4 ${u.is_admin ? "text-primary" : ""}`} />
-              </Button>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="text-destructive"
-                    disabled={u.id === user?.id}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Excluir {u.email}?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Esta ação remove o usuário, perfil, leads e carteira de forma permanente.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => deleteUser(u)}
-                      className="bg-destructive text-destructive-foreground"
+            {!readOnly && (
+              <div className="flex items-center justify-end gap-1 border-t pt-2">
+                <EditProfileButton u={u} onSaved={load} />
+                <ResetPwButton u={u} />
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => toggleAdmin(u)}
+                  title={u.is_admin ? "Remover admin" : "Tornar admin"}
+                >
+                  <Shield className={`w-4 h-4 ${u.is_admin ? "text-primary" : ""}`} />
+                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-destructive"
+                      disabled={u.id === user?.id}
                     >
-                      Excluir
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Excluir {u.email}?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Esta ação remove o usuário, perfil, leads e carteira de forma permanente.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => deleteUser(u)}
+                        className="bg-destructive text-destructive-foreground"
+                      >
+                        Excluir
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            )}
           </Card>
         ))}
       </div>
@@ -259,20 +267,20 @@ export default function AdminPromoters() {
               <TableHead className="text-right">Ganhos/mês</TableHead>
               <TableHead>Último acesso</TableHead>
               <TableHead>Papel</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
+              {!readOnly && <TableHead className="text-right">Ações</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading && (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">
+                <TableCell colSpan={readOnly ? 5 : 6} className="text-center py-8">
                   <Loader2 className="w-5 h-5 animate-spin inline" />
                 </TableCell>
               </TableRow>
             )}
             {!loading && filtered.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={readOnly ? 5 : 6} className="text-center py-8 text-muted-foreground">
                   Nenhum usuário encontrado
                 </TableCell>
               </TableRow>
@@ -314,51 +322,53 @@ export default function AdminPromoters() {
                     <Badge variant="secondary">PROMOTER</Badge>
                   )}
                 </TableCell>
-                <TableCell>
-                  <div className="flex items-center justify-end gap-1">
-                    <EditProfileButton u={u} onSaved={load} />
-                    <ResetPwButton u={u} />
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => toggleAdmin(u)}
-                      title={u.is_admin ? "Remover admin" : "Tornar admin"}
-                    >
-                      <Shield className={`w-4 h-4 ${u.is_admin ? "text-primary" : ""}`} />
-                    </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-destructive hover:text-destructive"
-                          disabled={u.id === user?.id}
-                          title="Excluir"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Excluir {u.email}?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Esta ação remove o usuário, perfil, leads e carteira de forma
-                            permanente.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => deleteUser(u)}
-                            className="bg-destructive text-destructive-foreground"
+                {!readOnly && (
+                  <TableCell>
+                    <div className="flex items-center justify-end gap-1">
+                      <EditProfileButton u={u} onSaved={load} />
+                      <ResetPwButton u={u} />
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => toggleAdmin(u)}
+                        title={u.is_admin ? "Remover admin" : "Tornar admin"}
+                      >
+                        <Shield className={`w-4 h-4 ${u.is_admin ? "text-primary" : ""}`} />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-destructive hover:text-destructive"
+                            disabled={u.id === user?.id}
+                            title="Excluir"
                           >
-                            Excluir
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </TableCell>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Excluir {u.email}?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Esta ação remove o usuário, perfil, leads e carteira de forma
+                              permanente.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => deleteUser(u)}
+                              className="bg-destructive text-destructive-foreground"
+                            >
+                              Excluir
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </TableCell>
+                )}
               </TableRow>
             ))}
           </TableBody>

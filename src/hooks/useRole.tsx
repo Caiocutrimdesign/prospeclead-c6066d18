@@ -7,6 +7,7 @@ export function useRole() {
   const userId = user?.id ?? null;
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [isRh, setIsRh] = useState<boolean>(false);
+  const [isVisualizador, setIsVisualizador] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -15,6 +16,7 @@ export function useRole() {
       if (!userId) {
         setIsAdmin(false);
         setIsRh(false);
+        setIsVisualizador(false);
         setLoading(false);
         return;
       }
@@ -35,6 +37,7 @@ export function useRole() {
       const roles = (data ?? []).map((r) => r.role as string);
       setIsAdmin(roles.includes("admin"));
       setIsRh(roles.includes("rh"));
+      setIsVisualizador(roles.includes("visualizador"));
       setLoading(false);
     })();
     return () => {
@@ -44,5 +47,5 @@ export function useRole() {
     // referência do objeto `user`) não dispara um novo fetch desnecessário.
   }, [userId]);
 
-  return { isAdmin, isRh, loading };
+  return { isAdmin, isRh, isVisualizador, loading };
 }

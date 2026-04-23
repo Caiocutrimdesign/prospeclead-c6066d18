@@ -794,6 +794,7 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_rh: { Args: never; Returns: boolean }
+      is_visualizador: { Args: never; Returns: boolean }
       move_to_dlq: {
         Args: {
           dlq_name: string
@@ -831,7 +832,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "promoter" | "rh"
+      app_role: "admin" | "promoter" | "rh" | "visualizador"
       approval_status: "pendente" | "aprovado" | "rejeitado"
       billing_cycle: "once" | "monthly" | "annual"
       kyc_status: "nao_enviado" | "em_analise" | "aprovado" | "rejeitado"
@@ -997,7 +998,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "promoter", "rh"],
+      app_role: ["admin", "promoter", "rh", "visualizador"],
       approval_status: ["pendente", "aprovado", "rejeitado"],
       billing_cycle: ["once", "monthly", "annual"],
       kyc_status: ["nao_enviado", "em_analise", "aprovado", "rejeitado"],
