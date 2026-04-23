@@ -100,6 +100,13 @@ const App = () => (
                 <Route path="promoters" element={<RhPromoters />} />
                 <Route path="pagamentos" element={<RhPagamentos />} />
               </Route>
+              <Route path="/admin/visualizador" element={<VisualizadorLayout />}>
+                <Route index element={<AdminVisualizador />} />
+                <Route path="leads" element={<AdminLeads />} />
+                <Route path="promoters" element={<AdminPromoters />} />
+                <Route path="saques" element={<AdminSaques />} />
+                <Route path="ranking" element={<AdminRanking />} />
+              </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
           </ProspectingTimerProvider>
