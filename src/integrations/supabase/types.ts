@@ -16,11 +16,19 @@ export type Database = {
     Tables: {
       app_settings: {
         Row: {
+          asaas_api_key: string | null
+          asaas_connected: boolean
+          brand_cnpj: string | null
           brand_logo_url: string | null
           brand_name: string
           commission_capture_fixed: number
           commission_goal_bonus: number
           commission_sale_percent: number
+          contact_city: string | null
+          contact_email: string | null
+          contact_phone: string | null
+          contact_responsible: string | null
+          contact_state: string | null
           id: number
           limit_max_leads_month: number
           limit_max_promoters: number
@@ -29,6 +37,10 @@ export type Database = {
           payment_pix_key: string | null
           plan: Database["public"]["Enums"]["plan_tier"]
           primary_color: string
+          smartgps_base_url: string | null
+          smartgps_connected: boolean
+          smartgps_token: string | null
+          tenant_id: string
           updated_at: string
           updated_by: string | null
           whatsapp_connected: boolean
@@ -37,11 +49,19 @@ export type Database = {
           whatsapp_webhook_url: string | null
         }
         Insert: {
+          asaas_api_key?: string | null
+          asaas_connected?: boolean
+          brand_cnpj?: string | null
           brand_logo_url?: string | null
           brand_name?: string
           commission_capture_fixed?: number
           commission_goal_bonus?: number
           commission_sale_percent?: number
+          contact_city?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          contact_responsible?: string | null
+          contact_state?: string | null
           id?: number
           limit_max_leads_month?: number
           limit_max_promoters?: number
@@ -50,6 +70,10 @@ export type Database = {
           payment_pix_key?: string | null
           plan?: Database["public"]["Enums"]["plan_tier"]
           primary_color?: string
+          smartgps_base_url?: string | null
+          smartgps_connected?: boolean
+          smartgps_token?: string | null
+          tenant_id?: string
           updated_at?: string
           updated_by?: string | null
           whatsapp_connected?: boolean
@@ -58,11 +82,19 @@ export type Database = {
           whatsapp_webhook_url?: string | null
         }
         Update: {
+          asaas_api_key?: string | null
+          asaas_connected?: boolean
+          brand_cnpj?: string | null
           brand_logo_url?: string | null
           brand_name?: string
           commission_capture_fixed?: number
           commission_goal_bonus?: number
           commission_sale_percent?: number
+          contact_city?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          contact_responsible?: string | null
+          contact_state?: string | null
           id?: number
           limit_max_leads_month?: number
           limit_max_promoters?: number
@@ -71,6 +103,10 @@ export type Database = {
           payment_pix_key?: string | null
           plan?: Database["public"]["Enums"]["plan_tier"]
           primary_color?: string
+          smartgps_base_url?: string | null
+          smartgps_connected?: boolean
+          smartgps_token?: string | null
+          tenant_id?: string
           updated_at?: string
           updated_by?: string | null
           whatsapp_connected?: boolean
