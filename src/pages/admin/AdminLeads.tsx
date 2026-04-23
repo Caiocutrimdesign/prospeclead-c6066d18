@@ -69,6 +69,9 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
@@ -478,42 +481,52 @@ export default function AdminLeads() {
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="gap-2">
                 <FileDown className="w-4 h-4" />
-                Exportar Excel
+                Exportar
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>Período do relatório</DropdownMenuLabel>
+              <DropdownMenuLabel>Formato e período</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => exportExcel("today")}>
-                Leads de hoje
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => exportExcel("month")}>
-                Leads do mês atual
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => exportExcel("all")}>
-                Todos os leads
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="gap-2">
-                <FileDown className="w-4 h-4" />
-                Exportar PDF
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>Período do relatório</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => exportPDF("today")}>
-                Leads de hoje
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => exportPDF("month")}>
-                Leads do mês atual
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => exportPDF("all")}>
-                Todos os leads
-              </DropdownMenuItem>
+
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <FileDown className="w-4 h-4 mr-2" />
+                  PDF
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className="w-52">
+                  <DropdownMenuLabel>Período</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => exportPDF("today")}>
+                    Leads de hoje
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => exportPDF("month")}>
+                    Leads do mês atual
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => exportPDF("all")}>
+                    Todos os leads
+                  </DropdownMenuItem>
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <FileDown className="w-4 h-4 mr-2" />
+                  Excel (XLSX)
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className="w-52">
+                  <DropdownMenuLabel>Período</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => exportExcel("today")}>
+                    Leads de hoje
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => exportExcel("month")}>
+                    Leads do mês atual
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => exportExcel("all")}>
+                    Todos os leads
+                  </DropdownMenuItem>
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
             </DropdownMenuContent>
           </DropdownMenu>
           {!readOnly && (
