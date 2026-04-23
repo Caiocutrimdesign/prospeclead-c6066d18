@@ -345,7 +345,7 @@ export default function AdminLeads() {
 
       const body = scope.map((l) => [
         l.name ?? "—",
-        l.phone ?? "—",
+        formatPhoneExport(l.phone),
         l.kind.toUpperCase(),
         STATUS_META[l.status]?.label ?? l.status,
         profiles[l.user_id] ?? "—",
@@ -441,7 +441,7 @@ export default function AdminLeads() {
 
       const body = scope.map((l) => [
         l.name ?? "—",
-        l.phone ?? "—",
+        formatPhoneExport(l.phone),
         l.kind.toUpperCase(),
         STATUS_META[l.status]?.label ?? l.status,
         profiles[l.user_id] ?? "—",
