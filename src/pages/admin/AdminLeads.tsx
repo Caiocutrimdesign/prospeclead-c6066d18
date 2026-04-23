@@ -253,8 +253,8 @@ export default function AdminLeads() {
     setFormOpen(true);
   };
 
-  /* ----- Exportação PDF ----- */
-  const exportPDF = async (range: "today" | "month" | "all") => {
+  /* ----- Exportação Excel ----- */
+  const exportExcel = async (range: "today" | "month" | "all") => {
     try {
       const now = new Date();
       let scope: LeadRow[] = leads;
@@ -281,36 +281,25 @@ export default function AdminLeads() {
         return;
       }
 
-      // Buscar nome da marca
       const { data: settings } = await supabase
         .from("app_settings")
         .select("brand_name")
         .eq("id", 1)
         .maybeSingle();
       const brandName = settings?.brand_name ?? "Plataforma";
+      const generatedAt = format(now, "dd/MM/yyyy HH:mm", { locale: ptBR });
 
-      const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
-      const generatedAt = format(now, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
+      // Cabeçalho informativo (linhas 1-4) + linha em branco + tabela
+      const header = [
+        [brandName],
+        [rangeLabel],
+        [`Gerado em: ${generatedAt}`],
+        [`Total de leads: ${scope.length}`],
+        [],
+        ["Lead", "Telefone", "Tipo", "Status", "Promotor", "Data da Captura"],
+      ];
 
-      // Header
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(16);
-      doc.text(brandName, 40, 40);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(11);
-      doc.text(rangeLabel, 40, 58);
-      doc.setFontSize(9);
-      doc.setTextColor(120);
-      doc.text(`Gerado em ${generatedAt}`, pageWidth - 40, 40, { align: "right" });
-      doc.text(`Total: ${scope.length} lead(s)`, pageWidth - 40, 54, {
-        align: "right",
-      });
-      doc.setTextColor(0);
-
-      // Tabela
-      const rows = scope.map((l) => [
+      const body = scope.map((l) => [
         l.name ?? "—",
         l.phone ?? "—",
         l.kind.toUpperCase(),
@@ -321,41 +310,38 @@ export default function AdminLeads() {
         }),
       ]);
 
-      autoTable(doc, {
-        startY: 80,
-        head: [["Lead", "Telefone", "Tipo", "Status", "Promotor", "Captura"]],
-        body: rows,
-        styles: { fontSize: 9, cellPadding: 6 },
-        headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: "bold" },
-        alternateRowStyles: { fillColor: [245, 247, 250] },
-        margin: { left: 40, right: 40, bottom: 40 },
-        didDrawPage: () => {
-          const pageNum = doc.getNumberOfPages();
-          doc.setFontSize(8);
-          doc.setTextColor(120);
-          doc.text(
-            `${brandName} • Relatório de Leads`,
-            40,
-            pageHeight - 20,
-          );
-          doc.text(
-            `Página ${pageNum}`,
-            pageWidth - 40,
-            pageHeight - 20,
-            { align: "right" },
-          );
-          doc.setTextColor(0);
-        },
-      });
+      const sheet = XLSX.utils.aoa_to_sheet([...header, ...body]);
 
-      const fileName = `leads-${range}-${format(now, "yyyy-MM-dd-HHmm")}.pdf`;
-      doc.save(fileName);
+      // Larguras das colunas
+      sheet["!cols"] = [
+        { wch: 32 }, // Lead
+        { wch: 18 }, // Telefone
+        { wch: 8 }, // Tipo
+        { wch: 14 }, // Status
+        { wch: 28 }, // Promotor
+        { wch: 20 }, // Data
+      ];
+
+      // Mesclar células do cabeçalho informativo
+      sheet["!merges"] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } },
+        { s: { r: 1, c: 0 }, e: { r: 1, c: 5 } },
+        { s: { r: 2, c: 0 }, e: { r: 2, c: 5 } },
+        { s: { r: 3, c: 0 }, e: { r: 3, c: 5 } },
+      ];
+
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, sheet, "Leads");
+
+      const fileName = `leads-${range}-${format(now, "yyyy-MM-dd-HHmm")}.xlsx`;
+      XLSX.writeFile(workbook, fileName);
       toast.success(`${scope.length} leads exportados`);
     } catch (e) {
       console.error(e);
-      toast.error("Erro ao gerar PDF");
+      toast.error("Erro ao gerar Excel");
     }
   };
+
 
 
   return (
