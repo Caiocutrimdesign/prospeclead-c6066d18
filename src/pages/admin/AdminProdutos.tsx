@@ -725,7 +725,7 @@ function StatCard({
 }) {
   const ring =
     tone === "success" ? "border-success/30 bg-success/5" :
-    tone === "info" ? "border-blue-200 bg-blue-50/50 dark:border-blue-500/30 dark:bg-blue-500/5" :
+    tone === "info" ? "border-primary/30 bg-primary/5" :
     tone === "muted" ? "border-border bg-card" :
     "border-border bg-card";
 
