@@ -151,18 +151,36 @@ export default function AdminLeads() {
 
   const load = async () => {
     setLoading(true);
-    const [{ data: ls, error: le }, { data: ps }, { data: pls }] =
-      await Promise.all([
-        supabase
-          .from("leads")
-          .select("*")
-          .order("created_at", { ascending: false })
-          .limit(1000),
-        supabase.from("profiles").select("id, full_name"),
-        supabase.from("pdv_leads").select("lead_id"),
-      ]);
-    if (le) toast.error(le.message);
-    setLeads((ls ?? []) as LeadRow[]);
+    // Busca paginada para trazer TODOS os leads (Supabase limita 1000 por requisição)
+    const PAGE = 1000;
+    let from = 0;
+    let all: LeadRow[] = [];
+    let firstError: string | null = null;
+    // Loop até retornar menos que PAGE
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const { data, error } = await supabase
+        .from("leads")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .range(from, from + PAGE - 1);
+      if (error) {
+        firstError = error.message;
+        break;
+      }
+      const batch = (data ?? []) as LeadRow[];
+      all = all.concat(batch);
+      if (batch.length < PAGE) break;
+      from += PAGE;
+    }
+
+    const [{ data: ps }, { data: pls }] = await Promise.all([
+      supabase.from("profiles").select("id, full_name"),
+      supabase.from("pdv_leads").select("lead_id"),
+    ]);
+
+    if (firstError) toast.error(firstError);
+    setLeads(all);
     setProfiles(
       Object.fromEntries((ps ?? []).map((p) => [p.id, p.full_name ?? "—"])),
     );
