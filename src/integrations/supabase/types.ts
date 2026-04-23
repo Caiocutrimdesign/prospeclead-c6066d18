@@ -794,6 +794,7 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_rh: { Args: never; Returns: boolean }
+      is_visualizador: { Args: never; Returns: boolean }
       move_to_dlq: {
         Args: {
           dlq_name: string
