@@ -22,10 +22,21 @@ type Action =
       email: string;
       password: string;
       full_name?: string;
-      role?: "admin" | "promoter";
+      phone?: string;
+      tenant?: string;
+      role?: "admin" | "promoter" | "rh";
     }
   | { type: "update_password"; user_id: string; password: string }
-  | { type: "set_role"; user_id: string; role: "admin" | "promoter" }
+  | {
+      type: "update";
+      user_id: string;
+      full_name?: string;
+      phone?: string;
+      tenant?: string;
+      role?: "admin" | "promoter" | "rh";
+      banned?: boolean;
+    }
+  | { type: "set_role"; user_id: string; role: "admin" | "promoter" | "rh" }
   | { type: "delete"; user_id: string };
 
 Deno.serve(async (req) => {
