@@ -498,9 +498,7 @@ export default function AdminProdutos() {
                       <TableCell>{Number(p.commission_percent).toFixed(2)}%</TableCell>
                       <TableCell>
                         {p.active ? (
-                          <Badge className="bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/20 border-emerald-500/30">
-                            Ativo
-                          </Badge>
+                          <Badge>Ativo</Badge>
                         ) : (
                           <Badge variant="outline">Inativo</Badge>
                         )}
