@@ -30,6 +30,7 @@ import AdminLeads from "./pages/admin/AdminLeads";
 import AdminSaques from "./pages/admin/AdminSaques";
 import AdminRanking from "./pages/admin/AdminRanking";
 import AdminPlaceholder from "./pages/admin/AdminPlaceholder";
+import AdminUsuarios from "./pages/admin/AdminUsuarios";
 import RhLayout from "./components/RhLayout";
 import RhDashboard from "./pages/rh/RhDashboard";
 import RhPromoters from "./pages/rh/RhPromoters";
@@ -79,7 +80,7 @@ const App = () => (
                 {/* Administração */}
                 <Route path="catalogo" element={<AdminPlaceholder title="Catálogo e Comissões" description="Produtos, planos e regras de comissionamento." />} />
                 <Route path="marcas" element={<AdminPlaceholder title="Gestão de Marcas" description="Marcas parceiras e identidade visual." />} />
-                <Route path="usuarios" element={<AdminPlaceholder title="Usuários" description="Gestão completa de contas e papéis do sistema." />} />
+                <Route path="usuarios" element={<AdminUsuarios />} />
                 <Route path="configuracoes" element={<AdminPlaceholder title="Configurações" description="Parâmetros gerais da plataforma." />} />
                 {/* Financeiro */}
                 <Route path="auditoria-fotos" element={<AdminPlaceholder title="Auditoria de Fotos" description="Validação manual das fotos enviadas pelos promoters." />} />

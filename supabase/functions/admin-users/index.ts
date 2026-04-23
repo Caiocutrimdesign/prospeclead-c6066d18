@@ -99,11 +99,13 @@ Deno.serve(async (req) => {
           return {
             id: u.id,
             email: u.email,
+            phone: (u.user_metadata as any)?.phone ?? null,
             created_at: u.created_at,
             last_sign_in_at: u.last_sign_in_at,
             banned_until: (u as any).banned_until ?? null,
             roles: userRoles,
             is_admin: userRoles.includes("admin"),
+            is_rh: userRoles.includes("rh"),
             profile,
           };
         });
