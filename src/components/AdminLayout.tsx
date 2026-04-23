@@ -110,6 +110,7 @@ const NAV_SECTIONS: {
   {
     label: "Rede PDV",
     items: [
+      { to: "/admin/leads", label: "Leads", icon: ContactRound },
       { to: "/admin/leads-pdv", label: "Leads PDV", icon: ContactRound },
       { to: "/admin/fila-oportunidades", label: "Fila de Oportunidades", icon: ListChecks },
       { to: "/admin/pdvs", label: "Pontos de Venda", icon: Store },
