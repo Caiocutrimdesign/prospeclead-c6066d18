@@ -2,9 +2,11 @@ import { ReactNode } from "react";
 import { Navigate, NavLink, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
+import { useProfile } from "@/hooks/useProfile";
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -23,36 +25,84 @@ import {
   Trophy,
   LogOut,
   Shield,
-  ArrowLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import logo from "@/assets/prospeclead-logo.png";
 
 const items = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
-  { to: "/admin/promoters", label: "Promoters", icon: Users },
+  { to: "/admin/promoters", label: "Promotores", icon: Users },
   { to: "/admin/leads", label: "Leads", icon: ContactRound },
-  { to: "/admin/saques", label: "Saques PIX", icon: Wallet },
+  { to: "/admin/saques", label: "Saques", icon: Wallet },
   { to: "/admin/ranking", label: "Ranking", icon: Trophy },
 ];
+
+function getInitials(name?: string | null, email?: string | null) {
+  const source = (name || email || "U").trim();
+  const parts = source.split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return source.slice(0, 2).toUpperCase();
+}
 
 function AdminSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
+  const { user } = useAuth();
+  const { profile } = useProfile();
+  const { isAdmin } = useRole();
+
+  // Mapeamento de role para o badge mostrado na UI.
+  // O enum atual no banco é: admin | promoter | rh. Tratamos `admin` como ADMIN_MASTER.
+  const roleLabel = isAdmin ? "ADMIN_MASTER" : "MANAGER";
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
+  };
+
   return (
     <Sidebar collapsible="icon">
       <SidebarContent>
+        {/* Logo */}
         <div className="px-3 py-4 flex items-center gap-2 border-b">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground shrink-0">
-            <Shield className="w-4 h-4" />
-          </div>
-          {!collapsed && (
-            <div>
-              <p className="font-bold text-sm leading-none">Painel ADM</p>
-              <p className="text-[10px] text-muted-foreground">Administração total</p>
+          {collapsed ? (
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground shrink-0">
+              <Shield className="w-4 h-4" />
             </div>
+          ) : (
+            <img
+              src={logo}
+              alt="ProspecLead"
+              className="h-8 w-auto object-contain"
+            />
           )}
         </div>
+
+        {/* Avatar + Nome + Badge de role */}
+        {!collapsed && (
+          <div className="px-3 py-3 border-b flex items-center gap-3">
+            <Avatar className="h-9 w-9">
+              <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+                {getInitials(profile?.full_name, user?.email)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold leading-tight truncate">
+                {profile?.full_name || user?.email?.split("@")[0] || "Usuário"}
+              </p>
+              <Badge
+                variant="outline"
+                className="mt-1 h-5 px-1.5 text-[10px] font-bold bg-primary/10 text-primary border-primary/30"
+              >
+                <Shield className="w-2.5 h-2.5 mr-1" />
+                {roleLabel}
+              </Badge>
+            </div>
+          </div>
+        )}
+
         <SidebarGroup>
           <SidebarGroupLabel>Gestão</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -81,6 +131,18 @@ function AdminSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
+      <SidebarFooter className="border-t p-2">
+        <Button
+          onClick={signOut}
+          variant="outline"
+          size="sm"
+          className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
+        >
+          <LogOut className="w-4 h-4" />
+          {!collapsed && <span className="ml-2">Sair do Sistema</span>}
+        </Button>
+      </SidebarFooter>
     </Sidebar>
   );
 }
