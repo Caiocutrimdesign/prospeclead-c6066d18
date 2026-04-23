@@ -19,10 +19,16 @@ import {
   ArrowUp,
   ArrowDown,
   Minus,
+  Target,
+  BarChart3,
+  Phone,
 } from "lucide-react";
 import {
+  Area,
+  AreaChart,
   Bar,
   BarChart,
+  CartesianGrid,
   Cell,
   Pie,
   PieChart,
@@ -31,12 +37,21 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 /* ---------- Tipos ---------- */
 interface LeadRow {
   id: string;
   user_id: string;
   name: string;
+  phone: string | null;
   status: string;
   created_at: string;
 }
@@ -109,7 +124,7 @@ export default function AdminDashboard() {
       await Promise.all([
         supabase
           .from("leads")
-          .select("id,user_id,name,status,created_at")
+          .select("id,user_id,name,phone,status,created_at")
           .order("created_at", { ascending: false })
           .limit(1000),
         supabase.from("profiles").select("id,full_name"),
@@ -204,6 +219,66 @@ export default function AdminDashboard() {
       .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
       .slice(0, 8);
   }, [leads, withdrawals, profiles]);
+
+  /* ---------- Série últimos 7 dias ---------- */
+  const last7Days = useMemo(() => {
+    const days: { label: string; key: string; total: number }[] = [];
+    const base = new Date();
+    base.setHours(0, 0, 0, 0);
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(base);
+      d.setDate(d.getDate() - i);
+      days.push({
+        key: d.toISOString().slice(0, 10),
+        label: d.toLocaleDateString("pt-BR", {
+          day: "2-digit",
+          month: "2-digit",
+        }),
+        total: 0,
+      });
+    }
+    leads.forEach((l) => {
+      const k = l.created_at.slice(0, 10);
+      const slot = days.find((d) => d.key === k);
+      if (slot) slot.total += 1;
+    });
+    return days;
+  }, [leads]);
+
+  /* ---------- Top 5 promotores (mês) ---------- */
+  const top5Promoters = useMemo(() => {
+    const counts = new Map<string, number>();
+    leadsThisMonth.forEach((l) =>
+      counts.set(l.user_id, (counts.get(l.user_id) ?? 0) + 1),
+    );
+    const nameById = new Map(profiles.map((p) => [p.id, p.full_name]));
+    return Array.from(counts.entries())
+      .map(([id, total]) => ({
+        id,
+        name: nameById.get(id) || "Sem nome",
+        total,
+      }))
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 5);
+  }, [leadsThisMonth, profiles]);
+
+  /* ---------- Últimos 10 leads ---------- */
+  const recentLeads = leads.slice(0, 10);
+
+  /* ---------- Métricas extras (Dashboard simples) ---------- */
+  const todayStart = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
+  const leadsToday = leads.filter((l) => new Date(l.created_at) >= todayStart).length;
+  const totalLeads = leads.length;
+  const totalConversions = leads.filter(
+    (l) => l.status === "vendido" || l.status === "fechado",
+  ).length;
+  const conversionRate =
+    totalLeads > 0 ? Math.round((totalConversions / totalLeads) * 100) : 0;
+  const totalPromoters = profiles.length;
 
   const newLeadsPct = pct(leadsThisMonth.length, leadsPrevMonth.length);
   const closedPct = pct(closedThisMonth, closedPrevMonth);
@@ -504,6 +579,216 @@ export default function AdminDashboard() {
           )}
         </Card>
       </div>
+
+      {/* ============================================================ */}
+      {/* DASHBOARD ADICIONAL — visão simplificada                      */}
+      {/* ============================================================ */}
+      <div className="pt-2">
+        <h2 className="text-2xl font-bold tracking-tight">Dashboard</h2>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          {new Date().toLocaleDateString("pt-BR", {
+            weekday: "long",
+            day: "2-digit",
+            month: "long",
+            year: "numeric",
+          })}
+        </p>
+      </div>
+
+      {/* 4 Cards de métricas */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <SimpleMetricCard
+          label="Total de Promotores"
+          value={totalPromoters}
+          icon={Users}
+          tone="bg-success/10 text-success"
+        />
+        <SimpleMetricCard
+          label="Leads Hoje"
+          value={leadsToday}
+          icon={Target}
+          tone="bg-success/10 text-success"
+        />
+        <SimpleMetricCard
+          label="Conversões"
+          value={totalConversions}
+          icon={DollarSign}
+          tone="bg-success/10 text-success"
+        />
+        <SimpleMetricCard
+          label="Taxa de Conversão"
+          value={`${conversionRate}%`}
+          icon={BarChart3}
+          tone="bg-success/10 text-success"
+        />
+      </div>
+
+      {/* Gráfico de área 7 dias + Top 5 promotores */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Card className="p-5 rounded-2xl border border-border bg-card shadow-sm">
+          <div className="mb-4">
+            <h3 className="text-sm font-semibold">Leads — últimos 7 dias</h3>
+            <p className="text-xs text-muted-foreground">Capturados por dia</p>
+          </div>
+          <div className="h-[240px] -ml-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={last7Days}>
+                <defs>
+                  <linearGradient id="leads7d" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis
+                  dataKey="label"
+                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                  tickLine={false}
+                  axisLine={{ stroke: "hsl(var(--border))" }}
+                />
+                <YAxis
+                  allowDecimals={false}
+                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                  tickLine={false}
+                  axisLine={{ stroke: "hsl(var(--border))" }}
+                  width={28}
+                />
+                <Tooltip
+                  contentStyle={{
+                    background: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: 8,
+                    fontSize: 12,
+                  }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="total"
+                  stroke="#10b981"
+                  strokeWidth={2}
+                  fill="url(#leads7d)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+
+        <Card className="p-5 rounded-2xl border border-border bg-card shadow-sm">
+          <div className="mb-4">
+            <h3 className="text-sm font-semibold">Top 5 promotores do mês</h3>
+            <p className="text-xs text-muted-foreground">Por leads capturados</p>
+          </div>
+          {top5Promoters.length === 0 ? (
+            <div className="h-[240px] flex items-center justify-center text-xs text-muted-foreground">
+              Sem dados neste mês.
+            </div>
+          ) : (
+            <div className="h-[240px] -ml-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={top5Promoters}
+                  layout="vertical"
+                  margin={{ left: 8, right: 16, top: 4, bottom: 4 }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="hsl(var(--border))"
+                    horizontal={false}
+                  />
+                  <XAxis
+                    type="number"
+                    allowDecimals={false}
+                    tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                    tickLine={false}
+                    axisLine={{ stroke: "hsl(var(--border))" }}
+                  />
+                  <YAxis
+                    type="category"
+                    dataKey="name"
+                    width={110}
+                    tick={{ fontSize: 11, fill: "hsl(var(--foreground))" }}
+                    tickLine={false}
+                    axisLine={{ stroke: "hsl(var(--border))" }}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      background: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: 8,
+                      fontSize: 12,
+                    }}
+                  />
+                  <Bar dataKey="total" fill="#10b981" radius={[0, 6, 6, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </Card>
+      </div>
+
+      {/* Tabela: 10 últimos leads */}
+      <Card className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+        <div className="p-5 border-b border-border">
+          <h3 className="text-sm font-semibold">Últimos leads</h3>
+          <p className="text-xs text-muted-foreground">10 capturas mais recentes</p>
+        </div>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome</TableHead>
+                <TableHead>Telefone</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Data</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {recentLeads.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={4}
+                    className="text-center text-xs text-muted-foreground py-10"
+                  >
+                    {loading ? "Carregando..." : "Nenhum lead capturado ainda."}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                recentLeads.map((l) => (
+                  <TableRow key={l.id}>
+                    <TableCell className="font-medium">{l.name}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {l.phone ? (
+                        <span className="inline-flex items-center gap-1">
+                          <Phone className="w-3 h-3 opacity-60" />
+                          {l.phone}
+                        </span>
+                      ) : (
+                        "—"
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <StatusBadge status={l.status} />
+                    </TableCell>
+                    <TableCell className="text-right text-xs text-muted-foreground tabular-nums whitespace-nowrap">
+                      {new Date(l.created_at).toLocaleDateString("pt-BR", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "2-digit",
+                      })}{" "}
+                      <span className="opacity-60">
+                        {new Date(l.created_at).toLocaleTimeString("pt-BR", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </Card>
     </div>
   );
 }
@@ -573,5 +858,51 @@ function MedalBadge({ rank }: { rank: number }) {
     >
       <span aria-hidden>{config.emoji}</span>
     </div>
+  );
+}
+
+function SimpleMetricCard({
+  label,
+  value,
+  icon: Icon,
+  tone,
+}: {
+  label: string;
+  value: number | string;
+  icon: typeof Users;
+  tone: string;
+}) {
+  return (
+    <Card className="p-5 rounded-2xl border border-border bg-card shadow-sm">
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-xs font-medium text-muted-foreground">{label}</p>
+        <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${tone}`}>
+          <Icon className="w-4 h-4" />
+        </div>
+      </div>
+      <p className="text-2xl font-bold mt-2 tabular-nums">{value}</p>
+    </Card>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const styles: Record<string, string> = {
+    coletado: "bg-muted text-muted-foreground border-border",
+    contatado: "bg-primary/10 text-primary border-primary/30",
+    respondido: "bg-accent text-accent-foreground border-border",
+    vendido: "bg-success/10 text-success border-success/30",
+    fechado: "bg-success/10 text-success border-success/30",
+    prospectado: "bg-primary/10 text-primary border-primary/30",
+    negociando: "bg-warning/10 text-warning border-warning/30",
+  };
+  return (
+    <Badge
+      variant="outline"
+      className={`text-[10px] uppercase tracking-wide ${
+        styles[status] ?? styles.coletado
+      }`}
+    >
+      {status}
+    </Badge>
   );
 }
