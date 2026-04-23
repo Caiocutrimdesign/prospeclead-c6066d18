@@ -860,3 +860,49 @@ function MedalBadge({ rank }: { rank: number }) {
     </div>
   );
 }
+
+function SimpleMetricCard({
+  label,
+  value,
+  icon: Icon,
+  tone,
+}: {
+  label: string;
+  value: number | string;
+  icon: typeof Users;
+  tone: string;
+}) {
+  return (
+    <Card className="p-5 rounded-2xl border border-border bg-card shadow-sm">
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-xs font-medium text-muted-foreground">{label}</p>
+        <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${tone}`}>
+          <Icon className="w-4 h-4" />
+        </div>
+      </div>
+      <p className="text-2xl font-bold mt-2 tabular-nums">{value}</p>
+    </Card>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const styles: Record<string, string> = {
+    coletado: "bg-muted text-muted-foreground border-border",
+    contatado: "bg-primary/10 text-primary border-primary/30",
+    respondido: "bg-accent text-accent-foreground border-border",
+    vendido: "bg-success/10 text-success border-success/30",
+    fechado: "bg-success/10 text-success border-success/30",
+    prospectado: "bg-primary/10 text-primary border-primary/30",
+    negociando: "bg-warning/10 text-warning border-warning/30",
+  };
+  return (
+    <Badge
+      variant="outline"
+      className={`text-[10px] uppercase tracking-wide ${
+        styles[status] ?? styles.coletado
+      }`}
+    >
+      {status}
+    </Badge>
+  );
+}
