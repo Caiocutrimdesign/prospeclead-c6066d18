@@ -53,6 +53,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { formatBRL } from "@/lib/format";
+import { useReadOnly } from "@/hooks/useReadOnly";
 import type { Database } from "@/integrations/supabase/types";
 
 type Withdrawal = Database["public"]["Tables"]["wallet_withdrawals"]["Row"];
@@ -110,6 +111,7 @@ type ConfirmAction = {
 } | null;
 
 export default function AdminSaques() {
+  const readOnly = useReadOnly();
   const [list, setList] = useState<Withdrawal[]>([]);
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
@@ -237,8 +239,9 @@ export default function AdminSaques() {
         </p>
         <h1 className="text-xl sm:text-2xl font-bold">Saques</h1>
         <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-          Aprove, marque como pago ou rejeite saques solicitados pelos
-          promoters.
+          {readOnly
+            ? "Acompanhe os saques solicitados pelos promoters (somente leitura)."
+            : "Aprove, marque como pago ou rejeite saques solicitados pelos promoters."}
         </p>
       </div>
 
@@ -271,7 +274,7 @@ export default function AdminSaques() {
       </div>
 
       {/* ---------- Pendentes em destaque ---------- */}
-      {pending.length > 0 && (
+      {!readOnly && pending.length > 0 && (
         <Card className="border-amber-500/40 bg-amber-500/5 p-4">
           <div className="flex items-center gap-2 mb-3">
             <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
