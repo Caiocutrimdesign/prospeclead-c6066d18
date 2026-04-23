@@ -428,6 +428,48 @@ export type Database = {
         }
         Relationships: []
       }
+      products: {
+        Row: {
+          active: boolean
+          commission_percent: number
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          kind: Database["public"]["Enums"]["product_kind"]
+          name: string
+          price: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          commission_percent?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          kind?: Database["public"]["Enums"]["product_kind"]
+          name: string
+          price?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          commission_percent?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          kind?: Database["public"]["Enums"]["product_kind"]
+          name?: string
+          price?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           active: boolean
@@ -759,6 +801,7 @@ export type Database = {
       payslip_status: "rascunho" | "emitido" | "pago"
       pix_key_kind: "cpf" | "cnpj" | "email" | "phone" | "random"
       plan_tier: "free" | "pro" | "enterprise"
+      product_kind: "hardware" | "assinatura" | "pacote"
       user_level: "BRONZE" | "PRATA" | "OURO"
       visit_status: "pendente" | "em_andamento" | "concluida"
       wallet_tx_kind:
@@ -924,6 +967,7 @@ export const Constants = {
       payslip_status: ["rascunho", "emitido", "pago"],
       pix_key_kind: ["cpf", "cnpj", "email", "phone", "random"],
       plan_tier: ["free", "pro", "enterprise"],
+      product_kind: ["hardware", "assinatura", "pacote"],
       user_level: ["BRONZE", "PRATA", "OURO"],
       visit_status: ["pendente", "em_andamento", "concluida"],
       wallet_tx_kind: [
