@@ -775,6 +775,7 @@ export default function AdminLeads() {
         lead={detailLead}
         promoterName={detailLead ? profiles[detailLead.user_id] ?? "—" : ""}
         origin={detailLead ? originOf(detailLead) : "manual"}
+        readOnly={readOnly}
         onClose={() => setDetailLead(null)}
         onEdit={(l) => {
           setDetailLead(null);
