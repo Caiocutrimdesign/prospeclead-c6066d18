@@ -884,12 +884,14 @@ function LeadDetailDialog({
   lead,
   promoterName,
   origin,
+  readOnly = false,
   onClose,
   onEdit,
 }: {
   lead: LeadRow | null;
   promoterName: string;
   origin: "manual" | "pdv" | "campanha";
+  readOnly?: boolean;
   onClose: () => void;
   onEdit: (l: LeadRow) => void;
 }) {
@@ -997,10 +999,12 @@ function LeadDetailDialog({
           <Button variant="outline" onClick={onClose}>
             Fechar
           </Button>
-          <Button onClick={() => onEdit(lead)} className="gap-2">
-            <Pencil className="w-4 h-4" />
-            Editar
-          </Button>
+          {!readOnly && (
+            <Button onClick={() => onEdit(lead)} className="gap-2">
+              <Pencil className="w-4 h-4" />
+              Editar
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
