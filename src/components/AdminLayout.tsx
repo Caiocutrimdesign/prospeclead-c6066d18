@@ -317,7 +317,7 @@ function AdminHeader() {
         >
           <Bell className="w-4 h-4" />
           {hasNewNotif && (
-            <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-success ring-2 ring-background" />
+            <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-foreground ring-2 ring-background" />
           )}
         </Button>
 
