@@ -27,11 +27,24 @@ import {
   Users,
   ContactRound,
   Wallet,
-  Trophy,
   LogOut,
   Bell,
   ChevronDown,
   Store,
+  Inbox,
+  Bot,
+  Megaphone,
+  Radar,
+  ClipboardList,
+  Columns3,
+  BookOpen,
+  Tags,
+  UserCog,
+  Settings,
+  Camera,
+  Percent,
+  ShieldCheck,
+  ListChecks,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -60,31 +73,73 @@ const NAV_SECTIONS: {
     ],
   },
   {
+    label: "Omnichannel IA",
+    items: [
+      { to: "/admin/inbox", label: "Caixa de Entrada", icon: Inbox },
+      { to: "/admin/ai-agents", label: "Agentes de IA", icon: Bot },
+      { to: "/admin/campaigns", label: "Motor de Campanhas", icon: Megaphone },
+      { to: "/admin/radar-b2b", label: "Radar B2B", icon: Radar },
+    ],
+  },
+  {
+    label: "Operação",
+    items: [
+      { to: "/admin/tarefas", label: "Tarefas & Agenda", icon: ClipboardList },
+      { to: "/admin/kanban", label: "Kanban — Funil", icon: Columns3 },
+    ],
+  },
+  {
     label: "Administração",
     items: [
+      { to: "/admin/catalogo", label: "Catálogo e Comissões", icon: BookOpen },
+      { to: "/admin/marcas", label: "Gestão de Marcas", icon: Tags },
       { to: "/admin/promoters", label: "Promotores", icon: Users },
-      { to: "/admin/leads", label: "Leads", icon: ContactRound },
-      { to: "/admin/ranking", label: "Ranking", icon: Trophy },
+      { to: "/admin/usuarios", label: "Usuários", icon: UserCog },
+      { to: "/admin/configuracoes", label: "Configurações", icon: Settings },
     ],
   },
   {
     label: "Financeiro",
-    items: [{ to: "/admin/saques", label: "Saques PIX", icon: Wallet }],
+    items: [
+      { to: "/admin/auditoria-fotos", label: "Auditoria de Fotos", icon: Camera },
+      { to: "/admin/comissoes-kyc", label: "Comissões & KYC", icon: Percent },
+      { to: "/admin/revisao-kyc", label: "Revisão KYC", icon: ShieldCheck },
+      { to: "/admin/saques", label: "Saques PIX", icon: Wallet },
+    ],
   },
   {
     label: "Rede PDV",
-    items: [{ to: "/admin/pdvs", label: "Pontos de Venda", icon: Store }],
+    items: [
+      { to: "/admin/leads-pdv", label: "Leads PDV", icon: ContactRound },
+      { to: "/admin/fila-oportunidades", label: "Fila de Oportunidades", icon: ListChecks },
+      { to: "/admin/pdvs", label: "Pontos de Venda", icon: Store },
+    ],
   },
 ];
 
 /* Mapeia path → título exibido no header */
 const PAGE_TITLES: Record<string, string> = {
   "/admin": "Dashboard Global",
+  "/admin/inbox": "Caixa de Entrada",
+  "/admin/ai-agents": "Agentes de IA",
+  "/admin/campaigns": "Motor de Campanhas",
+  "/admin/radar-b2b": "Radar B2B",
+  "/admin/tarefas": "Tarefas & Agenda",
+  "/admin/kanban": "Kanban — Funil",
+  "/admin/catalogo": "Catálogo e Comissões",
+  "/admin/marcas": "Gestão de Marcas",
   "/admin/promoters": "Promotores",
-  "/admin/leads": "Leads",
+  "/admin/usuarios": "Usuários",
+  "/admin/configuracoes": "Configurações",
+  "/admin/auditoria-fotos": "Auditoria de Fotos",
+  "/admin/comissoes-kyc": "Comissões & KYC",
+  "/admin/revisao-kyc": "Revisão KYC",
   "/admin/saques": "Saques PIX",
-  "/admin/ranking": "Ranking",
+  "/admin/leads-pdv": "Leads PDV",
+  "/admin/fila-oportunidades": "Fila de Oportunidades",
   "/admin/pdvs": "Pontos de Venda",
+  "/admin/leads": "Leads",
+  "/admin/ranking": "Ranking",
 };
 
 function getInitials(name?: string | null, email?: string | null) {
