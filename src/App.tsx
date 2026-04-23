@@ -32,6 +32,7 @@ import AdminRanking from "./pages/admin/AdminRanking";
 import AdminPlaceholder from "./pages/admin/AdminPlaceholder";
 import AdminUsuarios from "./pages/admin/AdminUsuarios";
 import AdminConfig from "./pages/admin/AdminConfig";
+import AdminProdutos from "./pages/admin/AdminProdutos";
 import RhLayout from "./components/RhLayout";
 import RhDashboard from "./pages/rh/RhDashboard";
 import RhPromoters from "./pages/rh/RhPromoters";
@@ -79,7 +80,7 @@ const App = () => (
                 <Route path="tarefas" element={<AdminPlaceholder title="Tarefas & Agenda" description="Visualização global de tarefas e visitas agendadas." />} />
                 <Route path="kanban" element={<AdminPlaceholder title="Kanban — Funil" description="Funil visual de leads e oportunidades." />} />
                 {/* Administração */}
-                <Route path="catalogo" element={<AdminPlaceholder title="Catálogo e Comissões" description="Produtos, planos e regras de comissionamento." />} />
+                <Route path="catalogo" element={<AdminProdutos />} />
                 <Route path="marcas" element={<AdminPlaceholder title="Gestão de Marcas" description="Marcas parceiras e identidade visual." />} />
                 <Route path="usuarios" element={<AdminUsuarios />} />
                 <Route path="configuracoes" element={<AdminConfig />} />
