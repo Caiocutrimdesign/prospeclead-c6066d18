@@ -74,6 +74,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { formatBRL } from "@/lib/format";
+import { useReadOnly } from "@/hooks/useReadOnly";
 import type { Database } from "@/integrations/supabase/types";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
