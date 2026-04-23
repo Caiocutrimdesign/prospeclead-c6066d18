@@ -31,6 +31,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/prospeclead-logo.png";
+import { resolveUiRole, getUiRoleMeta } from "@/lib/roleMapping";
 
 const items = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
@@ -52,11 +53,12 @@ function AdminSidebar() {
   const collapsed = state === "collapsed";
   const { user } = useAuth();
   const { profile } = useProfile();
-  const { isAdmin } = useRole();
+  const { isAdmin, isRh } = useRole();
 
-  // Mapeamento de role para o badge mostrado na UI.
-  // O enum atual no banco é: admin | promoter | rh. Tratamos `admin` como ADMIN_MASTER.
-  const roleLabel = isAdmin ? "ADMIN_MASTER" : "MANAGER";
+  // Mapeamento dos papéis do banco (admin | promoter | rh) para os papéis
+  // de UI herdados do projeto Next.js antigo (ADMIN_MASTER | MANAGER | FINANCIAL).
+  const uiRole = resolveUiRole({ isAdmin, isRh });
+  const roleMeta = getUiRoleMeta(uiRole);
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -94,10 +96,11 @@ function AdminSidebar() {
               </p>
               <Badge
                 variant="outline"
-                className="mt-1 h-5 px-1.5 text-[10px] font-bold bg-primary/10 text-primary border-primary/30"
+                title={roleMeta.description}
+                className={`mt-1 h-5 px-1.5 text-[10px] font-bold ${roleMeta.badgeClass}`}
               >
                 <Shield className="w-2.5 h-2.5 mr-1" />
-                {roleLabel}
+                {roleMeta.label}
               </Badge>
             </div>
           </div>
