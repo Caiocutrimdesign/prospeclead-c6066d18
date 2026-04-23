@@ -1,22 +1,22 @@
 /**
- * Mapeamento entre papéis do banco (app_role: admin | promoter | rh)
+ * Mapeamento entre papéis do banco (app_role: admin | promoter | rh | visualizador)
  * e os papéis de UI mais granulares herdados do projeto Next.js antigo.
  *
- * Esta camada existe APENAS para apresentação. O banco continua com os
- * 3 papéis originais (admin, promoter, rh) — qualquer mudança real de
+ * Esta camada existe APENAS para apresentação. Qualquer mudança real de
  * permissão deve ser feita via migração no enum `app_role`.
  */
 
-export type DbRole = "admin" | "promoter" | "rh";
+export type DbRole = "admin" | "promoter" | "rh" | "visualizador";
 
 export type UiRole =
   | "ADMIN_MASTER"
   | "MANAGER"
   | "FINANCIAL"
+  | "VIEWER"
   | "PROMOTER";
 
 interface UiRoleMeta {
-  label: UiRole;
+  label: UiRole | "VISUALIZADOR";
   /** Texto curto descritivo para tooltip ou subtítulo. */
   description: string;
   /** Classe Tailwind sugerida para badge (usa tokens semânticos). */
@@ -39,6 +39,12 @@ const UI_ROLE_META: Record<UiRole, UiRoleMeta> = {
     description: "Financeiro / RH",
     badgeClass: "bg-success/10 text-success border-success/30",
   },
+  VIEWER: {
+    label: "VISUALIZADOR",
+    description: "Acesso somente leitura",
+    badgeClass:
+      "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/40",
+  },
   PROMOTER: {
     label: "PROMOTER",
     description: "Promoter de campo",
@@ -48,16 +54,15 @@ const UI_ROLE_META: Record<UiRole, UiRoleMeta> = {
 
 /**
  * Converte um papel do banco no papel de UI "padrão" mais alto.
- * Use quando você precisa de UM rótulo só (ex.: badge no header).
  */
 export function dbRoleToUiRole(role: DbRole): UiRole {
   switch (role) {
     case "admin":
-      // ADMIN_MASTER e MANAGER convivem no mesmo papel real.
-      // Por padrão exibimos ADMIN_MASTER no topo.
       return "ADMIN_MASTER";
     case "rh":
       return "FINANCIAL";
+    case "visualizador":
+      return "VIEWER";
     case "promoter":
     default:
       return "PROMOTER";
@@ -66,14 +71,16 @@ export function dbRoleToUiRole(role: DbRole): UiRole {
 
 /**
  * Resolve o papel de UI a partir das flags carregadas pelo hook `useRole`.
- * Prioridade: admin > rh > promoter.
+ * Prioridade: admin > rh > visualizador > promoter.
  */
 export function resolveUiRole(opts: {
   isAdmin: boolean;
   isRh: boolean;
+  isVisualizador?: boolean;
 }): UiRole {
   if (opts.isAdmin) return "ADMIN_MASTER";
   if (opts.isRh) return "FINANCIAL";
+  if (opts.isVisualizador) return "VIEWER";
   return "PROMOTER";
 }
 
