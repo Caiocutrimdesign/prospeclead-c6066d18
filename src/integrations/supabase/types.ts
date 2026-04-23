@@ -200,6 +200,57 @@ export type Database = {
         }
         Relationships: []
       }
+      payslips: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          deductions: number
+          gross_amount: number
+          id: string
+          issued_at: string | null
+          net_amount: number
+          notes: string | null
+          paid_at: string | null
+          pdf_url: string | null
+          reference_month: string
+          status: Database["public"]["Enums"]["payslip_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          deductions?: number
+          gross_amount?: number
+          id?: string
+          issued_at?: string | null
+          net_amount?: number
+          notes?: string | null
+          paid_at?: string | null
+          pdf_url?: string | null
+          reference_month: string
+          status?: Database["public"]["Enums"]["payslip_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          deductions?: number
+          gross_amount?: number
+          id?: string
+          issued_at?: string | null
+          net_amount?: number
+          notes?: string | null
+          paid_at?: string | null
+          pdf_url?: string | null
+          reference_month?: string
+          status?: Database["public"]["Enums"]["payslip_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       pdv_leads: {
         Row: {
           contact_name: string
@@ -313,35 +364,80 @@ export type Database = {
       }
       profiles: {
         Row: {
+          active: boolean
+          approval_notes: string | null
+          approval_status: Database["public"]["Enums"]["approval_status"]
+          approved_at: string | null
+          approved_by: string | null
           created_at: string
           current_location: string | null
           daily_goal: number
           full_name: string | null
           id: string
+          kyc_doc_address_url: string | null
+          kyc_doc_id_back_url: string | null
+          kyc_doc_id_front_url: string | null
+          kyc_doc_selfie_url: string | null
+          kyc_notes: string | null
+          kyc_reviewed_at: string | null
+          kyc_reviewed_by: string | null
+          kyc_status: Database["public"]["Enums"]["kyc_status"]
+          kyc_submitted_at: string | null
           level: Database["public"]["Enums"]["user_level"]
           monthly_earnings: number
+          onboarding_step: number
           streak_days: number
           updated_at: string
         }
         Insert: {
+          active?: boolean
+          approval_notes?: string | null
+          approval_status?: Database["public"]["Enums"]["approval_status"]
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
           current_location?: string | null
           daily_goal?: number
           full_name?: string | null
           id: string
+          kyc_doc_address_url?: string | null
+          kyc_doc_id_back_url?: string | null
+          kyc_doc_id_front_url?: string | null
+          kyc_doc_selfie_url?: string | null
+          kyc_notes?: string | null
+          kyc_reviewed_at?: string | null
+          kyc_reviewed_by?: string | null
+          kyc_status?: Database["public"]["Enums"]["kyc_status"]
+          kyc_submitted_at?: string | null
           level?: Database["public"]["Enums"]["user_level"]
           monthly_earnings?: number
+          onboarding_step?: number
           streak_days?: number
           updated_at?: string
         }
         Update: {
+          active?: boolean
+          approval_notes?: string | null
+          approval_status?: Database["public"]["Enums"]["approval_status"]
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
           current_location?: string | null
           daily_goal?: number
           full_name?: string | null
           id?: string
+          kyc_doc_address_url?: string | null
+          kyc_doc_id_back_url?: string | null
+          kyc_doc_id_front_url?: string | null
+          kyc_doc_selfie_url?: string | null
+          kyc_notes?: string | null
+          kyc_reviewed_at?: string | null
+          kyc_reviewed_by?: string | null
+          kyc_status?: Database["public"]["Enums"]["kyc_status"]
+          kyc_submitted_at?: string | null
           level?: Database["public"]["Enums"]["user_level"]
           monthly_earnings?: number
+          onboarding_step?: number
           streak_days?: number
           updated_at?: string
         }
@@ -583,6 +679,8 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "promoter" | "rh"
+      approval_status: "pendente" | "aprovado" | "rejeitado"
+      kyc_status: "nao_enviado" | "em_analise" | "aprovado" | "rejeitado"
       lead_kind: "b2c" | "b2b"
       lead_status:
         | "coletado"
@@ -592,6 +690,7 @@ export type Database = {
         | "prospectado"
         | "negociando"
         | "fechado"
+      payslip_status: "rascunho" | "emitido" | "pago"
       pix_key_kind: "cpf" | "cnpj" | "email" | "phone" | "random"
       user_level: "BRONZE" | "PRATA" | "OURO"
       visit_status: "pendente" | "em_andamento" | "concluida"
@@ -743,6 +842,8 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "promoter", "rh"],
+      approval_status: ["pendente", "aprovado", "rejeitado"],
+      kyc_status: ["nao_enviado", "em_analise", "aprovado", "rejeitado"],
       lead_kind: ["b2c", "b2b"],
       lead_status: [
         "coletado",
@@ -753,6 +854,7 @@ export const Constants = {
         "negociando",
         "fechado",
       ],
+      payslip_status: ["rascunho", "emitido", "pago"],
       pix_key_kind: ["cpf", "cnpj", "email", "phone", "random"],
       user_level: ["BRONZE", "PRATA", "OURO"],
       visit_status: ["pendente", "em_andamento", "concluida"],
