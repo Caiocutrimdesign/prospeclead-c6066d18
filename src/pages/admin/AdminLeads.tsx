@@ -52,6 +52,7 @@ import {
   CalendarIcon,
   CheckCircle2,
   Eye,
+  FileDown,
   Loader2,
   Pencil,
   Plus,
@@ -62,10 +63,20 @@ import {
   Users,
   X,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { formatBRL } from "@/lib/format";
 import type { Database } from "@/integrations/supabase/types";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 type LeadRow = Database["public"]["Tables"]["leads"]["Row"];
 type LeadInsert = Database["public"]["Tables"]["leads"]["Insert"];
