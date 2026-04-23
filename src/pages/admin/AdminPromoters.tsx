@@ -52,6 +52,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatBRL } from "@/lib/format";
+import { useReadOnly } from "@/hooks/useReadOnly";
 
 type AdminUser = {
   id: string;
@@ -71,6 +72,7 @@ type AdminUser = {
 
 export default function AdminPromoters() {
   const { user } = useAuth();
+  const readOnly = useReadOnly();
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -140,7 +142,9 @@ export default function AdminPromoters() {
             </p>
             <h1 className="text-2xl font-bold md:text-3xl">Promoters & Admins</h1>
             <p className="mt-1 text-sm text-muted-foreground md:text-base">
-              Crie, edite, promova ou exclua usuários do sistema.
+              {readOnly
+                ? "Consulte os usuários cadastrados na plataforma."
+                : "Crie, edite, promova ou exclua usuários do sistema."}
             </p>
           </div>
           <div className="flex w-full flex-col gap-3 xl:w-[540px] xl:flex-row xl:items-center xl:justify-end">
@@ -153,15 +157,17 @@ export default function AdminPromoters() {
                 className="pl-9"
               />
             </div>
-            <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm" className="xl:min-w-[180px]">
-                  <Plus className="w-4 h-4 mr-2" />
-                  <span>Novo promoter</span>
-                </Button>
-              </DialogTrigger>
-              <CreateUserDialog onClose={() => setCreateOpen(false)} onCreated={load} />
-            </Dialog>
+            {!readOnly && (
+              <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm" className="xl:min-w-[180px]">
+                    <Plus className="w-4 h-4 mr-2" />
+                    <span>Novo promoter</span>
+                  </Button>
+                </DialogTrigger>
+                <CreateUserDialog onClose={() => setCreateOpen(false)} onCreated={load} />
+              </Dialog>
+            )}
           </div>
         </div>
       </section>
