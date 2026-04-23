@@ -37,6 +37,8 @@ import RhLayout from "./components/RhLayout";
 import RhDashboard from "./pages/rh/RhDashboard";
 import RhPromoters from "./pages/rh/RhPromoters";
 import RhPagamentos from "./pages/rh/RhPagamentos";
+import VisualizadorLayout from "./components/VisualizadorLayout";
+import AdminVisualizador from "./pages/admin/AdminVisualizador";
 
 const queryClient = new QueryClient();
 
@@ -97,6 +99,13 @@ const App = () => (
                 <Route index element={<RhDashboard />} />
                 <Route path="promoters" element={<RhPromoters />} />
                 <Route path="pagamentos" element={<RhPagamentos />} />
+              </Route>
+              <Route path="/admin/visualizador" element={<VisualizadorLayout />}>
+                <Route index element={<AdminVisualizador />} />
+                <Route path="leads" element={<AdminLeads />} />
+                <Route path="promoters" element={<AdminPromoters />} />
+                <Route path="saques" element={<AdminSaques />} />
+                <Route path="ranking" element={<AdminRanking />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>

@@ -61,6 +61,10 @@ export default function Auth() {
         navigate("/rh", { replace: true });
         return;
       }
+      if (list.includes("visualizador")) {
+        navigate("/admin/visualizador", { replace: true });
+        return;
+      }
     }
     setBusy(false);
     navigate("/", { replace: true });
