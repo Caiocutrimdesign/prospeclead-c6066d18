@@ -37,6 +37,8 @@ import RhLayout from "./components/RhLayout";
 import RhDashboard from "./pages/rh/RhDashboard";
 import RhPromoters from "./pages/rh/RhPromoters";
 import RhPagamentos from "./pages/rh/RhPagamentos";
+import VisualizadorLayout from "./components/VisualizadorLayout";
+import AdminVisualizador from "./pages/admin/AdminVisualizador";
 
 const queryClient = new QueryClient();
 
