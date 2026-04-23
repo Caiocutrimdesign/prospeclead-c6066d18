@@ -278,6 +278,25 @@ export default function AdminLeads() {
     setFormOpen(true);
   };
 
+  /* ----- Formatação de telefone para exportação (+55 (DDD) NNNNN-NNNN) ----- */
+  const formatPhoneExport = (raw?: string | null): string => {
+    if (!raw) return "—";
+    let digits = raw.replace(/\D/g, "");
+    if (!digits) return "—";
+    // Garante DDI 55 quando faltar
+    if (digits.length <= 11) digits = `55${digits}`;
+    if (!digits.startsWith("55")) digits = `55${digits}`;
+
+    const ddi = digits.slice(0, 2);
+    const ddd = digits.slice(2, 4);
+    const rest = digits.slice(4);
+    if (ddd.length < 2 || rest.length < 8) return `+${digits}`;
+
+    const mid = rest.length === 9 ? rest.slice(0, 5) : rest.slice(0, 4);
+    const end = rest.length === 9 ? rest.slice(5) : rest.slice(4);
+    return `+${ddi} (${ddd}) ${mid}-${end}`;
+  };
+
   /* ----- Exportação Excel ----- */
   const exportExcel = async (range: "today" | "month" | "all") => {
     try {
@@ -326,7 +345,7 @@ export default function AdminLeads() {
 
       const body = scope.map((l) => [
         l.name ?? "—",
-        l.phone ?? "—",
+        formatPhoneExport(l.phone),
         l.kind.toUpperCase(),
         STATUS_META[l.status]?.label ?? l.status,
         profiles[l.user_id] ?? "—",
@@ -422,7 +441,7 @@ export default function AdminLeads() {
 
       const body = scope.map((l) => [
         l.name ?? "—",
-        l.phone ?? "—",
+        formatPhoneExport(l.phone),
         l.kind.toUpperCase(),
         STATUS_META[l.status]?.label ?? l.status,
         profiles[l.user_id] ?? "—",
