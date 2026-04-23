@@ -254,6 +254,111 @@ export default function AdminLeads() {
     setFormOpen(true);
   };
 
+  /* ----- Exportação PDF ----- */
+  const exportPDF = async (range: "today" | "month" | "all") => {
+    try {
+      const now = new Date();
+      let scope: LeadRow[] = leads;
+      let rangeLabel = "Todos os Leads";
+
+      if (range === "today") {
+        const todayStr = now.toDateString();
+        scope = leads.filter(
+          (l) => new Date(l.created_at).toDateString() === todayStr,
+        );
+        rangeLabel = "Leads de Hoje";
+      } else if (range === "month") {
+        const m = now.getMonth();
+        const y = now.getFullYear();
+        scope = leads.filter((l) => {
+          const d = new Date(l.created_at);
+          return d.getMonth() === m && d.getFullYear() === y;
+        });
+        rangeLabel = `Leads de ${format(now, "MMMM 'de' yyyy", { locale: ptBR })}`;
+      }
+
+      if (scope.length === 0) {
+        toast.error("Nenhum lead no período selecionado");
+        return;
+      }
+
+      // Buscar nome da marca
+      const { data: settings } = await supabase
+        .from("app_settings")
+        .select("brand_name")
+        .eq("id", 1)
+        .maybeSingle();
+      const brandName = settings?.brand_name ?? "Plataforma";
+
+      const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const generatedAt = format(now, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
+
+      // Header
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+      doc.text(brandName, 40, 40);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
+      doc.text(rangeLabel, 40, 58);
+      doc.setFontSize(9);
+      doc.setTextColor(120);
+      doc.text(`Gerado em ${generatedAt}`, pageWidth - 40, 40, { align: "right" });
+      doc.text(`Total: ${scope.length} lead(s)`, pageWidth - 40, 54, {
+        align: "right",
+      });
+      doc.setTextColor(0);
+
+      // Tabela
+      const rows = scope.map((l) => [
+        l.name ?? "—",
+        l.phone ?? "—",
+        l.kind.toUpperCase(),
+        STATUS_META[l.status]?.label ?? l.status,
+        profiles[l.user_id] ?? "—",
+        format(new Date(l.captured_at ?? l.created_at), "dd/MM/yyyy HH:mm", {
+          locale: ptBR,
+        }),
+      ]);
+
+      autoTable(doc, {
+        startY: 80,
+        head: [["Lead", "Telefone", "Tipo", "Status", "Promotor", "Captura"]],
+        body: rows,
+        styles: { fontSize: 9, cellPadding: 6 },
+        headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: "bold" },
+        alternateRowStyles: { fillColor: [245, 247, 250] },
+        margin: { left: 40, right: 40, bottom: 40 },
+        didDrawPage: () => {
+          const pageNum = doc.getNumberOfPages();
+          doc.setFontSize(8);
+          doc.setTextColor(120);
+          doc.text(
+            `${brandName} • Relatório de Leads`,
+            40,
+            pageHeight - 20,
+          );
+          doc.text(
+            `Página ${pageNum}`,
+            pageWidth - 40,
+            pageHeight - 20,
+            { align: "right" },
+          );
+          doc.setTextColor(0);
+        },
+      });
+
+      const fileName = `leads-${range}-${format(now, "yyyy-MM-dd-HHmm")}.pdf`;
+      doc.save(fileName);
+      toast.success(`${scope.length} leads exportados`);
+    } catch (e) {
+      console.error(e);
+      toast.error("Erro ao gerar PDF");
+    }
+  };
+
+
   return (
     <div className="space-y-6 max-w-[1400px]">
       {/* ---------- Header ---------- */}
