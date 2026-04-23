@@ -32,6 +32,7 @@ import AdminRanking from "./pages/admin/AdminRanking";
 import AdminPlaceholder from "./pages/admin/AdminPlaceholder";
 import AdminUsuarios from "./pages/admin/AdminUsuarios";
 import AdminConfig from "./pages/admin/AdminConfig";
+import AdminProdutos from "./pages/admin/AdminProdutos";
 import RhLayout from "./components/RhLayout";
 import RhDashboard from "./pages/rh/RhDashboard";
 import RhPromoters from "./pages/rh/RhPromoters";
