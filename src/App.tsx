@@ -29,6 +29,7 @@ import AdminPromoters from "./pages/admin/AdminPromoters";
 import AdminLeads from "./pages/admin/AdminLeads";
 import AdminSaques from "./pages/admin/AdminSaques";
 import AdminRanking from "./pages/admin/AdminRanking";
+import AdminPlaceholder from "./pages/admin/AdminPlaceholder";
 import RhLayout from "./components/RhLayout";
 import RhDashboard from "./pages/rh/RhDashboard";
 import RhPromoters from "./pages/rh/RhPromoters";
@@ -67,6 +68,27 @@ const App = () => (
                 <Route path="leads" element={<AdminLeads />} />
                 <Route path="saques" element={<AdminSaques />} />
                 <Route path="ranking" element={<AdminRanking />} />
+                {/* Omnichannel IA */}
+                <Route path="inbox" element={<AdminPlaceholder title="Caixa de Entrada" description="Central omnichannel de mensagens (WhatsApp, e-mail, chat)." />} />
+                <Route path="ai-agents" element={<AdminPlaceholder title="Agentes de IA" description="Configuração de agentes inteligentes para qualificação e atendimento." />} />
+                <Route path="campaigns" element={<AdminPlaceholder title="Motor de Campanhas" description="Disparos automatizados e jornadas de marketing." />} />
+                <Route path="radar-b2b" element={<AdminPlaceholder title="Radar B2B" description="Captura automática de empresas e oportunidades B2B." />} />
+                {/* Operação */}
+                <Route path="tarefas" element={<AdminPlaceholder title="Tarefas & Agenda" description="Visualização global de tarefas e visitas agendadas." />} />
+                <Route path="kanban" element={<AdminPlaceholder title="Kanban — Funil" description="Funil visual de leads e oportunidades." />} />
+                {/* Administração */}
+                <Route path="catalogo" element={<AdminPlaceholder title="Catálogo e Comissões" description="Produtos, planos e regras de comissionamento." />} />
+                <Route path="marcas" element={<AdminPlaceholder title="Gestão de Marcas" description="Marcas parceiras e identidade visual." />} />
+                <Route path="usuarios" element={<AdminPlaceholder title="Usuários" description="Gestão completa de contas e papéis do sistema." />} />
+                <Route path="configuracoes" element={<AdminPlaceholder title="Configurações" description="Parâmetros gerais da plataforma." />} />
+                {/* Financeiro */}
+                <Route path="auditoria-fotos" element={<AdminPlaceholder title="Auditoria de Fotos" description="Validação manual das fotos enviadas pelos promoters." />} />
+                <Route path="comissoes-kyc" element={<AdminPlaceholder title="Comissões & KYC" description="Aprovação de comissões e verificação de identidade." />} />
+                <Route path="revisao-kyc" element={<AdminPlaceholder title="Revisão KYC" description="Fila de documentos KYC pendentes." />} />
+                {/* Rede PDV */}
+                <Route path="leads-pdv" element={<AdminPlaceholder title="Leads PDV" description="Leads capturados via QR Code nos pontos de venda." />} />
+                <Route path="fila-oportunidades" element={<AdminPlaceholder title="Fila de Oportunidades" description="Oportunidades aguardando distribuição para promoters." />} />
+                <Route path="pdvs" element={<AdminPlaceholder title="Pontos de Venda" description="Cadastro e gestão de PDVs ativos." />} />
               </Route>
               <Route path="/rh" element={<RhLayout />}>
                 <Route index element={<RhDashboard />} />
