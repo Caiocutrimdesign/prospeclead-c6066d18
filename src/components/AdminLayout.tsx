@@ -326,7 +326,7 @@ function AdminHeader() {
           <DropdownMenuTrigger asChild>
             <button className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-lg border border-border hover:bg-muted transition-colors">
               <Avatar className="h-7 w-7">
-                <AvatarFallback className="bg-success/10 text-success text-[10px] font-bold">
+                <AvatarFallback className="bg-foreground/10 text-foreground text-[10px] font-bold">
                   {getInitials(profile?.full_name, user?.email)}
                 </AvatarFallback>
               </Avatar>
