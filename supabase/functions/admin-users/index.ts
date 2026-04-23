@@ -22,10 +22,21 @@ type Action =
       email: string;
       password: string;
       full_name?: string;
-      role?: "admin" | "promoter";
+      phone?: string;
+      tenant?: string;
+      role?: "admin" | "promoter" | "rh";
     }
   | { type: "update_password"; user_id: string; password: string }
-  | { type: "set_role"; user_id: string; role: "admin" | "promoter" }
+  | {
+      type: "update";
+      user_id: string;
+      full_name?: string;
+      phone?: string;
+      tenant?: string;
+      role?: "admin" | "promoter" | "rh";
+      banned?: boolean;
+    }
+  | { type: "set_role"; user_id: string; role: "admin" | "promoter" | "rh" }
   | { type: "delete"; user_id: string };
 
 Deno.serve(async (req) => {
@@ -88,11 +99,13 @@ Deno.serve(async (req) => {
           return {
             id: u.id,
             email: u.email,
+            phone: (u.user_metadata as any)?.phone ?? null,
             created_at: u.created_at,
             last_sign_in_at: u.last_sign_in_at,
             banned_until: (u as any).banned_until ?? null,
             roles: userRoles,
             is_admin: userRoles.includes("admin"),
+            is_rh: userRoles.includes("rh"),
             profile,
           };
         });
@@ -107,18 +120,59 @@ Deno.serve(async (req) => {
           email: action.email,
           password: action.password,
           email_confirm: true,
-          user_metadata: { full_name: action.full_name ?? "" },
+          user_metadata: {
+            full_name: action.full_name ?? "",
+            phone: action.phone ?? "",
+          },
         });
         if (error) throw error;
         const newId = created.user.id;
         // Profile e role 'promoter' são criados pelos triggers.
-        // Se admin pediu role admin, adiciona.
-        if (action.role === "admin") {
+        if (action.tenant) {
+          await admin
+            .from("profiles")
+            .update({ current_location: action.tenant })
+            .eq("id", newId);
+        }
+        if (action.role && action.role !== "promoter") {
           await admin
             .from("user_roles")
-            .insert({ user_id: newId, role: "admin" });
+            .insert({ user_id: newId, role: action.role });
         }
         return json({ user: created.user });
+      }
+
+      case "update": {
+        const updates: Record<string, unknown> = {};
+        if (action.full_name !== undefined) updates.full_name = action.full_name;
+        if (action.tenant !== undefined) updates.current_location = action.tenant;
+        if (Object.keys(updates).length > 0) {
+          await admin.from("profiles").update(updates).eq("id", action.user_id);
+        }
+        if (action.phone !== undefined) {
+          await admin.auth.admin.updateUserById(action.user_id, {
+            user_metadata: { phone: action.phone },
+          });
+        }
+        if (action.banned !== undefined) {
+          await admin.auth.admin.updateUserById(action.user_id, {
+            ban_duration: action.banned ? "876000h" : "none",
+          });
+        }
+        if (action.role) {
+          // remove papéis privilegiados existentes (admin/rh) e aplica o novo
+          await admin
+            .from("user_roles")
+            .delete()
+            .eq("user_id", action.user_id)
+            .in("role", ["admin", "rh"]);
+          if (action.role !== "promoter") {
+            await admin
+              .from("user_roles")
+              .insert({ user_id: action.user_id, role: action.role });
+          }
+        }
+        return json({ ok: true });
       }
 
       case "update_password": {
@@ -131,17 +185,15 @@ Deno.serve(async (req) => {
       }
 
       case "set_role": {
-        if (action.role === "admin") {
+        await admin
+          .from("user_roles")
+          .delete()
+          .eq("user_id", action.user_id)
+          .in("role", ["admin", "rh"]);
+        if (action.role !== "promoter") {
           await admin
             .from("user_roles")
-            .insert({ user_id: action.user_id, role: "admin" })
-            .select();
-        } else {
-          await admin
-            .from("user_roles")
-            .delete()
-            .eq("user_id", action.user_id)
-            .eq("role", "admin");
+            .insert({ user_id: action.user_id, role: action.role });
         }
         return json({ ok: true });
       }
