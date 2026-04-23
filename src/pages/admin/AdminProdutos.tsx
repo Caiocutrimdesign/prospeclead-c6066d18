@@ -395,7 +395,7 @@ export default function AdminProdutos() {
       {/* Stats */}
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         <StatCard label="Total" value={stats.total} icon={<Package className="h-4 w-4" />} />
-        <StatCard label="Ativos" value={stats.active} icon={<Box className="h-4 w-4" />} accent="text-emerald-600" />
+        <StatCard label="Ativos" value={stats.active} icon={<Box className="h-4 w-4" />} accent="text-primary" />
         <StatCard label="Pacotes" value={stats.pacotes} icon={<Layers className="h-4 w-4" />} />
         <StatCard label="Assinaturas" value={stats.assinaturas} icon={<Repeat className="h-4 w-4" />} />
       </div>
