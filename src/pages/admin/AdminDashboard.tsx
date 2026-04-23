@@ -19,10 +19,16 @@ import {
   ArrowUp,
   ArrowDown,
   Minus,
+  Target,
+  BarChart3,
+  Phone,
 } from "lucide-react";
 import {
+  Area,
+  AreaChart,
   Bar,
   BarChart,
+  CartesianGrid,
   Cell,
   Pie,
   PieChart,
@@ -31,12 +37,21 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 /* ---------- Tipos ---------- */
 interface LeadRow {
   id: string;
   user_id: string;
   name: string;
+  phone: string | null;
   status: string;
   created_at: string;
 }
@@ -109,7 +124,7 @@ export default function AdminDashboard() {
       await Promise.all([
         supabase
           .from("leads")
-          .select("id,user_id,name,status,created_at")
+          .select("id,user_id,name,phone,status,created_at")
           .order("created_at", { ascending: false })
           .limit(1000),
         supabase.from("profiles").select("id,full_name"),
