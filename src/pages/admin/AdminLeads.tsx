@@ -369,10 +369,33 @@ export default function AdminLeads() {
             Gestão completa de todos os leads da plataforma.
           </p>
         </div>
-        <Button onClick={openCreate} className="gap-2">
-          <Plus className="w-4 h-4" />
-          Novo Lead
-        </Button>
+        <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <FileDown className="w-4 h-4" />
+                Exportar PDF
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Período do relatório</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => exportPDF("today")}>
+                Leads de hoje
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => exportPDF("month")}>
+                Leads do mês atual
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => exportPDF("all")}>
+                Todos os leads
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button onClick={openCreate} className="gap-2">
+            <Plus className="w-4 h-4" />
+            Novo Lead
+          </Button>
+        </div>
       </div>
 
       {/* ---------- Stats ---------- */}
