@@ -14,6 +14,72 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          brand_logo_url: string | null
+          brand_name: string
+          commission_capture_fixed: number
+          commission_goal_bonus: number
+          commission_sale_percent: number
+          id: number
+          limit_max_leads_month: number
+          limit_max_promoters: number
+          payment_api_key: string | null
+          payment_gateway_connected: boolean
+          payment_pix_key: string | null
+          plan: Database["public"]["Enums"]["plan_tier"]
+          primary_color: string
+          updated_at: string
+          updated_by: string | null
+          whatsapp_connected: boolean
+          whatsapp_phone_id: string | null
+          whatsapp_token: string | null
+          whatsapp_webhook_url: string | null
+        }
+        Insert: {
+          brand_logo_url?: string | null
+          brand_name?: string
+          commission_capture_fixed?: number
+          commission_goal_bonus?: number
+          commission_sale_percent?: number
+          id?: number
+          limit_max_leads_month?: number
+          limit_max_promoters?: number
+          payment_api_key?: string | null
+          payment_gateway_connected?: boolean
+          payment_pix_key?: string | null
+          plan?: Database["public"]["Enums"]["plan_tier"]
+          primary_color?: string
+          updated_at?: string
+          updated_by?: string | null
+          whatsapp_connected?: boolean
+          whatsapp_phone_id?: string | null
+          whatsapp_token?: string | null
+          whatsapp_webhook_url?: string | null
+        }
+        Update: {
+          brand_logo_url?: string | null
+          brand_name?: string
+          commission_capture_fixed?: number
+          commission_goal_bonus?: number
+          commission_sale_percent?: number
+          id?: number
+          limit_max_leads_month?: number
+          limit_max_promoters?: number
+          payment_api_key?: string | null
+          payment_gateway_connected?: boolean
+          payment_pix_key?: string | null
+          plan?: Database["public"]["Enums"]["plan_tier"]
+          primary_color?: string
+          updated_at?: string
+          updated_by?: string | null
+          whatsapp_connected?: boolean
+          whatsapp_phone_id?: string | null
+          whatsapp_token?: string | null
+          whatsapp_webhook_url?: string | null
+        }
+        Relationships: []
+      }
       checkins: {
         Row: {
           created_at: string
@@ -692,6 +758,7 @@ export type Database = {
         | "fechado"
       payslip_status: "rascunho" | "emitido" | "pago"
       pix_key_kind: "cpf" | "cnpj" | "email" | "phone" | "random"
+      plan_tier: "free" | "pro" | "enterprise"
       user_level: "BRONZE" | "PRATA" | "OURO"
       visit_status: "pendente" | "em_andamento" | "concluida"
       wallet_tx_kind:
@@ -856,6 +923,7 @@ export const Constants = {
       ],
       payslip_status: ["rascunho", "emitido", "pago"],
       pix_key_kind: ["cpf", "cnpj", "email", "phone", "random"],
+      plan_tier: ["free", "pro", "enterprise"],
       user_level: ["BRONZE", "PRATA", "OURO"],
       visit_status: ["pendente", "em_andamento", "concluida"],
       wallet_tx_kind: [
