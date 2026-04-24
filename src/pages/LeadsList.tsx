@@ -19,11 +19,11 @@ import type { Database } from "@/integrations/supabase/types";
 
 type Lead = Database["public"]["Tables"]["leads"]["Row"];
 
-const B2C_STATUSES = ["todos", "coletado", "contatado", "respondido", "vendido"] as const;
+const B2C_STATUSES = ["todos", "prospectado", "contatado", "respondido", "vendido"] as const;
 const B2B_STATUSES = ["todos", "prospectado", "contatado", "negociando", "fechado"] as const;
 
 const statusColors: Record<string, string> = {
-  coletado: "bg-muted text-muted-foreground",
+  prospectado: "bg-muted text-muted-foreground",
   contatado: "bg-brand-blue/15 text-brand-blue",
   respondido: "bg-warning/15 text-warning",
   vendido: "bg-success/15 text-success",

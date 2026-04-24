@@ -738,7 +738,7 @@ export default function AdminDashboard() {
               <TableRow>
                 <TableHead>Nome</TableHead>
                 <TableHead>Telefone</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Prospectado</TableHead>
                 <TableHead className="text-right">Data</TableHead>
               </TableRow>
             </TableHeader>
@@ -902,7 +902,7 @@ function StatusBadge({ status }: { status: string }) {
         styles[status] ?? styles.coletado
       }`}
     >
-      {status}
+      {status === "coletado" ? "prospectado" : status}
     </Badge>
   );
 }

@@ -28,11 +28,11 @@ import type { Database } from "@/integrations/supabase/types";
 type Lead = Database["public"]["Tables"]["leads"]["Row"];
 type LeadStatus = Database["public"]["Enums"]["lead_status"];
 
-const B2C_FLOW: LeadStatus[] = ["coletado", "contatado", "respondido", "vendido"];
+const B2C_FLOW: LeadStatus[] = ["prospectado", "contatado", "respondido", "vendido"];
 const B2B_FLOW: LeadStatus[] = ["prospectado", "contatado", "negociando", "fechado"];
 
 const statusColors: Record<string, string> = {
-  coletado: "bg-muted text-muted-foreground",
+  prospectado: "bg-muted text-muted-foreground",
   contatado: "bg-brand-blue/15 text-brand-blue",
   respondido: "bg-warning/15 text-warning",
   vendido: "bg-success/15 text-success",

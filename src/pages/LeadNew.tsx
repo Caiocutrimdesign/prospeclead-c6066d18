@@ -138,7 +138,7 @@ export default function LeadNew() {
       phone: form.phone || null,
       vehicle_model: form.vehicle_model || null,
       vehicle_plate: form.plate?.toUpperCase() || null,
-      status: action === "save" ? "vendido" : "contatado",
+      status: action === "save" ? "prospectado" : "contatado",
       latitude: coords?.lat ?? null,
       longitude: coords?.lng ?? null,
       location_accuracy: coords?.accuracy ?? null,
@@ -208,7 +208,7 @@ export default function LeadNew() {
       registerActivity();
       openWa();
 
-      toast.success(action === "save" ? "Lead salvo como vendido!" : "Lead cadastrado!");
+      toast.success(action === "save" ? "Lead cadastrado como prospectado!" : "Lead cadastrado!");
       navigate("/leads?tab=b2c");
     } catch (e: any) {
       console.error("Erro ao salvar lead:", e);

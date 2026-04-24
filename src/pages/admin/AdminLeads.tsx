@@ -103,7 +103,7 @@ const STATUS_META: Record<
   { label: string; className: string }
 > = {
   coletado: {
-    label: "Coletado",
+    label: "Prospectado",
     className: "bg-muted text-foreground hover:bg-muted",
   },
   contatado: {
@@ -340,7 +340,7 @@ export default function AdminLeads() {
         [`Gerado em: ${generatedAt}`],
         [`Total de leads: ${scope.length}`],
         [],
-        ["Lead", "Telefone", "Tipo", "Status", "Promotor", "Data da Captura"],
+        ["Lead", "Telefone", "Tipo", "Prospectado", "Promotor", "Data da Captura"],
       ];
 
       const body = scope.map((l) => [
@@ -451,7 +451,7 @@ export default function AdminLeads() {
       ]);
 
       autoTable(doc, {
-        head: [["Lead", "Telefone", "Tipo", "Status", "Promotor", "Data da Captura"]],
+        head: [["Lead", "Telefone", "Tipo", "Prospectado", "Promotor", "Data da Captura"]],
         body,
         startY: 90,
         styles: { fontSize: 9, cellPadding: 5 },
@@ -599,7 +599,7 @@ export default function AdminLeads() {
           </div>
           <Select value={filterStatus} onValueChange={setFilterStatus}>
             <SelectTrigger className="lg:col-span-2">
-              <SelectValue placeholder="Status" />
+              <SelectValue placeholder="Prospectado" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos status</SelectItem>
@@ -667,7 +667,7 @@ export default function AdminLeads() {
               <TableHead>Cliente</TableHead>
               <TableHead>Tipo</TableHead>
               <TableHead>Origem</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>Prospectado</TableHead>
               <TableHead className="text-right">Comissão</TableHead>
               <TableHead>Data Criação</TableHead>
               <TableHead className="text-right">Ações</TableHead>
@@ -956,7 +956,7 @@ function LeadDetailDialog({
               </Badge>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Status</p>
+              <p className="text-xs text-muted-foreground">Prospectado</p>
               <Badge
                 className={cn(
                   "border-transparent mt-1",
@@ -1242,7 +1242,7 @@ function LeadFormDialog({
           </div>
 
           <div>
-            <Label>Status</Label>
+            <Label>Prospectado</Label>
             <Select
               value={form.status}
               onValueChange={(v) => set("status", v as LeadStatus)}
