@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from "react";
-import { format, differenceInDays, subDays } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import {
   Users,
   TrendingUp,
@@ -27,6 +27,7 @@ import {
   History,
   X,
   LayoutGrid,
+  Loader2,
 } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
@@ -67,96 +68,33 @@ import { toast } from "sonner";
    TYPES & CONSTANTS
    ============================================================ */
 
-const COLUMNS = [
-  { id: "novo", title: "Novo Lead", color: "bg-blue-500/10 border-blue-200" },
-  { id: "ia", title: "Qualificado pela IA", color: "bg-purple-500/10 border-purple-200" },
-  { id: "contato", title: "Contato Realizado", color: "bg-amber-500/10 border-amber-200" },
-  { id: "visita", title: "Visita Agendada", color: "bg-indigo-500/10 border-indigo-200" },
-  { id: "proposta", title: "Proposta Enviada", color: "bg-cyan-500/10 border-cyan-200" },
-  { id: "fechado", title: "Instalado / Fechado", color: "bg-emerald-500/10 border-emerald-200" },
-  { id: "perdido", title: "Perdido / Sem Interesse", color: "bg-slate-500/10 border-slate-200" },
+type LeadStatus = Database["public"]["Enums"]["lead_status"];
+
+const COLUMNS: { id: LeadStatus; title: string; color: string }[] = [
+  { id: "prospectado", title: "Novo Lead", color: "bg-blue-500/10 border-blue-200" },
+  { id: "coletado", title: "Coletado", color: "bg-purple-500/10 border-purple-200" },
+  { id: "contatado", title: "Contato Realizado", color: "bg-amber-500/10 border-amber-200" },
+  { id: "respondido", title: "Qualificado", color: "bg-indigo-500/10 border-indigo-200" },
+  { id: "negociando", title: "Em Negociação", color: "bg-cyan-500/10 border-cyan-200" },
+  { id: "fechado", title: "Fechado", color: "bg-emerald-500/10 border-emerald-200" },
+  { id: "vendido", title: "Vendido", color: "bg-slate-500/10 border-slate-200" },
 ];
 
-const MOCK_PROMOTERS = [
-  { id: "p1", name: "Caio Cutrim", avatar: "" },
-  { id: "p2", name: "Ana Silva", avatar: "" },
-  { id: "p3", name: "Carlos Oliveira", avatar: "" },
-];
-
-const INITIAL_LEADS = [
-  {
-    id: "l1",
-    name: "João Pereira",
-    phone: "(11) 98888-7777",
-    promoterId: "p1",
-    column: "novo",
-    enteredAt: subDays(new Date(), 2),
-    priority: "Quente",
-    hasPendingTask: true,
-    history: [{ date: subDays(new Date(), 2), from: "", to: "novo", reason: "Lead capturado via Landing Page" }],
-    notes: "Interessado em plano solar residencial.",
-  },
-  {
-    id: "l2",
-    name: "Maria Souza",
-    phone: "(21) 97777-6666",
-    promoterId: "p2",
-    column: "ia",
-    enteredAt: subDays(new Date(), 8),
-    priority: "Frio",
-    hasPendingTask: false,
-    history: [
-      { date: subDays(new Date(), 8), from: "", to: "novo", reason: "Entrada manual" },
-      { date: subDays(new Date(), 5), from: "novo", to: "ia", reason: "Qualificação automática concluída" },
-    ],
-    notes: "Aguardando confirmação de endereço.",
-  },
-  {
-    id: "l3",
-    name: "Posto Shell - Centro",
-    phone: "(31) 96666-5555",
-    promoterId: "p1",
-    column: "visita",
-    enteredAt: subDays(new Date(), 1),
-    priority: "Quente",
-    hasPendingTask: true,
-    history: [
-      { date: subDays(new Date(), 4), from: "", to: "novo", reason: "Indicação" },
-      { date: subDays(new Date(), 3), from: "novo", to: "contato", reason: "Primeiro contato telefônico" },
-      { date: subDays(new Date(), 1), from: "contato", to: "visita", reason: "Visita agendada para vistoria" },
-    ],
-    notes: "Cliente corporativo com alto potencial.",
-  },
-  {
-    id: "l4",
-    name: "Ricardo Lima",
-    phone: "(11) 95555-4444",
-    promoterId: "p3",
-    column: "proposta",
-    enteredAt: subDays(new Date(), 10),
-    priority: "Quente",
-    hasPendingTask: false,
-    history: [
-      { date: subDays(new Date(), 10), from: "contato", to: "proposta", reason: "Orçamento enviado via PDF" },
-    ],
-    notes: "Analisando custo-benefício.",
-  },
-];
+// Removido Mock de Leads - Agora usando Supabase
 
 /* ============================================================
    MAIN COMPONENT
    ============================================================ */
 
 export default function AdminKanban() {
-  const [leads, setLeads] = useState(INITIAL_LEADS);
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [filterPromoter, setFilterPromoter] = useState("all");
   const [filterPriority, setFilterPriority] = useState("all");
   const [showLost, setShowLost] = useState(true);
 
   // DnD & Modal States
-  const [draggingLeadId, setDraggingLeadId] = useState<string | null>(null);
-  const [moveTarget, setMoveTarget] = useState<{ leadId: string, toColumn: string } | null>(null);
+  const [moveTarget, setMoveTarget] = useState<{ leadId: string, toColumn: LeadStatus } | null>(null);
   const [moveReason, setMoveReason] = useState("");
   const [createFollowup, setCreateFollowup] = useState(false);
 
@@ -164,41 +102,97 @@ export default function AdminKanban() {
   const [selectedLead, setSelectedLead] = useState<any>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  // Computed Stats
+  // --- FETCH DATA ---
+  const { data: leads = [], isLoading: loadingLeads } = useQuery({
+    queryKey: ["leads-kanban"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("leads")
+        .select(`
+          *,
+          profiles:user_id (full_name)
+        `)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        toast.error("Erro ao carregar leads.");
+        throw error;
+      }
+      return data;
+    },
+  });
+
+  const { data: promoters = [] } = useQuery({
+    queryKey: ["promoters"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .order("full_name");
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // --- MUTATIONS ---
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ leadId, newStatus }: { leadId: string, newStatus: LeadStatus }) => {
+      const { error } = await supabase
+        .from("leads")
+        .update({ 
+          status: newStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", leadId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leads-kanban"] });
+      toast.success("Lead atualizado com sucesso!");
+    },
+    onError: (error) => {
+      console.error("Erro na mutação:", error);
+      toast.error("Erro ao mover lead.");
+    }
+  });
+
+  // --- COMPUTED ---
   const stats = useMemo(() => {
-    const activeLeads = leads.filter(l => l.column !== "perdido");
-    const stuckLeads = activeLeads.filter(l => differenceInDays(new Date(), l.enteredAt) > 7).length;
+    const activeLeads = leads.filter(l => l.status !== "fechado"); // Simplificado
+    const stuckLeads = leads.filter(l => {
+      const days = differenceInDays(new Date(), new Date(l.updated_at || l.created_at));
+      return days > 7 && l.status !== "fechado" && l.status !== "vendido";
+    }).length;
     
     const colCounts = COLUMNS.map(col => ({
       id: col.id,
       title: col.title,
-      count: leads.filter(l => l.column === col.id).length
+      count: leads.filter(l => l.status === col.id).length
     }));
     const bottleneck = [...colCounts].sort((a, b) => b.count - a.count)[0];
 
     return {
       totalActive: activeLeads.length,
       stuckLeads,
-      convRate: "12.4%", // Mocked
+      convRate: leads.length > 0 ? `${((leads.filter(l => l.status === "vendido").length / leads.length) * 100).toFixed(1)}%` : "0%",
       bottleneck: bottleneck?.title || "Nenhuma",
     };
   }, [leads]);
 
-  // Filtering
   const filteredLeads = useMemo(() => {
     return leads.filter(l => {
-      if (!showLost && l.column === "perdido") return false;
-      if (filterPromoter !== "all" && l.promoterId !== filterPromoter) return false;
-      if (filterPriority !== "all" && l.priority !== filterPriority) return false;
+      // Filtros
+      if (filterPromoter !== "all" && l.user_id !== filterPromoter) return false;
       if (search && !l.name.toLowerCase().includes(search.toLowerCase())) return false;
       return true;
     });
-  }, [leads, search, filterPromoter, filterPriority, showLost]);
+  }, [leads, search, filterPromoter]);
 
   /* ----- HANDLERS ----- */
 
   const onDragStart = (e: React.DragEvent, leadId: string) => {
-    setDraggingLeadId(leadId);
     e.dataTransfer.setData("leadId", leadId);
     e.dataTransfer.effectAllowed = "move";
   };
@@ -208,49 +202,26 @@ export default function AdminKanban() {
     e.dataTransfer.dropEffect = "move";
   };
 
-  const onDrop = (e: React.DragEvent, toColumnId: string) => {
+  const onDrop = (e: React.DragEvent, toColumnId: LeadStatus) => {
     e.preventDefault();
     const leadId = e.dataTransfer.getData("leadId");
     const lead = leads.find(l => l.id === leadId);
     
-    if (lead && lead.column !== toColumnId) {
+    if (lead && lead.status !== toColumnId) {
       setMoveTarget({ leadId, toColumn: toColumnId });
       setMoveReason("");
-      setCreateFollowup(false);
     }
   };
 
   const confirmMove = () => {
     if (!moveTarget) return;
-    if (!moveReason.trim()) {
-      toast.error("Por favor, informe o motivo da mudança.");
-      return;
-    }
-
-    setLeads(prev => prev.map(l => {
-      if (l.id === moveTarget.leadId) {
-        return {
-          ...l,
-          column: moveTarget.toColumn,
-          enteredAt: new Date(),
-          history: [
-            ...l.history,
-            { date: new Date(), from: l.column, to: moveTarget.toColumn, reason: moveReason }
-          ],
-          hasPendingTask: createFollowup ? true : l.hasPendingTask
-        };
-      }
-      return l;
-    }));
-
-    if (createFollowup) {
-      toast.success("Movimentação registrada e tarefa de follow-up criada!");
-    } else {
-      toast.success("Movimentação registrada com sucesso!");
-    }
-
+    updateStatusMutation.mutate({ 
+      leadId: moveTarget.leadId, 
+      newStatus: moveTarget.toColumn 
+    });
     setMoveTarget(null);
   };
+
 
   return (
     <div className="space-y-6">
@@ -263,17 +234,23 @@ export default function AdminKanban() {
       </div>
 
       {/* ---------- METRICS ---------- */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard label="Leads Ativos" value={stats.totalActive} icon={Users} />
-        <MetricCard 
-          label="Parados > 7 dias" 
-          value={stats.stuckLeads} 
-          icon={AlertCircle} 
-          badge={stats.stuckLeads > 0 ? { text: "Alerta", color: "bg-red-500" } : undefined} 
-        />
-        <MetricCard label="Conversão Semanal" value={stats.convRate} icon={TrendingUp} />
-        <MetricCard label="Gargalo Atual" value={stats.bottleneck} icon={Target} subtext="Coluna com mais leads" />
-      </div>
+      {loadingLeads ? (
+        <div className="flex items-center justify-center p-12">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <MetricCard label="Leads Ativos" value={stats.totalActive} icon={Users} />
+          <MetricCard 
+            label="Parados > 7 dias" 
+            value={stats.stuckLeads} 
+            icon={AlertCircle} 
+            badge={stats.stuckLeads > 0 ? { text: "Alerta", color: "bg-red-500" } : undefined} 
+          />
+          <MetricCard label="Conversão Semanal" value={stats.convRate} icon={TrendingUp} />
+          <MetricCard label="Gargalo Atual" value={stats.bottleneck} icon={Target} subtext="Coluna com mais leads" />
+        </div>
+      )}
 
       {/* ---------- FILTERS ---------- */}
       <Card className="p-4">
@@ -294,7 +271,7 @@ export default function AdminKanban() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos Responsáveis</SelectItem>
-                {MOCK_PROMOTERS.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                {promoters.map(p => <SelectItem key={p.id} value={p.id}>{p.full_name}</SelectItem>)}
               </SelectContent>
             </Select>
 
@@ -321,8 +298,7 @@ export default function AdminKanban() {
       <ScrollArea className="w-full whitespace-nowrap pb-4">
         <div className="flex gap-4 p-1">
           {COLUMNS.map(col => {
-            if (!showLost && col.id === "perdido") return null;
-            const colLeads = filteredLeads.filter(l => l.column === col.id);
+            const colLeads = filteredLeads.filter(l => l.status === col.id);
             return (
               <div 
                 key={col.id} 
@@ -416,10 +392,10 @@ export default function AdminKanban() {
           <div className="py-6 space-y-8">
             {/* DETAILS */}
             <div className="grid grid-cols-2 gap-6">
-              <DetailItem icon={User} label="Responsável" value={MOCK_PROMOTERS.find(p => p.id === selectedLead?.promoterId)?.name} />
-              <DetailItem icon={LucideCalendar} label="Data de Entrada" value={selectedLead && format(selectedLead.enteredAt, "dd/MM/yyyy")} />
-              <DetailItem icon={Clock} label="Tempo na Coluna" value={`${selectedLead && differenceInDays(new Date(), selectedLead.enteredAt)} dias`} />
-              <DetailItem icon={CheckCircle2} label="Tarefas Pendentes" value={selectedLead?.hasPendingTask ? "Sim" : "Não"} />
+              <DetailItem icon={User} label="Responsável" value={selectedLead?.profiles?.full_name} />
+              <DetailItem icon={LucideCalendar} label="Data de Entrada" value={selectedLead && format(new Date(selectedLead.created_at), "dd/MM/yyyy")} />
+              <DetailItem icon={Clock} label="Última Atualização" value={selectedLead && format(new Date(selectedLead.updated_at || selectedLead.created_at), "dd/MM/yyyy")} />
+              <DetailItem icon={CheckCircle2} label="Tipo de Lead" value={selectedLead?.kind?.toUpperCase()} />
             </div>
 
             {/* ANNOTATIONS */}
@@ -433,21 +409,11 @@ export default function AdminKanban() {
 
             {/* HISTORY */}
             <div className="space-y-4">
-              <Label className="flex items-center gap-2"><History className="w-4 h-4" /> Histórico de Movimentações</Label>
-              <div className="relative pl-6 space-y-6 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-px before:bg-border">
-                {selectedLead?.history.map((item: any, i: number) => (
-                  <div key={i} className="relative">
-                    <div className="absolute -left-[21px] top-1 w-3 h-3 rounded-full bg-primary border-2 border-background shadow-sm" />
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs font-bold text-primary uppercase">{format(item.date, "dd MMM, HH:mm", { locale: ptBR })}</p>
-                        {item.from && <div className="flex items-center gap-1 text-[10px] text-muted-foreground"><span className="line-through">{item.from}</span> <ArrowRight className="w-3 h-3" /> <span>{item.to}</span></div>}
-                      </div>
-                      <p className="text-sm font-medium">{item.to === "novo" ? "Entrada no Funil" : `Muda para ${COLUMNS.find(c => c.id === item.to)?.title}`}</p>
-                      <p className="text-xs text-muted-foreground bg-muted/30 p-2 rounded border">{item.reason}</p>
-                    </div>
-                  </div>
-                )).reverse()}
+              <Label className="flex items-center gap-2"><History className="w-4 h-4" /> Informações Adicionais</Label>
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground">Lead ID: {selectedLead?.id}</p>
+                <p className="text-xs text-muted-foreground">Cidade: {selectedLead?.city || "Não informada"}</p>
+                {selectedLead?.vehicle_plate && <p className="text-xs text-muted-foreground">Placa: {selectedLead.vehicle_plate}</p>}
               </div>
             </div>
           </div>
@@ -486,9 +452,9 @@ function MetricCard({ label, value, icon: Icon, badge, subtext }: any) {
 }
 
 function LeadCard({ lead, onDragStart, onClick }: any) {
-  const daysInCol = differenceInDays(new Date(), lead.enteredAt);
-  const isStuck = daysInCol > 7 && lead.column !== "fechado" && lead.column !== "perdido";
-  const promoter = MOCK_PROMOTERS.find(p => p.id === lead.promoterId);
+  const daysSinceUpdate = differenceInDays(new Date(), new Date(lead.updated_at || lead.created_at));
+  const isStuck = daysSinceUpdate > 7 && lead.status !== "fechado" && lead.status !== "vendido";
+  const promoterName = lead.profiles?.full_name || "Sem responsável";
 
   return (
     <div 
@@ -503,34 +469,24 @@ function LeadCard({ lead, onDragStart, onClick }: any) {
       <div className="space-y-3">
         <div className="flex items-start justify-between">
           <p className="font-bold text-sm leading-snug group-hover:text-primary transition-colors">{lead.name}</p>
-          {lead.priority === "Quente" ? (
-            <Flame className="w-4 h-4 text-orange-500 shrink-0" />
-          ) : (
-            <Snowflake className="w-4 h-4 text-blue-400 shrink-0" />
-          )}
+          <Badge variant="outline" className="text-[10px] uppercase">{lead.kind}</Badge>
         </div>
         
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Phone className="w-3 h-3" />
-          {lead.phone}
+          {lead.phone || "(Não informado)"}
         </div>
 
         <div className="flex items-center justify-between pt-2">
           <div className="flex items-center gap-2">
             <Avatar className="w-6 h-6 border">
-              <AvatarImage src={promoter?.avatar} />
-              <AvatarFallback className="text-[8px]">{promoter?.name.split(" ").map(n => n[0]).join("")}</AvatarFallback>
+              <AvatarFallback className="text-[8px] bg-primary/10">{promoterName.split(" ").map((n: string) => n[0]).join("").slice(0, 2)}</AvatarFallback>
             </Avatar>
-            <span className="text-[10px] font-medium text-muted-foreground truncate max-w-[80px]">{promoter?.name}</span>
+            <span className="text-[10px] font-medium text-muted-foreground truncate max-w-[80px]">{promoterName}</span>
           </div>
           <div className="flex items-center gap-1.5">
-            {lead.hasPendingTask && (
-              <span title="Tarefa pendente">
-                <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
-              </span>
-            )}
             <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-muted", isStuck && "bg-red-500 text-white")}>
-              {daysInCol}d
+              {daysSinceUpdate}d
             </span>
           </div>
         </div>
