@@ -43,6 +43,7 @@ import RhPagamentos from "./pages/rh/RhPagamentos";
 import VisualizadorLayout from "./components/VisualizadorLayout";
 import AdminVisualizador from "./pages/admin/AdminVisualizador";
 import AdminTarefas from "./pages/admin/AdminTarefas";
+import AdminKanban from "./pages/admin/AdminKanban";
 
 const queryClient = new QueryClient();
 
@@ -85,7 +86,7 @@ const App = () => (
                 <Route path="radar-b2b" element={<AdminPlaceholder title="Radar B2B" description="Captura automática de empresas e oportunidades B2B." />} />
                 {/* Operação */}
                 <Route path="tarefas" element={<AdminTarefas />} />
-                <Route path="kanban" element={<AdminPlaceholder title="Kanban — Funil" description="Funil visual de leads e oportunidades." />} />
+                <Route path="kanban" element={<AdminKanban />} />
                 {/* Administração */}
                 <Route path="catalogo" element={<AdminProdutos />} />
                 <Route path="marcas" element={<AdminPlaceholder title="Gestão de Marcas" description="Marcas parceiras e identidade visual." />} />
