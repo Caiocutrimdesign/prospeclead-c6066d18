@@ -111,14 +111,12 @@ export default function AdminKanban() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("leads")
-        .select(`
-          *,
-          profiles:user_id (full_name)
-        `)
+        .select("*")
         .order("created_at", { ascending: false });
 
       if (error) {
-        toast.error("Erro ao carregar leads.");
+        console.error("Erro Supabase Leads:", error);
+        toast.error(`Erro ao carregar leads: ${error.message}`);
         throw error;
       }
       return data;
@@ -320,6 +318,7 @@ export default function AdminKanban() {
                         <LeadCard 
                           key={lead.id} 
                           lead={lead} 
+                          promoters={promoters}
                           onDragStart={onDragStart} 
                           onClick={() => { setSelectedLead(lead); setDrawerOpen(true); }}
                         />
@@ -395,7 +394,7 @@ export default function AdminKanban() {
           <div className="py-6 space-y-8">
             {/* DETAILS */}
             <div className="grid grid-cols-2 gap-6">
-              <DetailItem icon={User} label="Responsável" value={selectedLead?.profiles?.full_name} />
+              <DetailItem icon={User} label="Responsável" value={promoters.find(p => p.id === selectedLead?.user_id)?.full_name} />
               <DetailItem icon={LucideCalendar} label="Data de Entrada" value={selectedLead && format(new Date(selectedLead.created_at), "dd/MM/yyyy")} />
               <DetailItem icon={Clock} label="Última Atualização" value={selectedLead && format(new Date(selectedLead.updated_at || selectedLead.created_at), "dd/MM/yyyy")} />
               <DetailItem icon={CheckCircle2} label="Tipo de Lead" value={selectedLead?.kind?.toUpperCase()} />
@@ -454,10 +453,10 @@ function MetricCard({ label, value, icon: Icon, badge, subtext }: any) {
   );
 }
 
-function LeadCard({ lead, onDragStart, onClick }: any) {
+function LeadCard({ lead, onDragStart, onClick, promoters }: any) {
   const daysSinceUpdate = differenceInDays(new Date(), new Date(lead.updated_at || lead.created_at));
   const isStuck = daysSinceUpdate > 7 && lead.status !== "fechado" && lead.status !== "vendido";
-  const promoterName = lead.profiles?.full_name || "Sem responsável";
+  const promoterName = promoters.find((p: any) => p.id === lead.user_id)?.full_name || "Sem responsável";
 
   return (
     <div 
