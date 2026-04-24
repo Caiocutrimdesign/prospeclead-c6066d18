@@ -109,7 +109,7 @@ export default function Auth() {
                 <Label htmlFor="password">Senha</Label>
                 <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
               </div>
-              <Button type="submit" className="w-full" disabled={busy}>
+              <Button type="submit" variant="success" className="w-full" disabled={busy}>
                 {busy ? "Entrando..." : "Entrar"}
               </Button>
             </form>
@@ -129,7 +129,7 @@ export default function Auth() {
                 <Label htmlFor="password2">Senha</Label>
                 <Input id="password2" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
               </div>
-              <Button type="submit" className="w-full" disabled={busy}>
+              <Button type="submit" variant="success" className="w-full" disabled={busy}>
                 {busy ? "Criando..." : "Criar conta"}
               </Button>
             </form>
