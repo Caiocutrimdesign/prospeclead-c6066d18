@@ -56,6 +56,9 @@ export default defineConfig(({ mode }) => ({
         ],
       },
       workbox: {
+        // Garante ativação imediata da nova versão publicada.
+        skipWaiting: true,
+        clientsClaim: true,
         // Cache de assets estáticos da build (JS, CSS, imagens, fontes).
         globPatterns: ["**/*.{js,css,html,ico,png,svg,jpg,jpeg,webp,woff,woff2}"],
         // Aumenta limite para 5 MiB — o bundle JS principal passa de 2 MiB.
@@ -69,7 +72,7 @@ export default defineConfig(({ mode }) => ({
         ],
         runtimeCaching: [
           {
-            // Imagens vindas do Supabase Storage — cache leve, melhor UX offline.
+            // Imagens vindas do backend — cache leve, melhor UX offline.
             urlPattern: /^https:\/\/.*\.supabase\.co\/storage\/v1\/object\/.*/i,
             handler: "CacheFirst",
             options: {
@@ -82,8 +85,7 @@ export default defineConfig(({ mode }) => ({
             },
           },
           {
-            // Endpoints REST/Auth do Supabase — NÃO cacheamos (sempre rede).
-            // Listamos para forçar NetworkOnly com fallback claro.
+            // Endpoints de dados/autenticação — nunca usar cache offline aqui.
             urlPattern: /^https:\/\/.*\.supabase\.co\/(rest|auth|functions)\/.*/i,
             handler: "NetworkOnly",
           },
