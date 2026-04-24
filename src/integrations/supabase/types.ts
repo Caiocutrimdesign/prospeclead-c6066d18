@@ -638,6 +638,81 @@ export type Database = {
         }
         Relationships: []
       }
+      events: {
+        Row: {
+          created_at: string
+          description: string | null
+          end_time: string
+          event_type: string
+          id: string
+          linked_to: string | null
+          responsible_id: string
+          start_time: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          end_time: string
+          event_type: string
+          id?: string
+          linked_to?: string | null
+          responsible_id: string
+          start_time: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          end_time?: string
+          event_type?: string
+          id?: string
+          linked_to?: string | null
+          responsible_id?: string
+          start_time?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      tasks: {
+        Row: {
+          created_at: string
+          deadline: string
+          id: string
+          linked_to: string | null
+          notes: string | null
+          priority: string
+          responsible_id: string
+          status: string | null
+          task_type: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          deadline: string
+          id?: string
+          linked_to?: string | null
+          notes?: string | null
+          priority: string
+          responsible_id: string
+          status?: string | null
+          task_type: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          deadline?: string
+          id?: string
+          linked_to?: string | null
+          notes?: string | null
+          priority?: string
+          responsible_id?: string
+          status?: string | null
+          task_type?: string
+          title?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string

@@ -2,141 +2,26 @@ import React, { useState, useMemo } from "react";
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, addWeeks, subWeeks, addDays, subDays, eachHourOfInterval, setHours, setMinutes } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
-  Calendar as CalendarIcon,
-  ChevronLeft,
-  ChevronRight,
-  Clock,
-  Plus,
-  Search,
-  CheckCircle2,
-  Phone,
-  Mail,
-  MessageSquare,
-  User,
-  Calendar as LucideCalendar,
-  Briefcase,
-  ExternalLink,
-  Trash2,
-  Pencil,
-  MoreHorizontal,
+  Calendar as CalendarIcon, ChevronLeft, ChevronRight, Clock, Plus, Search, CheckCircle2,
+  Phone, Mail, MessageSquare, User, Calendar as LucideCalendar, Briefcase, ExternalLink,
+  Trash2, Pencil, MoreHorizontal, Loader2
 } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-
-/* ============================================================
-   MOCK DATA
-   ============================================================ */
-
-const MOCK_USERS = [
-  { id: "1", name: "Caio Cutrim" },
-  { id: "2", name: "Ana Silva" },
-  { id: "3", name: "Carlos Oliveira" },
-];
-
-const MOCK_LEADS_PDV = [
-  { id: "l1", name: "João Pereira", type: "Lead" },
-  { id: "l2", name: "Maria Souza", type: "Lead" },
-  { id: "p1", name: "Posto Shell - Centro", type: "PDV" },
-];
-
-const INITIAL_TASKS = [
-  {
-    id: "t1",
-    title: "Retornar ligação para João",
-    type: "Ligação",
-    priority: "Alta",
-    deadline: new Date(new Date().setHours(14, 0, 0, 0)),
-    responsibleId: "1",
-    linkedTo: "João Pereira",
-    status: "Pendente",
-    notes: "",
-  },
-  {
-    id: "t2",
-    title: "Visita técnica no PDV Centro",
-    type: "Visita",
-    priority: "Média",
-    deadline: new Date(new Date().setDate(new Date().getDate() - 1)),
-    responsibleId: "1",
-    linkedTo: "Posto Shell - Centro",
-    status: "Em andamento",
-    notes: "",
-  },
-  {
-    id: "t3",
-    title: "Enviar proposta por E-mail",
-    type: "E-mail",
-    priority: "Baixa",
-    deadline: new Date(new Date().setHours(18, 0, 0, 0)),
-    responsibleId: "2",
-    linkedTo: "Maria Souza",
-    status: "Pendente",
-    notes: "",
-  },
-];
-
-const INITIAL_EVENTS = [
-  {
-    id: "e1",
-    title: "Reunião de Alinhamento",
-    type: "Reunião",
-    start: new Date(new Date().setHours(10, 0, 0, 0)),
-    end: new Date(new Date().setHours(11, 0, 0, 0)),
-    responsibleId: "1",
-    linkedTo: "João Pereira",
-    description: "Discutir novos termos do contrato.",
-  },
-  {
-    id: "e2",
-    title: "Visita de Prospecção",
-    type: "Visita",
-    start: new Date(new Date().setDate(new Date().getDate() + 1)),
-    end: new Date(new Date().setDate(new Date().getDate() + 1)),
-    responsibleId: "2",
-    linkedTo: "Posto Shell - Centro",
-    description: "Apresentar plataforma para o gerente.",
-  },
-];
-
-/* ============================================================
-   HELPERS
-   ============================================================ */
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 const priorityColors: Record<string, string> = {
   Alta: "bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/20",
@@ -158,13 +43,9 @@ const eventTypeColors: Record<string, string> = {
   Ligação: "bg-info text-info-foreground",
 };
 
-/* ============================================================
-   MAIN COMPONENT
-   ============================================================ */
-
 export default function AdminTarefas() {
-  const [tasks, setTasks] = useState(INITIAL_TASKS);
-  const [events, setEvents] = useState(INITIAL_EVENTS);
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("tarefas");
 
   const [taskStatusFilter, setTaskStatusFilter] = useState("Todos");
@@ -184,22 +65,112 @@ export default function AdminTarefas() {
   const [calendarMode, setCalendarMode] = useState<"dia" | "semana" | "mes">("mes");
   const [currentDate, setCurrentDate] = useState(new Date());
 
+  // Queries
+  const { data: users = [] } = useQuery({
+    queryKey: ["profiles-tarefas"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("profiles").select("id, full_name");
+      if (error) throw error;
+      return data || [];
+    }
+  });
+
+  const { data: leads = [] } = useQuery({
+    queryKey: ["leads-tarefas"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("leads").select("id, name, kind");
+      if (error) throw error;
+      return data || [];
+    }
+  });
+
+  const { data: tasks = [], isLoading: isLoadingTasks } = useQuery({
+    queryKey: ["tasks"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("tasks").select("*").order("deadline", { ascending: true });
+      if (error) throw error;
+      return data.map((t) => ({ ...t, deadline: new Date(t.deadline) }));
+    }
+  });
+
+  const { data: events = [], isLoading: isLoadingEvents } = useQuery({
+    queryKey: ["events"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("events").select("*").order("start_time", { ascending: true });
+      if (error) throw error;
+      return data.map((e) => ({ ...e, start: new Date(e.start_time), end: new Date(e.end_time) }));
+    }
+  });
+
+  // Mutations
+  const createTask = useMutation({
+    mutationFn: async (newTask: any) => {
+      const { error } = await supabase.from("tasks").insert(newTask);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      toast.success("Tarefa criada!");
+      setTaskModalOpen(false);
+    },
+    onError: (err) => toast.error("Erro ao criar: " + err.message)
+  });
+
+  const finishTask = useMutation({
+    mutationFn: async ({ id, notes }: { id: string; notes: string }) => {
+      const { error } = await supabase.from("tasks").update({ status: "Concluída", notes }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      toast.success("Tarefa concluída!");
+      setFinishTaskModalOpen(false);
+      setAnnotation("");
+    },
+    onError: (err) => toast.error("Erro ao concluir: " + err.message)
+  });
+
+  const createEvent = useMutation({
+    mutationFn: async (newEvent: any) => {
+      const { error } = await supabase.from("events").insert(newEvent);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["events"] });
+      toast.success("Evento agendado!");
+      setEventModalOpen(false);
+    },
+    onError: (err) => toast.error("Erro ao agendar: " + err.message)
+  });
+
+  const deleteEvent = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("events").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["events"] });
+      toast.success("Evento removido!");
+      setEventDetailModalOpen(false);
+    },
+    onError: (err) => toast.error("Erro ao remover: " + err.message)
+  });
+
   const filteredTasks = useMemo(() => {
-    return tasks.filter(t => {
+    return tasks.filter((t: any) => {
       if (taskStatusFilter !== "Todos" && t.status !== taskStatusFilter) return false;
       if (taskPriorityFilter !== "Todas" && t.priority !== taskPriorityFilter) return false;
-      if (taskUserFilter !== "all" && t.responsibleId !== taskUserFilter) return false;
+      if (taskUserFilter !== "all" && t.responsible_id !== taskUserFilter) return false;
       if (taskSearch && !t.title.toLowerCase().includes(taskSearch.toLowerCase())) return false;
       return true;
     });
   }, [tasks, taskStatusFilter, taskPriorityFilter, taskUserFilter, taskSearch]);
 
-  const todayTasksCount = tasks.filter(t => isSameDay(t.deadline, new Date()) && t.status !== "Concluída").length;
-  const todayEventsCount = events.filter(e => isSameDay(e.start, new Date())).length;
+  const todayTasksCount = tasks.filter((t: any) => isSameDay(t.deadline, new Date()) && t.status !== "Concluída").length;
+  const todayEventsCount = events.filter((e: any) => isSameDay(e.start, new Date())).length;
 
   return (
     <div className="space-y-6">
-      {/* SUMMARY BANNER */}
       <Card className="p-6 bg-primary/5 border-primary/20">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
@@ -240,44 +211,36 @@ export default function AdminTarefas() {
 
             <TabsContent value="minhas" className="space-y-4">
               <TaskControls 
-                search={taskSearch} 
-                setSearch={setTaskSearch}
-                status={taskStatusFilter}
-                setStatus={setTaskStatusFilter}
-                priority={taskPriorityFilter}
-                setPriority={setTaskPriorityFilter}
-                userId={taskUserFilter}
-                setUserId={setTaskUserFilter}
-                showUserFilter={false}
+                search={taskSearch} setSearch={setTaskSearch}
+                status={taskStatusFilter} setStatus={setTaskStatusFilter}
+                priority={taskPriorityFilter} setPriority={setTaskPriorityFilter}
+                userId={taskUserFilter} setUserId={setTaskUserFilter}
+                showUserFilter={false} users={users}
               />
-              <TaskTable 
-                tasks={filteredTasks.filter(t => t.responsibleId === "1")} 
-                onFinish={(t) => {
-                  setSelectedTask(t);
-                  setFinishTaskModalOpen(true);
-                }} 
-              />
+              {isLoadingTasks ? <div className="p-8 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-muted-foreground" /></div> : (
+                <TaskTable 
+                  tasks={filteredTasks.filter((t: any) => t.responsible_id === user?.id)} 
+                  users={users}
+                  onFinish={(t: any) => { setSelectedTask(t); setFinishTaskModalOpen(true); }} 
+                />
+              )}
             </TabsContent>
 
             <TabsContent value="equipe" className="space-y-4">
               <TaskControls 
-                search={taskSearch} 
-                setSearch={setTaskSearch}
-                status={taskStatusFilter}
-                setStatus={setTaskStatusFilter}
-                priority={taskPriorityFilter}
-                setPriority={setTaskPriorityFilter}
-                userId={taskUserFilter}
-                setUserId={setTaskUserFilter}
-                showUserFilter={true}
+                search={taskSearch} setSearch={setTaskSearch}
+                status={taskStatusFilter} setStatus={setTaskStatusFilter}
+                priority={taskPriorityFilter} setPriority={setTaskPriorityFilter}
+                userId={taskUserFilter} setUserId={setTaskUserFilter}
+                showUserFilter={true} users={users}
               />
-              <TaskTable 
-                tasks={filteredTasks} 
-                onFinish={(t) => {
-                  setSelectedTask(t);
-                  setFinishTaskModalOpen(true);
-                }} 
-              />
+              {isLoadingTasks ? <div className="p-8 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-muted-foreground" /></div> : (
+                <TaskTable 
+                  tasks={filteredTasks} 
+                  users={users}
+                  onFinish={(t: any) => { setSelectedTask(t); setFinishTaskModalOpen(true); }} 
+                />
+              )}
             </TabsContent>
           </Tabs>
         </TabsContent>
@@ -301,30 +264,26 @@ export default function AdminTarefas() {
           </div>
 
           <Card className="p-4 overflow-hidden min-h-[600px]">
-            {calendarMode === "mes" && <MonthCalendar currentDate={currentDate} events={events} onEventClick={(ev) => { setSelectedEvent(ev); setEventDetailModalOpen(true); }} />}
-            {calendarMode === "semana" && <WeekCalendar currentDate={currentDate} events={events} onEventClick={(ev) => { setSelectedEvent(ev); setEventDetailModalOpen(true); }} />}
-            {calendarMode === "dia" && <DayCalendar currentDate={currentDate} events={events} onEventClick={(ev) => { setSelectedEvent(ev); setEventDetailModalOpen(true); }} />}
+            {isLoadingEvents ? <div className="p-8 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-muted-foreground" /></div> : (
+              <>
+                {calendarMode === "mes" && <MonthCalendar currentDate={currentDate} events={events} onEventClick={(ev: any) => { setSelectedEvent(ev); setEventDetailModalOpen(true); }} />}
+                {calendarMode === "semana" && <WeekCalendar currentDate={currentDate} events={events} onEventClick={(ev: any) => { setSelectedEvent(ev); setEventDetailModalOpen(true); }} />}
+                {calendarMode === "dia" && <DayCalendar currentDate={currentDate} events={events} onEventClick={(ev: any) => { setSelectedEvent(ev); setEventDetailModalOpen(true); }} />}
+              </>
+            )}
           </Card>
         </TabsContent>
       </Tabs>
 
-      {/* MODALS */}
-      <TaskModal open={taskModalOpen} setOpen={setTaskModalOpen} onCreate={(t) => { setTasks([t, ...tasks]); toast.success("Tarefa criada!"); }} />
-      <FinishTaskModal open={finishTaskModalOpen} setOpen={setFinishTaskModalOpen} task={selectedTask} annotation={annotation} setAnnotation={setAnnotation} onFinish={() => {
-        setTasks(tasks.map(t => t.id === selectedTask.id ? { ...t, status: "Concluída", notes: annotation } : t));
-        setFinishTaskModalOpen(false); setAnnotation(""); toast.success("Tarefa concluída!");
-      }} />
-      <EventModal open={eventModalOpen} setOpen={setEventModalOpen} onCreate={(e) => { setEvents([...events, e]); toast.success("Evento agendado!"); }} />
-      <EventDetailModal open={eventDetailModalOpen} setOpen={setEventDetailModalOpen} event={selectedEvent} />
+      <TaskModal open={taskModalOpen} setOpen={setTaskModalOpen} onCreate={(t: any) => createTask.mutate(t)} users={users} leads={leads} currentUserId={user?.id} busy={createTask.isPending} />
+      <FinishTaskModal open={finishTaskModalOpen} setOpen={setFinishTaskModalOpen} task={selectedTask} annotation={annotation} setAnnotation={setAnnotation} onFinish={() => finishTask.mutate({ id: selectedTask.id, notes: annotation })} busy={finishTask.isPending} />
+      <EventModal open={eventModalOpen} setOpen={setEventModalOpen} onCreate={(e: any) => createEvent.mutate(e)} users={users} leads={leads} currentUserId={user?.id} busy={createEvent.isPending} />
+      <EventDetailModal open={eventDetailModalOpen} setOpen={setEventDetailModalOpen} event={selectedEvent} onDelete={(id: string) => deleteEvent.mutate(id)} busy={deleteEvent.isPending} />
     </div>
   );
 }
 
-/* ============================================================
-   SUB-COMPONENTS
-   ============================================================ */
-
-function TaskControls({ search, setSearch, status, setStatus, priority, setPriority, userId, setUserId, showUserFilter }: any) {
+function TaskControls({ search, setSearch, status, setStatus, priority, setPriority, userId, setUserId, showUserFilter, users }: any) {
   return (
     <Card className="p-4">
       <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -355,7 +314,7 @@ function TaskControls({ search, setSearch, status, setStatus, priority, setPrior
             <SelectTrigger><SelectValue placeholder="Responsável" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Qualquer Responsável</SelectItem>
-              {MOCK_USERS.map((u) => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}
+              {users.map((u: any) => <SelectItem key={u.id} value={u.id}>{u.full_name || 'Usuário Sem Nome'}</SelectItem>)}
             </SelectContent>
           </Select>
         )}
@@ -364,7 +323,7 @@ function TaskControls({ search, setSearch, status, setStatus, priority, setPrior
   );
 }
 
-function TaskTable({ tasks, onFinish }: any) {
+function TaskTable({ tasks, users, onFinish }: any) {
   return (
     <Card>
       <Table>
@@ -384,8 +343,8 @@ function TaskTable({ tasks, onFinish }: any) {
           ) : (
             tasks.map((t: any) => {
               const isOverdue = t.deadline < new Date() && t.status !== "Concluída";
-              const TypeIcon = taskTypeIcons[t.type] || Briefcase;
-              const responsible = MOCK_USERS.find(u => u.id === t.responsibleId)?.name || "—";
+              const TypeIcon = taskTypeIcons[t.task_type] || Briefcase;
+              const responsible = users.find((u: any) => u.id === t.responsible_id)?.full_name || "—";
               return (
                 <TableRow key={t.id}>
                   <TableCell>
@@ -393,7 +352,7 @@ function TaskTable({ tasks, onFinish }: any) {
                       <div className="mt-1 p-2 rounded-lg bg-muted flex items-center justify-center"><TypeIcon className="w-4 h-4 text-muted-foreground" /></div>
                       <div>
                         <p className="font-semibold text-sm leading-tight">{t.title}</p>
-                        <p className="text-xs text-muted-foreground mt-1">{t.type} {t.linkedTo && `• Vinc. a: ${t.linkedTo}`}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{t.task_type} {t.linked_to && `• Vinc. a: ${t.linked_to}`}</p>
                       </div>
                     </div>
                   </TableCell>
@@ -467,7 +426,7 @@ function MonthCalendar({ currentDate, events, onEventClick }: any) {
               </div>
               <div className="space-y-1">
                 {dayEvents.map((ev: any) => (
-                  <button key={ev.id} onClick={() => onEventClick(ev)} className={cn("w-full text-[10px] p-1 rounded border-l-2 text-left truncate transition-opacity hover:opacity-80", eventTypeColors[ev.type] || "bg-muted text-foreground border-muted-foreground")}>
+                  <button key={ev.id} onClick={() => onEventClick(ev)} className={cn("w-full text-[10px] p-1 rounded border-l-2 text-left truncate transition-opacity hover:opacity-80", eventTypeColors[ev.event_type] || "bg-muted text-foreground border-muted-foreground")}>
                     <span className="font-bold">{format(ev.start, "HH:mm")}</span> {ev.title}
                   </button>
                 ))}
@@ -506,7 +465,7 @@ function WeekCalendar({ currentDate, events, onEventClick }: any) {
                 return (
                   <div key={day.toString() + hour.toString()} className="h-16 border-r border-b border-border p-1 relative">
                     {hourEvents.map((ev: any) => (
-                      <button key={ev.id} onClick={() => onEventClick(ev)} className={cn("absolute inset-x-1 top-1 p-1 rounded text-[10px] text-left truncate", eventTypeColors[ev.type])}>
+                      <button key={ev.id} onClick={() => onEventClick(ev)} className={cn("absolute inset-x-1 top-1 p-1 rounded text-[10px] text-left truncate", eventTypeColors[ev.event_type])}>
                         {ev.title}
                       </button>
                     ))}
@@ -542,7 +501,7 @@ function DayCalendar({ currentDate, events, onEventClick }: any) {
                     <Card key={ev.id} className="p-3 cursor-pointer hover:bg-muted/50" onClick={() => onEventClick(ev)}>
                       <div className="flex items-center justify-between">
                         <p className="text-sm font-bold">{ev.title}</p>
-                        <Badge className={eventTypeColors[ev.type]}>{ev.type}</Badge>
+                        <Badge className={eventTypeColors[ev.event_type]}>{ev.event_type}</Badge>
                       </div>
                       <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{ev.description}</p>
                     </Card>
@@ -558,7 +517,7 @@ function DayCalendar({ currentDate, events, onEventClick }: any) {
   );
 }
 
-function TaskModal({ open, setOpen, onCreate }: any) {
+function TaskModal({ open, setOpen, onCreate, users, leads, currentUserId, busy }: any) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="max-w-lg">
@@ -566,8 +525,16 @@ function TaskModal({ open, setOpen, onCreate }: any) {
         <form onSubmit={(e) => {
           e.preventDefault();
           const fd = new FormData(e.currentTarget);
-          onCreate({ id: Math.random().toString(), title: fd.get("title"), type: fd.get("type"), priority: fd.get("priority"), deadline: new Date(fd.get("deadline") as string), responsibleId: fd.get("responsible"), linkedTo: fd.get("linkedTo"), status: fd.get("status"), notes: fd.get("notes") });
-          setOpen(false);
+          onCreate({ 
+            title: fd.get("title"), 
+            task_type: fd.get("type"), 
+            priority: fd.get("priority"), 
+            deadline: new Date(fd.get("deadline") as string).toISOString(), 
+            responsible_id: fd.get("responsible"), 
+            linked_to: fd.get("linkedTo"), 
+            status: fd.get("status"), 
+            notes: fd.get("notes") 
+          });
         }} className="space-y-4 pt-4">
           <div className="space-y-2"><Label htmlFor="title">Título da Tarefa</Label><Input id="title" name="title" placeholder="Ex: Retornar para Lead X" required /></div>
           <div className="grid grid-cols-2 gap-4">
@@ -576,20 +543,20 @@ function TaskModal({ open, setOpen, onCreate }: any) {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2"><Label htmlFor="deadline">Prazo</Label><Input name="deadline" type="datetime-local" required /></div>
-            <div className="space-y-2"><Label htmlFor="responsible">Responsável</Label><Select name="responsible" defaultValue="1"><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{MOCK_USERS.map(u => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}</SelectContent></Select></div>
+            <div className="space-y-2"><Label htmlFor="responsible">Responsável</Label><Select name="responsible" defaultValue={currentUserId}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{users.map((u: any) => <SelectItem key={u.id} value={u.id}>{u.full_name || 'Sem Nome'}</SelectItem>)}</SelectContent></Select></div>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2"><Label htmlFor="linkedTo">Vincular a</Label><Select name="linkedTo"><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger><SelectContent>{MOCK_LEADS_PDV.map(l => <SelectItem key={l.id} value={l.name}>{l.name} ({l.type})</SelectItem>)}</SelectContent></Select></div>
+            <div className="space-y-2"><Label htmlFor="linkedTo">Vincular a</Label><Select name="linkedTo"><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger><SelectContent>{leads.map((l: any) => <SelectItem key={l.id} value={l.name}>{l.name} ({l.kind})</SelectItem>)}</SelectContent></Select></div>
             <div className="space-y-2"><Label htmlFor="status">Status</Label><Select name="status" defaultValue="Pendente"><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Pendente">Pendente</SelectItem><SelectItem value="Em andamento">Em andamento</SelectItem></SelectContent></Select></div>
           </div>
-          <DialogFooter className="pt-4"><Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button><Button type="submit">Criar Tarefa</Button></DialogFooter>
+          <DialogFooter className="pt-4"><Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button><Button type="submit" disabled={busy}>{busy ? <Loader2 className="w-4 h-4 animate-spin" /> : "Criar Tarefa"}</Button></DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
   );
 }
 
-function FinishTaskModal({ open, setOpen, task, annotation, setAnnotation, onFinish }: any) {
+function FinishTaskModal({ open, setOpen, task, annotation, setAnnotation, onFinish, busy }: any) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent>
@@ -601,13 +568,13 @@ function FinishTaskModal({ open, setOpen, task, annotation, setAnnotation, onFin
           </div>
           <div className="space-y-2"><Label htmlFor="finishNote">O que foi feito? *</Label><Textarea id="finishNote" value={annotation} onChange={(e) => setAnnotation(e.target.value)} autoFocus /></div>
         </div>
-        <DialogFooter><Button variant="ghost" onClick={() => setOpen(false)}>Voltar</Button><Button onClick={onFinish}>Salvar e Concluir</Button></DialogFooter>
+        <DialogFooter><Button variant="ghost" onClick={() => setOpen(false)}>Voltar</Button><Button onClick={onFinish} disabled={busy}>{busy ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar e Concluir"}</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
 
-function EventModal({ open, setOpen, onCreate }: any) {
+function EventModal({ open, setOpen, onCreate, users, leads, currentUserId, busy }: any) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="max-w-lg">
@@ -615,32 +582,40 @@ function EventModal({ open, setOpen, onCreate }: any) {
         <form onSubmit={(e) => {
           e.preventDefault();
           const fd = new FormData(e.currentTarget);
-          onCreate({ id: Math.random().toString(), title: fd.get("title"), type: fd.get("type"), start: new Date(fd.get("start") as string), end: new Date(fd.get("end") as string), responsibleId: fd.get("responsible"), linkedTo: fd.get("linkedTo"), description: fd.get("description") });
-          setOpen(false);
+          onCreate({ 
+            title: fd.get("title"), 
+            event_type: fd.get("type"), 
+            start_time: new Date(fd.get("start") as string).toISOString(), 
+            end_time: new Date(fd.get("end") as string).toISOString(), 
+            responsible_id: fd.get("responsible"), 
+            linked_to: fd.get("linkedTo"), 
+            description: fd.get("description") 
+          });
         }} className="space-y-4 pt-4">
           <div className="space-y-2"><Label>Título</Label><Input name="title" required /></div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2"><Label>Tipo</Label><Select name="type" defaultValue="Reunião"><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Reunião">Reunião</SelectItem><SelectItem value="Visita">Visita</SelectItem><SelectItem value="Ligação">Ligação</SelectItem></SelectContent></Select></div>
-            <div className="space-y-2"><Label>Responsável</Label><Select name="responsible" defaultValue="1"><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{MOCK_USERS.map(u => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}</SelectContent></Select></div>
+            <div className="space-y-2"><Label>Responsável</Label><Select name="responsible" defaultValue={currentUserId}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{users.map((u: any) => <SelectItem key={u.id} value={u.id}>{u.full_name || 'Sem Nome'}</SelectItem>)}</SelectContent></Select></div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2"><Label>Início</Label><Input name="start" type="datetime-local" required /></div>
             <div className="space-y-2"><Label>Término</Label><Input name="end" type="datetime-local" required /></div>
           </div>
+          <div className="space-y-2"><Label>Vincular a</Label><Select name="linkedTo"><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger><SelectContent>{leads.map((l: any) => <SelectItem key={l.id} value={l.name}>{l.name} ({l.kind})</SelectItem>)}</SelectContent></Select></div>
           <div className="space-y-2"><Label>Descrição</Label><Textarea name="description" /></div>
-          <DialogFooter className="pt-4"><Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button><Button type="submit">Salvar Evento</Button></DialogFooter>
+          <DialogFooter className="pt-4"><Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button><Button type="submit" disabled={busy}>{busy ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar Evento"}</Button></DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
   );
 }
 
-function EventDetailModal({ open, setOpen, event }: any) {
+function EventDetailModal({ open, setOpen, event, onDelete, busy }: any) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent>
         <DialogHeader>
-          <div className="flex items-center gap-2 mb-2"><Badge className={event ? eventTypeColors[event.type] : ""}>{event?.type}</Badge></div>
+          <div className="flex items-center gap-2 mb-2"><Badge className={event ? eventTypeColors[event.event_type] : ""}>{event?.event_type}</Badge></div>
           <DialogTitle className="text-xl">{event?.title}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 pt-4">
@@ -650,7 +625,7 @@ function EventDetailModal({ open, setOpen, event }: any) {
           </div>
           <div className="space-y-1"><p className="text-[10px] uppercase text-muted-foreground font-bold">Descrição</p><p className="text-sm text-muted-foreground">{event?.description || "Sem descrição."}</p></div>
         </div>
-        <DialogFooter className="pt-4"><div className="flex gap-2 w-full justify-between"><Button variant="destructive" size="sm" className="gap-2"><Trash2 className="w-4 h-4" /> Excluir</Button><div className="flex gap-2"><Button variant="outline" size="sm" className="gap-2"><Pencil className="w-4 h-4" /> Editar</Button><Button size="sm" onClick={() => setOpen(false)}>Fechar</Button></div></div></DialogFooter>
+        <DialogFooter className="pt-4"><div className="flex gap-2 w-full justify-between"><Button variant="destructive" size="sm" className="gap-2" onClick={() => onDelete(event?.id)} disabled={busy}>{busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Trash2 className="w-4 h-4" /> Excluir</>}</Button><div className="flex gap-2"><Button size="sm" onClick={() => setOpen(false)}>Fechar</Button></div></div></DialogFooter>
       </DialogContent>
     </Dialog>
   );
