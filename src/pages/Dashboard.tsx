@@ -79,6 +79,7 @@ export default function Dashboard() {
   const [missions, setMissions] = useState([false, false, false]);
 
   useEffect(() => {
+    console.log("Dashboard loaded - Test update for Lovable sync");
     if (!user) return;
     (async () => {
       const today = new Date();
