@@ -433,6 +433,8 @@ function MonthCalendar({ currentDate, events, onEventClick, onDayClick }: any) {
                       <span className="opacity-70 text-[9px] uppercase">{ev.event_type}</span>
                     </div>
                     <span className="line-clamp-2 leading-tight">{ev.title}</span>
+                    {ev.linked_to && <span className="opacity-80 text-[8px] leading-tight line-clamp-1 mt-0.5 font-medium">👤 {ev.linked_to}</span>}
+                    {ev.description && <span className="opacity-70 text-[8px] leading-tight line-clamp-1 mt-0.5">{ev.description}</span>}
                   </button>
                 ))}
               </div>
@@ -474,7 +476,8 @@ function WeekCalendar({ currentDate, events, onEventClick, onDayClick }: any) {
                     </div>
                     {hourEvents.map((ev: any) => (
                       <button key={ev.id} onClick={(e) => { e.stopPropagation(); onEventClick(ev); }} className={cn("absolute inset-x-1 top-1 p-1 rounded text-[10px] text-left truncate flex flex-col gap-0.5 z-10", eventTypeColors[ev.event_type])}>
-                        <span className="font-bold">{ev.title}</span>
+                        <span className="font-bold truncate w-full">{ev.title}</span>
+                        {ev.linked_to && <span className="opacity-80 text-[8px] leading-tight truncate w-full">👤 {ev.linked_to}</span>}
                       </button>
                     ))}
                   </div>
@@ -511,7 +514,8 @@ function DayCalendar({ currentDate, events, onEventClick }: any) {
                         <p className="text-sm font-bold">{ev.title}</p>
                         <Badge className={eventTypeColors[ev.event_type]}>{ev.event_type}</Badge>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{ev.description}</p>
+                      {ev.linked_to && <p className="text-xs font-semibold mt-1">👤 Vinc. a: {ev.linked_to}</p>}
+                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{ev.description}</p>
                     </Card>
                   ))}
                   {evs.length === 0 && <div className="h-4"></div>}
