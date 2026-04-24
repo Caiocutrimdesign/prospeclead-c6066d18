@@ -93,11 +93,6 @@ export default function RhLayout({ children }: Props) {
   const { isRh, isAdmin, loading: roleLoading } = useRole();
   const location = useLocation();
 
-  // Garante que a conta de RH padrão sempre exista (idempotente)
-  useEffect(() => {
-    supabase.functions.invoke("rh-bootstrap").catch(() => {});
-  }, []);
-
   if (authLoading || roleLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">

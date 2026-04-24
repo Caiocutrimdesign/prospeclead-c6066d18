@@ -32,13 +32,12 @@ export default function PdvCapture() {
   useEffect(() => {
     (async () => {
       if (!code) return;
-      const { data } = await supabase
-        .from("pdvs")
-        .select("id,name,city,state,active")
-        .eq("short_code", code.toUpperCase())
-        .eq("active", true)
-        .maybeSingle();
-      setPdv(data as PDV | null);
+      // Lookup público via SECURITY DEFINER (expõe apenas campos seguros).
+      const { data } = await supabase.rpc("get_pdv_public", {
+        _short_code: code,
+      });
+      const row = Array.isArray(data) ? data[0] : data;
+      setPdv((row as PDV) ?? null);
       setLoading(false);
     })();
   }, [code]);
