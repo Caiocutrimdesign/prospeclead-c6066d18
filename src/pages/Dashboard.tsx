@@ -373,24 +373,28 @@ export default function Dashboard() {
         </Card>
 
         {/* Stats grid - 3 cards pastel */}
-        <div className="grid grid-cols-3 gap-2.5">
+        <div className={`grid ${stats.converted > 0 ? "grid-cols-3" : "grid-cols-1"} gap-2.5`}>
           <div className="bg-[hsl(145_55%_94%)] border border-[hsl(145_50%_82%)] rounded-xl p-3 flex flex-col items-center justify-center text-center">
             <IdCard className="w-5 h-5 text-[hsl(145_60%_35%)]" />
             <p className="text-2xl font-extrabold mt-1 leading-none">{stats.total}</p>
             <p className="text-[11px] text-muted-foreground mt-0.5">Total Leads</p>
           </div>
-          <div className="bg-[hsl(145_60%_92%)] border border-[hsl(145_55%_78%)] rounded-xl p-3 flex flex-col items-center justify-center text-center">
-            <CheckCircle2 className="w-5 h-5 text-[hsl(145_65%_35%)]" fill="hsl(145 60% 88%)" />
-            <p className="text-2xl font-extrabold mt-1 leading-none">{stats.converted}</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Convertidos</p>
-          </div>
-          <div className="bg-[hsl(35_100%_94%)] border border-[hsl(35_90%_82%)] rounded-xl p-3 flex flex-col items-center justify-center text-center">
-            <TrendingUp className="w-5 h-5 text-[hsl(35_85%_45%)]" />
-            <p className="text-2xl font-extrabold mt-1 leading-none text-[hsl(35_85%_45%)]">
-              {conversionRate}%
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Conversão</p>
-          </div>
+          {stats.converted > 0 && (
+            <>
+              <div className="bg-[hsl(145_60%_92%)] border border-[hsl(145_55%_78%)] rounded-xl p-3 flex flex-col items-center justify-center text-center">
+                <CheckCircle2 className="w-5 h-5 text-[hsl(145_65%_35%)]" fill="hsl(145 60% 88%)" />
+                <p className="text-2xl font-extrabold mt-1 leading-none">{stats.converted}</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Convertidos</p>
+              </div>
+              <div className="bg-[hsl(35_100%_94%)] border border-[hsl(35_90%_82%)] rounded-xl p-3 flex flex-col items-center justify-center text-center">
+                <TrendingUp className="w-5 h-5 text-[hsl(35_85%_45%)]" />
+                <p className="text-2xl font-extrabold mt-1 leading-none text-[hsl(35_85%_45%)]">
+                  {conversionRate}%
+                </p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Conversão</p>
+              </div>
+            </>
+          )}
         </div>
 
         {/* AÇÕES RÁPIDAS */}

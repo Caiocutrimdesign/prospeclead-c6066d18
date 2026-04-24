@@ -355,18 +355,20 @@ export default function AdminDashboard() {
           deltaPct={newLeadsPct}
           deltaLabel="vs mês anterior"
         />
-        <MetricCard
-          label="Vendas Fechadas"
-          value={closedThisMonth}
-          icon={TrendingUp}
-          iconClass="bg-success/10 text-success"
-          deltaPct={closedPct}
-          deltaLabel={
-            closedPrevMonth === 0
-              ? "sem dados do mês anterior"
-              : "vs mês anterior"
-          }
-        />
+        {closedThisMonth > 0 && (
+          <MetricCard
+            label="Vendas Fechadas"
+            value={closedThisMonth}
+            icon={TrendingUp}
+            iconClass="bg-success/10 text-success"
+            deltaPct={closedPct}
+            deltaLabel={
+              closedPrevMonth === 0
+                ? "sem dados do mês anterior"
+                : "vs mês anterior"
+            }
+          />
+        )}
         <MetricCard
           label="MRR Adicionado"
           value="—"
@@ -609,18 +611,22 @@ export default function AdminDashboard() {
           icon={Target}
           tone="bg-success/10 text-success"
         />
-        <SimpleMetricCard
-          label="Conversões"
-          value={totalConversions}
-          icon={DollarSign}
-          tone="bg-success/10 text-success"
-        />
-        <SimpleMetricCard
-          label="Taxa de Conversão"
-          value={`${conversionRate}%`}
-          icon={BarChart3}
-          tone="bg-success/10 text-success"
-        />
+        {totalConversions > 0 && (
+          <>
+            <SimpleMetricCard
+              label="Conversões"
+              value={totalConversions}
+              icon={DollarSign}
+              tone="bg-success/10 text-success"
+            />
+            <SimpleMetricCard
+              label="Taxa de Conversão"
+              value={`${conversionRate}%`}
+              icon={BarChart3}
+              tone="bg-success/10 text-success"
+            />
+          </>
+        )}
       </div>
 
       {/* Gráfico de área 7 dias + Top 5 promotores */}
