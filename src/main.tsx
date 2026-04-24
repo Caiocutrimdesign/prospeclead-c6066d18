@@ -33,7 +33,12 @@ if (isInIframe || isPreviewHost) {
   // Importação dinâmica — só carrega o registrar do vite-plugin-pwa em prod.
   import("virtual:pwa-register")
     .then(({ registerSW }) => {
-      registerSW({ immediate: true });
+      const updateSW = registerSW({
+        immediate: true,
+        onNeedRefresh() {
+          updateSW(true);
+        },
+      });
     })
     .catch(() => {
       // virtual:pwa-register só existe quando o plugin está ativo na build
