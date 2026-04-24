@@ -158,7 +158,7 @@ export default function LeadDetail() {
           <div className="flex-1 min-w-0">
             <h1 className="text-xl font-bold truncate">{lead.name}</h1>
             <Badge className={`${statusColors[lead.status]} border-0 capitalize mt-1`}>
-              {lead.status}
+              {lead.status === "vendido" ? "Lead" : lead.status}
             </Badge>
           </div>
         </div>
@@ -201,7 +201,7 @@ export default function LeadDetail() {
           <div className="grid grid-cols-4 gap-1 text-[10px] text-center capitalize text-muted-foreground">
             {flow.map((s) => (
               <span key={s} className={s === lead.status ? "text-primary font-semibold" : ""}>
-                {s}
+                {s === "vendido" ? "Lead" : s}
               </span>
             ))}
           </div>

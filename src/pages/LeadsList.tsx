@@ -178,7 +178,7 @@ export default function LeadsList() {
               onClick={() => setFilter(s)}
               className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium capitalize border transition ${filter === s ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border text-muted-foreground hover:bg-muted"}`}
             >
-              {s}
+              {s === "vendido" ? "Lead" : s}
             </button>
           ))}
         </div>
@@ -213,7 +213,7 @@ export default function LeadsList() {
                       )}
                     </div>
                     <div className="text-right shrink-0">
-                      <Badge className={`${statusColors[l.status]} border-0 capitalize`}>{l.status}</Badge>
+                      <Badge className={`${statusColors[l.status]} border-0 capitalize`}>{l.status === "vendido" ? "Lead" : l.status}</Badge>
                       {l.value ? <p className="text-xs font-semibold mt-1">{formatBRL(l.value)}</p> : null}
                     </div>
                   </Link>

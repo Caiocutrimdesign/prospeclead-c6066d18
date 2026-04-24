@@ -902,7 +902,7 @@ function StatusBadge({ status }: { status: string }) {
         styles[status] ?? styles.coletado
       }`}
     >
-      {status === "coletado" ? "prospectado" : status}
+      {status === "coletado" ? "prospectado" : status === "vendido" ? "Lead" : status}
     </Badge>
   );
 }

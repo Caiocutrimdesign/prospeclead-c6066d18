@@ -123,7 +123,7 @@ const STATUS_META: Record<
     className: "bg-orange-500/15 text-orange-700 dark:text-orange-300 hover:bg-orange-500/20",
   },
   vendido: {
-    label: "Vendido",
+    label: "Lead",
     className: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20",
   },
   fechado: {
