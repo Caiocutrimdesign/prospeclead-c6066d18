@@ -58,6 +58,8 @@ export default defineConfig(({ mode }) => ({
       workbox: {
         // Cache de assets estáticos da build (JS, CSS, imagens, fontes).
         globPatterns: ["**/*.{js,css,html,ico,png,svg,jpg,jpeg,webp,woff,woff2}"],
+        // Aumenta limite para 5 MiB — o bundle JS principal passa de 2 MiB.
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         // Roteamento SPA: volta ao index quando offline.
         navigateFallback: "/index.html",
         navigateFallbackDenylist: [
