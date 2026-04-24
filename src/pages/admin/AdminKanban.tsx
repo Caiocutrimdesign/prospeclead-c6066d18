@@ -159,6 +159,23 @@ export default function AdminKanban() {
     }
   });
 
+  const fixLeadsMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("leads")
+        .update({ status: "coletado" })
+        .eq("status", "vendido");
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leads-kanban"] });
+      toast.success("Todos os leads foram movidos para Coletado!");
+    },
+    onError: (error: any) => {
+      toast.error(`Erro ao corrigir leads: ${error.message}`);
+    }
+  });
+
   // --- COMPUTED ---
   const stats = useMemo(() => {
     const activeLeads = leads.filter(l => l.status !== "fechado"); // Simplificado
@@ -231,6 +248,23 @@ export default function AdminKanban() {
         <div>
           <h1 className="text-2xl font-bold">Funil de Vendas</h1>
           <p className="text-sm text-muted-foreground">Gestão visual do pipeline de leads e oportunidades.</p>
+        </div>
+        <div className="flex items-center gap-3">
+          {leads.filter(l => l.status === "vendido").length > 0 && (
+            <Button 
+              variant="destructive" 
+              onClick={() => {
+                if (window.confirm(`Deseja mover todos os ${leads.filter(l => l.status === "vendido").length} leads da coluna Vendido para Coletado?`)) {
+                  fixLeadsMutation.mutate();
+                }
+              }}
+              disabled={fixLeadsMutation.isPending}
+              className="gap-2 shadow-lg animate-pulse"
+            >
+              <AlertCircle className="w-4 h-4" />
+              Corrigir {leads.filter(l => l.status === "vendido").length} leads
+            </Button>
+          )}
         </div>
       </div>
 
