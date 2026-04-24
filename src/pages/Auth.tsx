@@ -22,17 +22,9 @@ export default function Auth() {
     if (!loading && user) navigate("/", { replace: true });
   }, [user, loading, navigate]);
 
-  const RH_EMAIL = "rh@facilitcorp.com";
-
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
-    const isRhEmail = email.trim().toLowerCase() === RH_EMAIL;
-
-    // Se for o e-mail padrão de RH, garante que a conta exista (idempotente)
-    if (isRhEmail) {
-      await supabase.functions.invoke("rh-bootstrap").catch(() => {});
-    }
 
     const { data: signed, error } = await supabase.auth.signInWithPassword({
       email,

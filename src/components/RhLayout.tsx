@@ -1,4 +1,4 @@
-import { ReactNode, useEffect } from "react";
+import { ReactNode } from "react";
 import { Navigate, NavLink, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
@@ -92,11 +92,6 @@ export default function RhLayout({ children }: Props) {
   const { user, loading: authLoading } = useAuth();
   const { isRh, isAdmin, loading: roleLoading } = useRole();
   const location = useLocation();
-
-  // Garante que a conta de RH padrão sempre exista (idempotente)
-  useEffect(() => {
-    supabase.functions.invoke("rh-bootstrap").catch(() => {});
-  }, []);
 
   if (authLoading || roleLoading) {
     return (
