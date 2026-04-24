@@ -74,8 +74,8 @@ import { toast } from "sonner";
 type LeadStatus = Database["public"]["Enums"]["lead_status"];
 
 const COLUMNS: { id: LeadStatus; title: string; color: string }[] = [
-  { id: "prospectado", title: "Novo Lead", color: "bg-blue-500/10 border-blue-200" },
   { id: "coletado", title: "Coletado", color: "bg-purple-500/10 border-purple-200" },
+  { id: "prospectado", title: "Novo Lead", color: "bg-blue-500/10 border-blue-200" },
   { id: "contatado", title: "Contato Realizado", color: "bg-amber-500/10 border-amber-200" },
   { id: "respondido", title: "Qualificado", color: "bg-indigo-500/10 border-indigo-200" },
   { id: "negociando", title: "Em Negociação", color: "bg-cyan-500/10 border-cyan-200" },

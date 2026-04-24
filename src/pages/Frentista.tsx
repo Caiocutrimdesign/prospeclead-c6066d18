@@ -175,7 +175,7 @@ export default function Frentista() {
       kind: "b2c",
       name: `Placa ${plate.toUpperCase()}`,
       vehicle_plate: plate.toUpperCase(),
-      status: "prospectado",
+      status: "coletado",
       latitude: coords.lat,
       longitude: coords.lng,
       location_accuracy: coords.accuracy,

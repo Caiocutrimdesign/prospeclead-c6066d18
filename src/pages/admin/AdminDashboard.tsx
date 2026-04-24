@@ -68,10 +68,11 @@ interface WithdrawalRow {
 
 /* ---------- Helpers ---------- */
 const FUNNEL_STEPS = [
-  { key: "captados", label: "Captados", color: "hsl(262, 83%, 65%)", statuses: ["coletado", "prospectado"] },
-  { key: "qualificados", label: "Qualif. IA", color: "hsl(150, 70%, 45%)", statuses: ["contatado", "respondido"] },
-  { key: "agendados", label: "Agendados", color: "hsl(38, 92%, 55%)", statuses: ["negociando"] },
-  { key: "instalados", label: "Instalados", color: "hsl(0, 80%, 60%)", statuses: ["vendido", "fechado"] },
+  { key: "captados", label: "Coletados", color: "hsl(262, 83%, 65%)", statuses: ["coletado"] },
+  { key: "prospectados", label: "Prospectados", color: "hsl(200, 70%, 50%)", statuses: ["prospectado"] },
+  { key: "qualificados", label: "Contatados/Respondidos", color: "hsl(150, 70%, 45%)", statuses: ["contatado", "respondido"] },
+  { key: "negociando", label: "Em Negociação", color: "hsl(38, 92%, 55%)", statuses: ["negociando"] },
+  { key: "vendidos", label: "Vendidos", color: "hsl(142, 76%, 36%)", statuses: ["vendido"] },
 ];
 
 function startOfMonth(d = new Date()) {
@@ -153,10 +154,10 @@ export default function AdminDashboard() {
     return d >= prevMonthStart && d < monthStart;
   });
   const closedThisMonth = leadsThisMonth.filter(
-    (l) => l.status === "vendido" || l.status === "fechado",
+    (l) => l.status === "vendido",
   ).length;
   const closedPrevMonth = leadsPrevMonth.filter(
-    (l) => l.status === "vendido" || l.status === "fechado",
+    (l) => l.status === "vendido",
   ).length;
   const pendingWithdrawals = withdrawals.filter(
     (w) => w.status === "pendente" || w.status === "aprovado",
@@ -274,7 +275,7 @@ export default function AdminDashboard() {
   const leadsToday = leads.filter((l) => new Date(l.created_at) >= todayStart).length;
   const totalLeads = leads.length;
   const totalConversions = leads.filter(
-    (l) => l.status === "vendido" || l.status === "fechado",
+    (l) => l.status === "vendido",
   ).length;
   const conversionRate =
     totalLeads > 0 ? Math.round((totalConversions / totalLeads) * 100) : 0;
@@ -901,6 +902,15 @@ function StatusBadge({ status }: { status: string }) {
     prospectado: "bg-primary/10 text-primary border-primary/30",
     negociando: "bg-warning/10 text-warning border-warning/30",
   };
+  const labels: Record<string, string> = {
+    coletado: "Coletado",
+    contatado: "Contatado",
+    respondido: "Respondido",
+    vendido: "Vendido",
+    fechado: "Fechado",
+    prospectado: "Prospectado",
+    negociando: "Negociando",
+  };
   return (
     <Badge
       variant="outline"
@@ -908,7 +918,7 @@ function StatusBadge({ status }: { status: string }) {
         styles[status] ?? styles.coletado
       }`}
     >
-      {status === "coletado" ? "prospectado" : status === "vendido" ? "Lead" : status}
+      {labels[status] ?? status}
     </Badge>
   );
 }
