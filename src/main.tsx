@@ -2,19 +2,32 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 
-// --- PWA / Service Worker Kill Switch ---------------------------------------
-// Forçamos a remoção de qualquer Service Worker ativo para resolver o problema
-// de cache persistente que está bloqueando a visualização das atualizações.
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker
-    .getRegistrations()
-    .then((regs) => {
-      regs.forEach((r) => {
-        r.unregister();
-        console.log("Service Worker desregistrado para limpeza de cache.");
-      });
-    })
-    .catch((err) => console.error("Erro ao desregistrar SW:", err));
+// --- PWA / Cache Kill Switch (FORÇADO) --------------------------------------
+// Este bloco garante que versões antigas do código (JS/CSS) presas no cache do 
+// navegador sejam removidas. Isso resolve o problema de não ver atualizações.
+// IMPORTANTE: Isso NÃO apaga dados de formulários ou banco local (IndexedDB).
+if (typeof window !== "undefined") {
+  // 1. Desregistrar Service Workers
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+      for (const registration of registrations) {
+        registration.unregister();
+        console.log("SW desregistrado.");
+      }
+    });
+  }
+
+  // 2. Limpar Cache Storage (Onde ficam os arquivos estáticos index.html, JS, CSS)
+  if ("caches" in window) {
+    caches.keys().then((names) => {
+      for (const name of names) {
+        caches.delete(name);
+        console.log(`Cache ${name} removido.`);
+      }
+    });
+  }
 }
+// ----------------------------------------------------------------------------
+
 
 createRoot(document.getElementById("root")!).render(<App />);
