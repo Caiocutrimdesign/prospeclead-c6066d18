@@ -353,6 +353,24 @@ export type Database = {
         }
         Relationships: []
       }
+      pdv_capture_rate_limit: {
+        Row: {
+          created_at: string
+          id: number
+          ip: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          ip: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          ip?: string
+        }
+        Relationships: []
+      }
       pdv_leads: {
         Row: {
           contact_name: string
@@ -784,6 +802,30 @@ export type Database = {
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
         Returns: number
+      }
+      get_branding_settings: {
+        Args: never
+        Returns: {
+          brand_cnpj: string
+          brand_logo_url: string
+          brand_name: string
+          contact_city: string
+          contact_email: string
+          contact_phone: string
+          contact_responsible: string
+          contact_state: string
+          primary_color: string
+        }[]
+      }
+      get_pdv_public: {
+        Args: { _short_code: string }
+        Returns: {
+          active: boolean
+          city: string
+          id: string
+          name: string
+          state: string
+        }[]
       }
       has_role: {
         Args: {
