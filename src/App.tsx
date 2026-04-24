@@ -5,6 +5,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProspectingTimerProvider } from "@/hooks/useProspectingTimer";
+import { SyncProvider } from "@/hooks/useSync";
+import OfflineStatus from "@/components/OfflineStatus";
 import AppLayout from "@/components/AppLayout";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -49,8 +51,9 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <ProspectingTimerProvider>
-            <Routes>
+          <SyncProvider>
+            <ProspectingTimerProvider>
+              <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route path="/" element={<AppLayout><Dashboard /></AppLayout>} />
               <Route path="/leads" element={<AppLayout><LeadsList /></AppLayout>} />
@@ -108,8 +111,10 @@ const App = () => (
                 <Route path="ranking" element={<AdminRanking />} />
               </Route>
               <Route path="*" element={<NotFound />} />
-            </Routes>
-          </ProspectingTimerProvider>
+              </Routes>
+              <OfflineStatus />
+            </ProspectingTimerProvider>
+          </SyncProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProspectingTimer } from "@/hooks/useProspectingTimer";
+import { useSync } from "@/hooks/useSync";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,6 +14,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
+import { queueLeadOffline, isNetworkLikeError } from "@/lib/offlineSave";
+import { makePhotoPath } from "@/lib/offlineDb";
 
 type LeadInsert = Database["public"]["Tables"]["leads"]["Insert"];
 const ACCURACY_LIMIT_M = 100;
@@ -26,6 +29,7 @@ const PAINS = [
 export default function LeadNew() {
   const { user } = useAuth();
   const { registerActivity } = useProspectingTimer();
+  const { offline } = useSync();
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
@@ -125,37 +129,25 @@ export default function LeadNew() {
     if (!user) return;
     if (!validate()) return;
     setBusy(true);
-    try {
-      let photoPath: string | null = null;
-      if (photoBlob) {
-        const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
-        const { error: upErr } = await supabase.storage
-          .from("lead-photos")
-          .upload(path, photoBlob, { contentType: "image/jpeg", upsert: false });
-        if (upErr) throw upErr;
-        photoPath = path;
-      }
 
-      const payload: LeadInsert = {
-        user_id: user.id,
-        kind: "b2c",
-        name: form.name,
-        phone: form.phone || null,
-        vehicle_model: form.vehicle_model || null,
-        vehicle_plate: form.plate?.toUpperCase() || null,
-        status: action === "save" ? "vendido" : "contatado",
-        photo_url: photoPath,
-        latitude: coords?.lat ?? null,
-        longitude: coords?.lng ?? null,
-        location_accuracy: coords?.accuracy ?? null,
-        captured_at: coords?.capturedAt ?? null,
-        city: form.location,
-      };
-      const { error } = await supabase.from("leads").insert(payload);
-      if (error) throw error;
+    // Monta o payload (sem photo_url — definido conforme caminho online/offline).
+    const basePayload: Omit<LeadInsert, "photo_url"> = {
+      user_id: user.id,
+      kind: "b2c",
+      name: form.name,
+      phone: form.phone || null,
+      vehicle_model: form.vehicle_model || null,
+      vehicle_plate: form.plate?.toUpperCase() || null,
+      status: action === "save" ? "vendido" : "contatado",
+      latitude: coords?.lat ?? null,
+      longitude: coords?.lng ?? null,
+      location_accuracy: coords?.accuracy ?? null,
+      captured_at: coords?.capturedAt ?? null,
+      city: form.location,
+    };
 
-      registerActivity();
-
+    // Helper que abre o WhatsApp se o usuário pediu.
+    const openWa = () => {
       if (action === "whatsapp" && form.phone) {
         const msg = encodeURIComponent(
           `Olá ${form.name.split(" ")[0]}! Vi seu ${form.vehicle_model} e tenho uma proposta de proteção veicular. Posso te explicar?`
@@ -163,12 +155,72 @@ export default function LeadNew() {
         const phone = form.phone.replace(/\D/g, "");
         window.open(`https://wa.me/55${phone}?text=${msg}`, "_blank");
       }
+    };
+
+    // Helper que enfileira no IndexedDB (foto fica como Blob para upload futuro).
+    const saveOffline = async (reason: "offline" | "network-error") => {
+      await queueLeadOffline({
+        user_id: user.id,
+        source: "b2c",
+        payload: basePayload,
+        photoBlob: photoBlob ?? null,
+        postSyncWhatsapp: action === "whatsapp",
+      });
+      registerActivity();
+      openWa();
+      toast.success(
+        reason === "offline"
+          ? "Salvo localmente — será enviado quando voltar a internet"
+          : "Sem rede agora — salvo localmente e enviaremos depois",
+      );
+      navigate("/leads?tab=b2c");
+    };
+
+    // Caminho offline declarado: nem tenta o Supabase.
+    if (offline) {
+      try {
+        await saveOffline("offline");
+      } catch (e: any) {
+        console.error("Falha ao salvar offline:", e);
+        toast.error(e?.message ?? "Não foi possível salvar localmente");
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
+
+    // Caminho online: tenta normal, se falhar por rede cai para offline.
+    try {
+      let photoPath: string | null = null;
+      if (photoBlob) {
+        const path = makePhotoPath(user.id);
+        const { error: upErr } = await supabase.storage
+          .from("lead-photos")
+          .upload(path, photoBlob, { contentType: "image/jpeg", upsert: false });
+        if (upErr) throw upErr;
+        photoPath = path;
+      }
+
+      const payload: LeadInsert = { ...basePayload, photo_url: photoPath };
+      const { error } = await supabase.from("leads").insert(payload);
+      if (error) throw error;
+
+      registerActivity();
+      openWa();
 
       toast.success(action === "save" ? "Lead salvo como vendido!" : "Lead cadastrado!");
       navigate("/leads?tab=b2c");
     } catch (e: any) {
       console.error("Erro ao salvar lead:", e);
-      toast.error(e.message ?? "Erro ao salvar");
+      if (isNetworkLikeError(e)) {
+        try {
+          await saveOffline("network-error");
+        } catch (offErr: any) {
+          toast.error(offErr?.message ?? "Não foi possível salvar localmente");
+        }
+      } else {
+        toast.error(e.message ?? "Erro ao salvar");
+      }
     } finally {
       setBusy(false);
     }

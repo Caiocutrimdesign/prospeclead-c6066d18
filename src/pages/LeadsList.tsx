@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { useLiveQuery } from "dexie-react-hooks";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
+import { useSync } from "@/hooks/useSync";
+import { offlineDb, type CachedLead } from "@/lib/offlineDb";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -11,7 +14,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatBRL } from "@/lib/format";
 import { openWhatsApp, normalizePhoneBR } from "@/lib/whatsapp";
 import { toast } from "sonner";
-import { Car, Truck, Search, Plus, ContactRound, MessageCircle } from "lucide-react";
+import { Car, Truck, Search, Plus, ContactRound, MessageCircle, Clock } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 
 type Lead = Database["public"]["Tables"]["leads"]["Row"];
@@ -32,15 +35,75 @@ const statusColors: Record<string, string> = {
 export default function LeadsList() {
   const { user } = useAuth();
   const { profile } = useProfile();
+  const { offline, pendingCount } = useSync();
   const [params, setParams] = useSearchParams();
   const tab = (params.get("tab") as "b2c" | "b2b") || "b2c";
   const [leads, setLeads] = useState<Lead[]>([]);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<string>("todos");
+  const [usingCache, setUsingCache] = useState(false);
+
+  // Pendentes locais (Dexie) — exibimos como itens "aguardando envio".
+  const pendingLeads = useLiveQuery(
+    async () => {
+      if (!user) return [];
+      return offlineDb.pendingLeads.where("user_id").equals(user.id).toArray();
+    },
+    [user?.id],
+    [],
+  ) ?? [];
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("leads").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).then(({ data }) => setLeads(data || []));
+
+    const loadFromCache = async () => {
+      const cached = await offlineDb.cachedLeads
+        .where("user_id")
+        .equals(user.id)
+        .toArray();
+      if (cached.length > 0) {
+        setLeads(
+          cached.sort((a, b) =>
+            (b.created_at ?? "").localeCompare(a.created_at ?? ""),
+          ) as Lead[],
+        );
+        setUsingCache(true);
+      }
+    };
+
+    // Primeiro carrega o cache (resposta instantânea, mesmo offline).
+    loadFromCache();
+
+    // Depois tenta buscar do Supabase. Se conseguir, atualiza o cache.
+    supabase
+      .from("leads")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .then(async ({ data, error }) => {
+        if (error || !data) return;
+        setLeads(data);
+        setUsingCache(false);
+        // Atualiza cache local (substitui o snapshot anterior).
+        try {
+          await offlineDb.transaction("rw", offlineDb.cachedLeads, async () => {
+            await offlineDb.cachedLeads
+              .where("user_id")
+              .equals(user.id)
+              .delete();
+            const now = Date.now();
+            const items: CachedLead[] = data.map((l) => ({
+              ...(l as Lead),
+              cachedAt: now,
+            }));
+            if (items.length > 0) {
+              await offlineDb.cachedLeads.bulkPut(items);
+            }
+          });
+        } catch {
+          // cache é "best effort" — se falhar, ignora silenciosamente
+        }
+      });
   }, [user]);
 
   const current = useMemo(() => leads.filter((l) => l.kind === tab), [leads, tab]);

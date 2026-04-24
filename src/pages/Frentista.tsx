@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProspectingTimer } from "@/hooks/useProspectingTimer";
+import { useSync } from "@/hooks/useSync";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +12,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
+import { queueLeadOffline, isNetworkLikeError } from "@/lib/offlineSave";
+import { makePhotoPath } from "@/lib/offlineDb";
 
 type LeadInsert = Database["public"]["Tables"]["leads"]["Insert"];
 const ACCURACY_LIMIT_M = 100;
@@ -18,6 +21,7 @@ const ACCURACY_LIMIT_M = 100;
 export default function Frentista() {
   const { user } = useAuth();
   const { registerActivity } = useProspectingTimer();
+  const { offline } = useSync();
   const navigate = useNavigate();
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -165,25 +169,50 @@ export default function Frentista() {
       return;
     }
     setBusy(true);
+
+    const basePayload: Omit<LeadInsert, "photo_url"> = {
+      user_id: user.id,
+      kind: "b2c",
+      name: `Placa ${plate.toUpperCase()}`,
+      vehicle_plate: plate.toUpperCase(),
+      status: "coletado",
+      latitude: coords.lat,
+      longitude: coords.lng,
+      location_accuracy: coords.accuracy,
+      captured_at: coords.capturedAt,
+    };
+
+    const saveOffline = async (msg: string) => {
+      await queueLeadOffline({
+        user_id: user.id,
+        source: "frentista",
+        payload: basePayload,
+        photoBlob,
+      });
+      registerActivity();
+      toast.success(msg);
+      navigate("/leads?tab=b2c");
+    };
+
+    if (offline) {
+      try {
+        await saveOffline("Salvo localmente — enviaremos quando voltar a internet");
+      } catch (e: any) {
+        toast.error(e?.message ?? "Não foi possível salvar localmente");
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
+
     try {
-      const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+      const path = makePhotoPath(user.id);
       const { error: upErr } = await supabase.storage
         .from("lead-photos")
         .upload(path, photoBlob, { contentType: "image/jpeg", upsert: false });
       if (upErr) throw upErr;
 
-      const payload: LeadInsert = {
-        user_id: user.id,
-        kind: "b2c",
-        name: `Placa ${plate.toUpperCase()}`,
-        vehicle_plate: plate.toUpperCase(),
-        status: "coletado",
-        photo_url: path,
-        latitude: coords.lat,
-        longitude: coords.lng,
-        location_accuracy: coords.accuracy,
-        captured_at: coords.capturedAt,
-      };
+      const payload: LeadInsert = { ...basePayload, photo_url: path };
       const { error } = await supabase.from("leads").insert(payload);
       if (error) throw error;
 
@@ -191,7 +220,15 @@ export default function Frentista() {
       toast.success("Lead registrado!");
       navigate("/leads?tab=b2c");
     } catch (e: any) {
-      toast.error(e.message ?? "Erro ao salvar");
+      if (isNetworkLikeError(e)) {
+        try {
+          await saveOffline("Sem rede agora — salvo localmente e enviaremos depois");
+        } catch (offErr: any) {
+          toast.error(offErr?.message ?? "Não foi possível salvar localmente");
+        }
+      } else {
+        toast.error(e.message ?? "Erro ao salvar");
+      }
     } finally {
       setBusy(false);
     }

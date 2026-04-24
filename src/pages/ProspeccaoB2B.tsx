@@ -3,12 +3,14 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProspectingTimer } from "@/hooks/useProspectingTimer";
+import { useSync } from "@/hooks/useSync";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Loader2, Search, Save, Calendar as CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
+import { queueLeadOffline, isNetworkLikeError } from "@/lib/offlineSave";
 
 type LeadInsert = Database["public"]["Tables"]["leads"]["Insert"];
 
@@ -25,6 +27,7 @@ const CALENDLY_URL = "https://calendly.com/";
 export default function ProspeccaoB2B() {
   const { user } = useAuth();
   const { registerActivity } = useProspectingTimer();
+  const { offline } = useSync();
   const navigate = useNavigate();
 
   // Empresa
@@ -97,51 +100,89 @@ export default function ProspeccaoB2B() {
       return;
     }
     setBusy(true);
-    try {
-      const phone = gestorTel.replace(/\D/g, "");
-      const fleetSize = frota ? Number(frota.replace(/\D/g, "")) : null;
-      const painsLine = pains.length
-        ? ` | Dores: ${pains
-            .map((p) => PAINS.find((x) => x.id === p)?.label)
-            .filter(Boolean)
-            .join(", ")}`
-        : "";
-      const trackerLine =
-        hasTracker === null ? "" : ` | Rastreamento: ${hasTracker ? "Sim" : "Não"}`;
-      const decisorLine = decisorNome
-        ? ` | Decisor: ${decisorNome}${decisorTel ? " (" + decisorTel + ")" : ""}${
-            decisorEmail ? " " + decisorEmail : ""
-          }`
-        : "";
-      const cnaeLine = cnae ? ` | CNAE: ${cnae}` : "";
-      const fantasiaLine = fantasia ? ` (${fantasia})` : "";
-      const enderecoLine = endereco ? ` | End: ${endereco}` : "";
+    const phone = gestorTel.replace(/\D/g, "");
+    const fleetSize = frota ? Number(frota.replace(/\D/g, "")) : null;
+    const painsLine = pains.length
+      ? ` | Dores: ${pains
+          .map((p) => PAINS.find((x) => x.id === p)?.label)
+          .filter(Boolean)
+          .join(", ")}`
+      : "";
+    const trackerLine =
+      hasTracker === null ? "" : ` | Rastreamento: ${hasTracker ? "Sim" : "Não"}`;
+    const decisorLine = decisorNome
+      ? ` | Decisor: ${decisorNome}${decisorTel ? " (" + decisorTel + ")" : ""}${
+          decisorEmail ? " " + decisorEmail : ""
+        }`
+      : "";
+    const cnaeLine = cnae ? ` | CNAE: ${cnae}` : "";
+    const fantasiaLine = fantasia ? ` (${fantasia})` : "";
+    const enderecoLine = endereco ? ` | End: ${endereco}` : "";
 
-      const payload: LeadInsert = {
-        user_id: user.id,
-        kind: "b2b",
-        name: razao + fantasiaLine,
-        phone: phone || null,
-        company_cnpj: cnpj.replace(/\D/g, "") || null,
-        fleet_size: fleetSize,
-        city: endereco || null,
-        vehicle_model:
-          `Gestor: ${gestorNome}${gestorEmail ? " <" + gestorEmail + ">" : ""}${cnaeLine}${enderecoLine}${trackerLine}${painsLine}${decisorLine}`.slice(
-            0,
-            500,
-          ),
-        status: "prospectado",
-      };
-      const { error } = await supabase.from("leads").insert(payload);
-      if (error) throw error;
+    const basePayload: Omit<LeadInsert, "photo_url"> = {
+      user_id: user.id,
+      kind: "b2b",
+      name: razao + fantasiaLine,
+      phone: phone || null,
+      company_cnpj: cnpj.replace(/\D/g, "") || null,
+      fleet_size: fleetSize,
+      city: endereco || null,
+      vehicle_model:
+        `Gestor: ${gestorNome}${gestorEmail ? " <" + gestorEmail + ">" : ""}${cnaeLine}${enderecoLine}${trackerLine}${painsLine}${decisorLine}`.slice(
+          0,
+          500,
+        ),
+      status: "prospectado",
+    };
+
+    const finishOk = (offlineSave: boolean) => {
       registerActivity();
-      toast.success("Lead B2B salvo!");
+      toast.success(
+        offlineSave
+          ? "Salvo localmente — enviaremos quando voltar a internet"
+          : "Lead B2B salvo!",
+      );
       if (afterCalendly) {
         window.open(CALENDLY_URL, "_blank", "noopener");
       }
       navigate("/leads?tab=b2b");
+    };
+
+    const saveOffline = async () => {
+      await queueLeadOffline({
+        user_id: user.id,
+        source: "b2b",
+        payload: basePayload,
+      });
+      finishOk(true);
+    };
+
+    if (offline) {
+      try {
+        await saveOffline();
+      } catch (e: any) {
+        toast.error(e?.message ?? "Não foi possível salvar localmente");
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
+
+    try {
+      const payload: LeadInsert = { ...basePayload, photo_url: null };
+      const { error } = await supabase.from("leads").insert(payload);
+      if (error) throw error;
+      finishOk(false);
     } catch (e: any) {
-      toast.error(e.message ?? "Erro ao salvar");
+      if (isNetworkLikeError(e)) {
+        try {
+          await saveOffline();
+        } catch (offErr: any) {
+          toast.error(offErr?.message ?? "Não foi possível salvar localmente");
+        }
+      } else {
+        toast.error(e.message ?? "Erro ao salvar");
+      }
     } finally {
       setBusy(false);
     }
