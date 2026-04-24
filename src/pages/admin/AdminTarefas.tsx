@@ -61,6 +61,7 @@ export default function AdminTarefas() {
   const [eventModalOpen, setEventModalOpen] = useState(false);
   const [eventDetailModalOpen, setEventDetailModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [initialEventDate, setInitialEventDate] = useState<Date | null>(null);
 
   const [calendarMode, setCalendarMode] = useState<"dia" | "semana" | "mes">("mes");
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -257,7 +258,7 @@ export default function AdminTarefas() {
             </div>
             <div className="flex items-center gap-2">
               <CalendarNavigation currentDate={currentDate} mode={calendarMode} onNavigate={setCurrentDate} />
-              <Button onClick={() => setEventModalOpen(true)} className="gap-2">
+              <Button onClick={() => { setInitialEventDate(new Date()); setEventModalOpen(true); }} className="gap-2">
                 <Plus className="w-4 h-4" /> Novo Evento
               </Button>
             </div>
@@ -266,9 +267,9 @@ export default function AdminTarefas() {
           <Card className="p-4 overflow-hidden min-h-[600px]">
             {isLoadingEvents ? <div className="p-8 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-muted-foreground" /></div> : (
               <>
-                {calendarMode === "mes" && <MonthCalendar currentDate={currentDate} events={events} onEventClick={(ev: any) => { setSelectedEvent(ev); setEventDetailModalOpen(true); }} />}
-                {calendarMode === "semana" && <WeekCalendar currentDate={currentDate} events={events} onEventClick={(ev: any) => { setSelectedEvent(ev); setEventDetailModalOpen(true); }} />}
-                {calendarMode === "dia" && <DayCalendar currentDate={currentDate} events={events} onEventClick={(ev: any) => { setSelectedEvent(ev); setEventDetailModalOpen(true); }} />}
+                {calendarMode === "mes" && <MonthCalendar currentDate={currentDate} events={events} onDayClick={(day: Date) => { setInitialEventDate(day); setEventModalOpen(true); }} onEventClick={(ev: any) => { setSelectedEvent(ev); setEventDetailModalOpen(true); }} />}
+                {calendarMode === "semana" && <WeekCalendar currentDate={currentDate} events={events} onDayClick={(day: Date, hour?: Date) => { setInitialEventDate(hour || day); setEventModalOpen(true); }} onEventClick={(ev: any) => { setSelectedEvent(ev); setEventDetailModalOpen(true); }} />}
+                {calendarMode === "dia" && <DayCalendar currentDate={currentDate} events={events} onDayClick={(hour: Date) => { setInitialEventDate(hour); setEventModalOpen(true); }} onEventClick={(ev: any) => { setSelectedEvent(ev); setEventDetailModalOpen(true); }} />}
               </>
             )}
           </Card>
@@ -277,7 +278,7 @@ export default function AdminTarefas() {
 
       <TaskModal open={taskModalOpen} setOpen={setTaskModalOpen} onCreate={(t: any) => createTask.mutate(t)} users={users} leads={leads} currentUserId={user?.id} busy={createTask.isPending} />
       <FinishTaskModal open={finishTaskModalOpen} setOpen={setFinishTaskModalOpen} task={selectedTask} annotation={annotation} setAnnotation={setAnnotation} onFinish={() => finishTask.mutate({ id: selectedTask.id, notes: annotation })} busy={finishTask.isPending} />
-      <EventModal open={eventModalOpen} setOpen={setEventModalOpen} onCreate={(e: any) => createEvent.mutate(e)} users={users} leads={leads} currentUserId={user?.id} busy={createEvent.isPending} />
+      <EventModal open={eventModalOpen} setOpen={setEventModalOpen} onCreate={(e: any) => createEvent.mutate(e)} users={users} leads={leads} currentUserId={user?.id} busy={createEvent.isPending} initialDate={initialEventDate} />
       <EventDetailModal open={eventDetailModalOpen} setOpen={setEventDetailModalOpen} event={selectedEvent} onDelete={(id: string) => deleteEvent.mutate(id)} busy={deleteEvent.isPending} />
     </div>
   );
@@ -401,7 +402,7 @@ function CalendarNavigation({ currentDate, mode, onNavigate }: any) {
   );
 }
 
-function MonthCalendar({ currentDate, events, onEventClick }: any) {
+function MonthCalendar({ currentDate, events, onEventClick, onDayClick }: any) {
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(monthStart);
   const startDate = startOfWeek(monthStart);
@@ -420,14 +421,18 @@ function MonthCalendar({ currentDate, events, onEventClick }: any) {
           const isSelectedMonth = isSameMonth(day, monthStart);
           const isToday = isSameDay(day, new Date());
           return (
-            <div key={i} className={cn("min-h-[100px] p-2 border-r border-b border-border transition-colors", !isSelectedMonth && "bg-muted/30 text-muted-foreground/50", isSelectedMonth && "hover:bg-muted/10")}>
+            <div key={i} onClick={() => onDayClick?.(day)} className={cn("min-h-[100px] p-2 border-r border-b border-border transition-colors cursor-pointer", !isSelectedMonth && "bg-muted/30 text-muted-foreground/50", isSelectedMonth && "hover:bg-muted/10")}>
               <div className="flex items-center justify-between mb-1">
                 <span className={cn("text-xs font-semibold w-6 h-6 flex items-center justify-center rounded-full", isToday && "bg-primary text-primary-foreground")}>{format(day, "d")}</span>
               </div>
               <div className="space-y-1">
                 {dayEvents.map((ev: any) => (
-                  <button key={ev.id} onClick={() => onEventClick(ev)} className={cn("w-full text-[10px] p-1 rounded border-l-2 text-left truncate transition-opacity hover:opacity-80", eventTypeColors[ev.event_type] || "bg-muted text-foreground border-muted-foreground")}>
-                    <span className="font-bold">{format(ev.start, "HH:mm")}</span> {ev.title}
+                  <button key={ev.id} onClick={(e) => { e.stopPropagation(); onEventClick(ev); }} className={cn("w-full text-[10px] p-1 rounded border-l-2 text-left transition-opacity hover:opacity-80 flex flex-col gap-0.5", eventTypeColors[ev.event_type] || "bg-muted text-foreground border-muted-foreground")}>
+                    <div className="flex justify-between w-full font-bold">
+                      <span>{format(ev.start, "HH:mm")}</span>
+                      <span className="opacity-70 text-[9px] uppercase">{ev.event_type}</span>
+                    </div>
+                    <span className="line-clamp-2 leading-tight">{ev.title}</span>
                   </button>
                 ))}
               </div>
@@ -439,7 +444,7 @@ function MonthCalendar({ currentDate, events, onEventClick }: any) {
   );
 }
 
-function WeekCalendar({ currentDate, events, onEventClick }: any) {
+function WeekCalendar({ currentDate, events, onEventClick, onDayClick }: any) {
   const start = startOfWeek(currentDate);
   const days = Array.from({ length: 7 }, (_, i) => addDays(start, i));
   const hours = eachHourOfInterval({ start: setHours(new Date(), 8), end: setHours(new Date(), 19) });
@@ -449,7 +454,7 @@ function WeekCalendar({ currentDate, events, onEventClick }: any) {
       <div className="grid grid-cols-[80px_repeat(7,1fr)] border-b border-border bg-muted/50">
         <div className="border-r border-border"></div>
         {days.map((day) => (
-          <div key={day.toString()} className="py-2 text-center border-r border-border">
+          <div key={day.toString()} onClick={() => onDayClick?.(day)} className="py-2 text-center border-r border-border cursor-pointer hover:bg-muted/10 transition-colors">
             <p className="text-[10px] font-bold uppercase text-muted-foreground">{format(day, "EEE", { locale: ptBR })}</p>
             <p className={cn("text-sm font-bold", isSameDay(day, new Date()) && "text-primary")}>{format(day, "dd")}</p>
           </div>
@@ -463,10 +468,13 @@ function WeekCalendar({ currentDate, events, onEventClick }: any) {
               {days.map((day) => {
                 const hourEvents = events.filter((e: any) => isSameDay(e.start, day) && format(e.start, "HH") === format(hour, "HH"));
                 return (
-                  <div key={day.toString() + hour.toString()} className="h-16 border-r border-b border-border p-1 relative">
+                  <div key={day.toString() + hour.toString()} onClick={() => onDayClick?.(day, hour)} className="h-16 border-r border-b border-border p-1 relative cursor-pointer hover:bg-muted/10 transition-colors group">
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Plus className="w-4 h-4 text-muted-foreground/30" />
+                    </div>
                     {hourEvents.map((ev: any) => (
-                      <button key={ev.id} onClick={() => onEventClick(ev)} className={cn("absolute inset-x-1 top-1 p-1 rounded text-[10px] text-left truncate", eventTypeColors[ev.event_type])}>
-                        {ev.title}
+                      <button key={ev.id} onClick={(e) => { e.stopPropagation(); onEventClick(ev); }} className={cn("absolute inset-x-1 top-1 p-1 rounded text-[10px] text-left truncate flex flex-col gap-0.5 z-10", eventTypeColors[ev.event_type])}>
+                        <span className="font-bold">{ev.title}</span>
                       </button>
                     ))}
                   </div>
@@ -574,7 +582,15 @@ function FinishTaskModal({ open, setOpen, task, annotation, setAnnotation, onFin
   );
 }
 
-function EventModal({ open, setOpen, onCreate, users, leads, currentUserId, busy }: any) {
+function EventModal({ open, setOpen, onCreate, users, leads, currentUserId, busy, initialDate }: any) {
+  const getLocalISO = (date: Date) => {
+    const tz = date.getTimezoneOffset() * 60000;
+    return new Date(date.getTime() - tz).toISOString().slice(0, 16);
+  };
+  
+  const defaultStart = initialDate ? getLocalISO(initialDate) : getLocalISO(new Date());
+  const defaultEnd = initialDate ? getLocalISO(new Date(initialDate.getTime() + 60 * 60 * 1000)) : getLocalISO(new Date(Date.now() + 60 * 60 * 1000));
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="max-w-lg">
@@ -598,8 +614,8 @@ function EventModal({ open, setOpen, onCreate, users, leads, currentUserId, busy
             <div className="space-y-2"><Label>Responsável</Label><Select name="responsible" defaultValue={currentUserId}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{users.map((u: any) => <SelectItem key={u.id} value={u.id}>{u.full_name || 'Sem Nome'}</SelectItem>)}</SelectContent></Select></div>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2"><Label>Início</Label><Input name="start" type="datetime-local" required /></div>
-            <div className="space-y-2"><Label>Término</Label><Input name="end" type="datetime-local" required /></div>
+            <div className="space-y-2"><Label>Início</Label><Input name="start" type="datetime-local" defaultValue={defaultStart} required /></div>
+            <div className="space-y-2"><Label>Término</Label><Input name="end" type="datetime-local" defaultValue={defaultEnd} required /></div>
           </div>
           <div className="space-y-2"><Label>Vincular a</Label><Select name="linkedTo"><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger><SelectContent>{leads.map((l: any) => <SelectItem key={l.id} value={l.name}>{l.name} ({l.kind})</SelectItem>)}</SelectContent></Select></div>
           <div className="space-y-2"><Label>Descrição</Label><Textarea name="description" /></div>
