@@ -17,6 +17,7 @@ export default defineConfig(({ mode }) => ({
     react(),
     mode === "development" && componentTagger(),
     VitePWA({
+      selfDestroying: true, // Força a remoção do Service Worker e limpeza de cache
       registerType: "autoUpdate",
       // Não ativa o service worker em dev — fundamental para não quebrar o
       // preview do Lovable, que roda dentro de iframe.
