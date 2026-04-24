@@ -36,7 +36,6 @@ const statusColors: Record<string, string> = {
   contatado: "bg-brand-blue/15 text-brand-blue",
   respondido: "bg-warning/15 text-warning",
   vendido: "bg-success/15 text-success",
-  prospectado: "bg-muted text-muted-foreground",
   negociando: "bg-warning/15 text-warning",
   fechado: "bg-success/15 text-success",
 };
