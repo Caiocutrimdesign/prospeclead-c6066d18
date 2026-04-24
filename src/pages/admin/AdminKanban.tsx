@@ -524,7 +524,11 @@ function LeadCard({ lead, onDragStart, onClick }: any) {
             <span className="text-[10px] font-medium text-muted-foreground truncate max-w-[80px]">{promoter?.name}</span>
           </div>
           <div className="flex items-center gap-1.5">
-            {lead.hasPendingTask && <AlertCircle className="w-3.5 h-3.5 text-amber-500" title="Tarefa pendente" />}
+            {lead.hasPendingTask && (
+              <span title="Tarefa pendente">
+                <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
+              </span>
+            )}
             <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-muted", isStuck && "bg-red-500 text-white")}>
               {daysInCol}d
             </span>
