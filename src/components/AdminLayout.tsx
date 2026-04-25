@@ -58,6 +58,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
+import EnvironmentSwitcher from "@/components/EnvironmentSwitcher";
 import logo from "@/assets/prospeclead-logo.png";
 import { resolveUiRole, getUiRoleMeta } from "@/lib/roleMapping";
 
@@ -309,6 +310,9 @@ function AdminHeader() {
       </div>
 
       <div className="flex items-center gap-2">
+        {/* Trocar ambiente (aparece se o usuário tiver mais de um papel) */}
+        <EnvironmentSwitcher />
+
         {/* Sino */}
         <Button
           variant="ghost"

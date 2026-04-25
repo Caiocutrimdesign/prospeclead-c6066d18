@@ -3,6 +3,7 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import BottomNav from "./BottomNav";
 import InactivityOverlay from "./InactivityOverlay";
+import EnvironmentSwitcher from "./EnvironmentSwitcher";
 
 interface Props {
   children: ReactNode;
@@ -28,6 +29,10 @@ export default function AppLayout({ children, wide = false }: Props) {
   return (
     <div className="min-h-screen bg-muted/30">
       <div className={`${containerWidth} mx-auto bg-background min-h-screen pb-20 relative`}>
+        {/* Switcher de ambiente — só aparece para usuários com mais de um papel */}
+        <div className="absolute top-3 right-3 z-40">
+          <EnvironmentSwitcher variant="compact" />
+        </div>
         {children}
         <BottomNav />
       </div>
