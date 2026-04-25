@@ -58,6 +58,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
+import EnvironmentSwitcher from "@/components/EnvironmentSwitcher";
 import logo from "@/assets/prospeclead-logo.png";
 import { resolveUiRole, getUiRoleMeta } from "@/lib/roleMapping";
 
