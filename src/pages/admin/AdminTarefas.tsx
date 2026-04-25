@@ -4,7 +4,7 @@ import { ptBR } from "date-fns/locale";
 import {
   Calendar as CalendarIcon, ChevronLeft, ChevronRight, Clock, Plus, Search, CheckCircle2,
   Phone, Mail, MessageSquare, User, Calendar as LucideCalendar, Briefcase, ExternalLink,
-  Trash2, Pencil, MoreHorizontal, Loader2
+  Trash2, Pencil, MoreHorizontal, Loader2, Edit
 } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
@@ -157,6 +157,22 @@ export default function AdminTarefas() {
     onError: (err) => toast.error("Erro ao remover: " + err.message)
   });
 
+  const updateEvent = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      const { error } = await supabase.from("events").update(data).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["events"] });
+      toast.success("Evento atualizado!");
+      setEventEditModalOpen(false);
+    },
+    onError: (err) => toast.error("Erro ao atualizar: " + err.message)
+  });
+
+  const [eventEditModalOpen, setEventEditModalOpen] = useState(false);
+  const [eventEditing, setEventEditing] = useState<any>(null);
+
   const filteredTasks = useMemo(() => {
     return tasks.filter((t: any) => {
       if (taskStatusFilter !== "Todos" && t.status !== taskStatusFilter) return false;
@@ -236,7 +252,7 @@ export default function AdminTarefas() {
                 showUserFilter={true} users={users}
               />
               {isLoadingTasks ? <div className="p-8 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-muted-foreground" /></div> : (
-                <TaskTable 
+                <TaskGrid 
                   tasks={filteredTasks} 
                   users={users}
                   onFinish={(t: any) => { setSelectedTask(t); setFinishTaskModalOpen(true); }} 
@@ -279,7 +295,8 @@ export default function AdminTarefas() {
       <TaskModal open={taskModalOpen} setOpen={setTaskModalOpen} onCreate={(t: any) => createTask.mutate(t)} users={users} leads={leads} currentUserId={user?.id} busy={createTask.isPending} />
       <FinishTaskModal open={finishTaskModalOpen} setOpen={setFinishTaskModalOpen} task={selectedTask} annotation={annotation} setAnnotation={setAnnotation} onFinish={() => finishTask.mutate({ id: selectedTask.id, notes: annotation })} busy={finishTask.isPending} />
       <EventModal open={eventModalOpen} setOpen={setEventModalOpen} onCreate={(e: any) => createEvent.mutate(e)} users={users} leads={leads} currentUserId={user?.id} busy={createEvent.isPending} initialDate={initialEventDate} />
-      <EventDetailModal open={eventDetailModalOpen} setOpen={setEventDetailModalOpen} event={selectedEvent} onDelete={(id: string) => deleteEvent.mutate(id)} busy={deleteEvent.isPending} />
+      <EventDetailModal open={eventDetailModalOpen} setOpen={setEventDetailModalOpen} event={selectedEvent} onEdit={(ev: any) => { setEventEditing(ev); setEventEditModalOpen(true); }} onDelete={(id: string) => deleteEvent.mutate(id)} busy={deleteEvent.isPending} />
+      <EditEventModal open={eventEditModalOpen} setOpen={setEventEditModalOpen} event={eventEditing} onUpdate={(id: string, data: any) => updateEvent.mutate({ id, data })} users={users} leads={leads} busy={updateEvent.isPending} />
     </div>
   );
 }
@@ -321,6 +338,91 @@ function TaskControls({ search, setSearch, status, setStatus, priority, setPrior
         )}
       </div>
     </Card>
+  );
+}
+
+function TaskGrid({ tasks, users, onFinish }: any) {
+  const groupedByUser = useMemo(() => {
+    const groups: Record<string, any[]> = {};
+    tasks.forEach((t: any) => {
+      const userId = t.responsible_id || 'unassigned';
+      if (!groups[userId]) groups[userId] = [];
+      groups[userId].push(t);
+    });
+    return groups;
+  }, [tasks]);
+
+  if (tasks.length === 0) {
+    return (
+      <Card className="p-12 text-center">
+        <p className="text-muted-foreground">Nenhuma tarefa encontrada.</p>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      {Object.entries(groupedByUser).map(([userId, userTasks]) => {
+        const user = users.find((u: any) => u.id === userId);
+        const userName = user?.full_name || 'Sem Responsável';
+        const pendingCount = (userTasks as any[]).filter((t: any) => t.status !== "Concluída").length;
+        
+        return (
+          <Card key={userId} className="overflow-hidden">
+            <div className="p-3 bg-muted/50 border-b border-border">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                    <User className="w-4 h-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm leading-tight">{userName}</p>
+                    <p className="text-xs text-muted-foreground">{pendingCount} pendentes</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="p-2 space-y-2 max-h-[300px] overflow-y-auto">
+              {(userTasks as any[]).map((t: any) => {
+                const isOverdue = t.deadline < new Date() && t.status !== "Concluída";
+                const TypeIcon = taskTypeIcons[t.task_type] || Briefcase;
+                return (
+                  <div 
+                    key={t.id} 
+                    className={cn(
+                      "p-2 rounded-lg border cursor-pointer transition-all hover:bg-muted/50",
+                      t.status === "Concluída" && "bg-muted/30 opacity-60",
+                      isOverdue && "border-red-500/50 bg-red-500/5"
+                    )}
+                    onClick={() => onFinish(t)}
+                  >
+                    <div className="flex items-start gap-2">
+                      <div className="mt-0.5 p-1 rounded bg-background border">
+                        <TypeIcon className="w-3 h-3 text-muted-foreground" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={cn("text-xs font-semibold leading-tight truncate", isOverdue && "text-red-600")}>{t.title}</p>
+                        <div className="flex items-center gap-1 mt-1">
+                          <Badge variant="outline" className={cn("h-4 px-1 text-[9px]", priorityColors[t.priority])}>{t.priority}</Badge>
+                          <span className={cn("text-[9px]", isOverdue ? "text-red-600 font-medium" : "text-muted-foreground")}>
+                            {format(t.deadline, "dd/MM", { locale: ptBR })}
+                          </span>
+                        </div>
+                      </div>
+                      {t.status !== "Concluída" && (
+                        <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={(e) => { e.stopPropagation(); onFinish(t); }}>
+                          <CheckCircle2 className="w-3 h-3" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+        );
+      })}
+    </div>
   );
 }
 
@@ -424,19 +526,30 @@ function MonthCalendar({ currentDate, events, onEventClick, onDayClick }: any) {
             <div key={i} onClick={() => onDayClick?.(day)} className={cn("min-h-[100px] p-2 border-r border-b border-border transition-colors cursor-pointer", !isSelectedMonth && "bg-muted/30 text-muted-foreground/50", isSelectedMonth && "hover:bg-muted/10")}>
               <div className="flex items-center justify-between mb-1">
                 <span className={cn("text-xs font-semibold w-6 h-6 flex items-center justify-center rounded-full", isToday && "bg-primary text-primary-foreground")}>{format(day, "d")}</span>
+                {dayEvents.length > 0 && <Badge variant="secondary" className="h-4 px-1 text-[9px]">{dayEvents.length}</Badge>}
               </div>
               <div className="space-y-1">
-                {dayEvents.map((ev: any) => (
-                  <button key={ev.id} onClick={(e) => { e.stopPropagation(); onEventClick(ev); }} className={cn("w-full text-[10px] p-1 rounded border-l-2 text-left transition-opacity hover:opacity-80 flex flex-col gap-0.5", eventTypeColors[ev.event_type] || "bg-muted text-foreground border-muted-foreground")}>
-                    <div className="flex justify-between w-full font-bold">
-                      <span>{format(ev.start, "HH:mm")}</span>
+                {dayEvents.slice(0, 3).map((ev: any) => (
+                  <div 
+                    key={ev.id} 
+                    onClick={(e) => { e.stopPropagation(); onEventClick(ev); }} 
+                    className={cn(
+                      "w-full text-[10px] p-1.5 rounded border-l-2 cursor-pointer transition-all hover:opacity-80 flex flex-col gap-0.5 group",
+                      eventTypeColors[ev.event_type] || "bg-muted text-foreground border-muted-foreground"
+                    )}
+                  >
+                    <div className="flex justify-between items-center w-full">
+                      <span className="font-bold truncate">{format(ev.start, "HH:mm")}</span>
                       <span className="opacity-70 text-[9px] uppercase">{ev.event_type}</span>
                     </div>
-                    <span className="line-clamp-2 leading-tight">{ev.title}</span>
-                    {ev.linked_to && <span className="opacity-80 text-[8px] leading-tight line-clamp-1 mt-0.5 font-medium">👤 {ev.linked_to}</span>}
+                    <span className="line-clamp-2 leading-tight font-medium">{ev.title}</span>
+                    {ev.linked_to && <span className="opacity-80 text-[8px] leading-tight line-clamp-1 mt-0.5 font-medium">Vinculado: {ev.linked_to}</span>}
                     {ev.description && <span className="opacity-70 text-[8px] leading-tight line-clamp-1 mt-0.5">{ev.description}</span>}
-                  </button>
+                  </div>
                 ))}
+                {dayEvents.length > 3 && (
+                  <div className="text-[9px] text-muted-foreground text-center py-1">+{dayEvents.length - 3} mais</div>
+                )}
               </div>
             </div>
           );
@@ -630,7 +743,7 @@ function EventModal({ open, setOpen, onCreate, users, leads, currentUserId, busy
   );
 }
 
-function EventDetailModal({ open, setOpen, event, onDelete, busy }: any) {
+function EventDetailModal({ open, setOpen, event, onEdit, onDelete, busy }: any) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent>
@@ -643,9 +756,65 @@ function EventDetailModal({ open, setOpen, event, onDelete, busy }: any) {
             <div className="space-y-1"><p className="text-[10px] uppercase text-muted-foreground font-bold">Horário</p><div className="flex items-center gap-1.5 text-sm"><Clock className="w-3.5 h-3.5 text-muted-foreground" />{event && `${format(event.start, "HH:mm")} - ${format(event.end, "HH:mm")}`}</div></div>
             <div className="space-y-1"><p className="text-[10px] uppercase text-muted-foreground font-bold">Data</p><div className="flex items-center gap-1.5 text-sm"><CalendarIcon className="w-3.5 h-3.5 text-muted-foreground" />{event && format(event.start, "dd 'de' MMMM", { locale: ptBR })}</div></div>
           </div>
+          {event?.linked_to && (
+            <div className="space-y-1"><p className="text-[10px] uppercase text-muted-foreground font-bold">Vinculado a</p><p className="text-sm font-medium">{event.linked_to}</p></div>
+          )}
           <div className="space-y-1"><p className="text-[10px] uppercase text-muted-foreground font-bold">Descrição</p><p className="text-sm text-muted-foreground">{event?.description || "Sem descrição."}</p></div>
         </div>
-        <DialogFooter className="pt-4"><div className="flex gap-2 w-full justify-between"><Button variant="destructive" size="sm" className="gap-2" onClick={() => onDelete(event?.id)} disabled={busy}>{busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Trash2 className="w-4 h-4" /> Excluir</>}</Button><div className="flex gap-2"><Button size="sm" onClick={() => setOpen(false)}>Fechar</Button></div></div></DialogFooter>
+        <DialogFooter className="pt-4">
+          <div className="flex gap-2 w-full justify-between">
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" className="gap-2" onClick={() => onEdit(event)} disabled={busy}>
+                <Edit className="w-4 h-4" /> Editar
+              </Button>
+              <Button variant="destructive" size="sm" className="gap-2" onClick={() => onDelete(event?.id)} disabled={busy}>
+                {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Trash2 className="w-4 h-4" /> Excluir</>}
+              </Button>
+            </div>
+            <Button size="sm" onClick={() => setOpen(false)}>Fechar</Button>
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function EditEventModal({ open, setOpen, event, onUpdate, users, leads, busy }: any) {
+  const getLocalISO = (date: Date) => {
+    const tz = date.getTimezoneOffset() * 60000;
+    return new Date(date.getTime() - tz).toISOString().slice(0, 16);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader><DialogTitle>Editar Evento</DialogTitle></DialogHeader>
+        <form onSubmit={(e) => {
+          e.preventDefault();
+          const fd = new FormData(e.currentTarget);
+          onUpdate(event.id, {
+            title: fd.get("title"),
+            event_type: fd.get("type"),
+            start_time: new Date(fd.get("start") as string).toISOString(),
+            end_time: new Date(fd.get("end") as string).toISOString(),
+            responsible_id: fd.get("responsible"),
+            linked_to: fd.get("linkedTo"),
+            description: fd.get("description")
+          });
+        }} className="space-y-4 pt-4">
+          <div className="space-y-2"><Label>Título</Label><Input name="title" defaultValue={event?.title} required /></div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2"><Label>Tipo</Label><Select name="type" defaultValue={event?.event_type}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Reunião">Reunião</SelectItem><SelectItem value="Visita">Visita</SelectItem><SelectItem value="Ligação">Ligação</SelectItem></SelectContent></Select></div>
+            <div className="space-y-2"><Label>Responsável</Label><Select name="responsible" defaultValue={event?.responsible_id}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{users.map((u: any) => <SelectItem key={u.id} value={u.id}>{u.full_name || 'Sem Nome'}</SelectItem>)}</SelectContent></Select></div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2"><Label>Início</Label><Input name="start" type="datetime-local" defaultValue={event ? getLocalISO(new Date(event.start_time)) : ""} required /></div>
+            <div className="space-y-2"><Label>Término</Label><Input name="end" type="datetime-local" defaultValue={event ? getLocalISO(new Date(event.end_time)) : ""} required /></div>
+          </div>
+          <div className="space-y-2"><Label>Vincular a</Label><Select name="linkedTo" defaultValue={event?.linked_to || ""}><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger><SelectContent>{leads.map((l: any) => <SelectItem key={l.id} value={l.name}>{l.name} ({l.kind})</SelectItem>)}</SelectContent></Select></div>
+          <div className="space-y-2"><Label>Descrição</Label><Textarea name="description" defaultValue={event?.description} /></div>
+          <DialogFooter className="pt-4"><Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button><Button type="submit" disabled={busy}>{busy ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar Alterações"}</Button></DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );
