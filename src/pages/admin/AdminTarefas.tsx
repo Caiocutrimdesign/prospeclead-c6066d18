@@ -227,15 +227,8 @@ export default function AdminTarefas() {
             </TabsList>
 
             <TabsContent value="minhas" className="space-y-4">
-              <TaskControls 
-                search={taskSearch} setSearch={setTaskSearch}
-                status={taskStatusFilter} setStatus={setTaskStatusFilter}
-                priority={taskPriorityFilter} setPriority={setTaskPriorityFilter}
-                userId={taskUserFilter} setUserId={setTaskUserFilter}
-                showUserFilter={false} users={users}
-              />
               {isLoadingTasks ? <div className="p-8 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-muted-foreground" /></div> : (
-                <TaskTable 
+                <TaskGrid 
                   tasks={filteredTasks.filter((t: any) => t.responsible_id === user?.id)} 
                   users={users}
                   onFinish={(t: any) => { setSelectedTask(t); setFinishTaskModalOpen(true); }} 
@@ -244,13 +237,6 @@ export default function AdminTarefas() {
             </TabsContent>
 
             <TabsContent value="equipe" className="space-y-4">
-              <TaskControls 
-                search={taskSearch} setSearch={setTaskSearch}
-                status={taskStatusFilter} setStatus={setTaskStatusFilter}
-                priority={taskPriorityFilter} setPriority={setTaskPriorityFilter}
-                userId={taskUserFilter} setUserId={setTaskUserFilter}
-                showUserFilter={true} users={users}
-              />
               {isLoadingTasks ? <div className="p-8 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-muted-foreground" /></div> : (
                 <TaskGrid 
                   tasks={filteredTasks} 
