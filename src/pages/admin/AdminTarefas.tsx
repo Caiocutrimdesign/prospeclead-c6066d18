@@ -328,15 +328,30 @@ function TaskControls({ search, setSearch, status, setStatus, priority, setPrior
 }
 
 function TaskGrid({ tasks, users, onFinish }: any) {
-  const groupedByUser = useMemo(() => {
+  const weekDays = useMemo(() => {
+    const today = new Date();
+    const startOfWeekDay = new Date(today);
+    startOfWeekDay.setDate(today.getDate() - today.getDay());
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(startOfWeekDay);
+      d.setDate(startOfWeekDay.getDate() + i);
+      return d;
+    });
+  }, []);
+
+  const groupedByDay = useMemo(() => {
     const groups: Record<string, any[]> = {};
-    tasks.forEach((t: any) => {
-      const userId = t.responsible_id || 'unassigned';
-      if (!groups[userId]) groups[userId] = [];
-      groups[userId].push(t);
+    weekDays.forEach(day => {
+      const dayStr = format(day, "yyyy-MM-dd");
+      groups[dayStr] = tasks.filter((t: any) => {
+        const taskDate = format(t.deadline, "yyyy-MM-dd");
+        return taskDate === dayStr;
+      });
     });
     return groups;
-  }, [tasks]);
+  }, [tasks, weekDays]);
+
+  const weekDayNames = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
   if (tasks.length === 0) {
     return (
@@ -347,63 +362,57 @@ function TaskGrid({ tasks, users, onFinish }: any) {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-      {Object.entries(groupedByUser).map(([userId, userTasks]) => {
-        const user = users.find((u: any) => u.id === userId);
-        const userName = user?.full_name || 'Sem Responsável';
-        const pendingCount = (userTasks as any[]).filter((t: any) => t.status !== "Concluída").length;
+    <div className="grid grid-cols-7 gap-2">
+      {weekDays.map((day, i) => {
+        const dayStr = format(day, "yyyy-MM-dd");
+        const dayTasks = groupedByDay[dayStr] || [];
+        const isToday = format(day, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
         
         return (
-          <Card key={userId} className="overflow-hidden">
-            <div className="p-3 bg-muted/50 border-b border-border">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                    <User className="w-4 h-4 text-primary" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-sm leading-tight">{userName}</p>
-                    <p className="text-xs text-muted-foreground">{pendingCount} pendentes</p>
-                  </div>
-                </div>
-              </div>
+          <Card key={i} className={cn("min-h-[400px] flex flex-col", isToday && "border-primary border-2")}>
+            <div className={cn("p-3 border-b text-center", isToday ? "bg-primary text-primary-foreground" : "bg-muted/50")}>
+              <p className="text-xs font-bold">{weekDayNames[i]}</p>
+              <p className="text-lg font-bold">{format(day, "d")}</p>
+              <Badge variant={isToday ? "secondary" : "outline"} className="mt-1">{dayTasks.length} tarefas</Badge>
             </div>
-            <div className="p-2 space-y-2 max-h-[300px] overflow-y-auto">
-              {(userTasks as any[]).map((t: any) => {
-                const isOverdue = t.deadline < new Date() && t.status !== "Concluída";
-                const TypeIcon = taskTypeIcons[t.task_type] || Briefcase;
-                return (
-                  <div 
-                    key={t.id} 
-                    className={cn(
-                      "p-2 rounded-lg border cursor-pointer transition-all hover:bg-muted/50",
-                      t.status === "Concluída" && "bg-muted/30 opacity-60",
-                      isOverdue && "border-red-500/50 bg-red-500/5"
-                    )}
-                    onClick={() => onFinish(t)}
-                  >
-                    <div className="flex items-start gap-2">
-                      <div className="mt-0.5 p-1 rounded bg-background border">
+            <div className="p-2 space-y-2 flex-1 overflow-y-auto">
+              {dayTasks.length === 0 ? (
+                <div className="h-full flex items-center justify-center text-muted-foreground text-xs">—</div>
+              ) : (
+                dayTasks.map((t: any) => {
+                  const isOverdue = t.deadline < new Date() && t.status !== "Concluída";
+                  const TypeIcon = taskTypeIcons[t.task_type] || Briefcase;
+                  const user = users.find((u: any) => u.id === t.responsible_id);
+                  
+                  return (
+                    <div 
+                      key={t.id} 
+                      className={cn(
+                        "p-2 rounded-lg border cursor-pointer transition-all hover:bg-muted/50 text-xs",
+                        t.status === "Concluída" && "bg-muted/30 opacity-60",
+                        isOverdue && "border-red-500/50 bg-red-500/5"
+                      )}
+                      onClick={() => onFinish(t)}
+                    >
+                      <div className="flex items-center gap-1 mb-1">
                         <TypeIcon className="w-3 h-3 text-muted-foreground" />
+                        <span className="font-bold">{format(t.deadline, "HH:mm")}</span>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className={cn("text-xs font-semibold leading-tight truncate", isOverdue && "text-red-600")}>{t.title}</p>
-                        <div className="flex items-center gap-1 mt-1">
-                          <Badge variant="outline" className={cn("h-4 px-1 text-[9px]", priorityColors[t.priority])}>{t.priority}</Badge>
-                          <span className={cn("text-[9px]", isOverdue ? "text-red-600 font-medium" : "text-muted-foreground")}>
-                            {format(t.deadline, "dd/MM", { locale: ptBR })}
-                          </span>
-                        </div>
+                      <p className={cn("font-semibold leading-tight", isOverdue && "text-red-600")}>{t.title}</p>
+                      {user && <p className="text-[10px] text-muted-foreground mt-1">👤 {user.full_name}</p>}
+                      <div className="flex items-center gap-1 mt-1">
+                        <Badge variant="outline" className={cn("h-4 px-1 text-[8px]", priorityColors[t.priority])}>{t.priority}</Badge>
+                        <Badge variant="secondary" className="h-4 px-1 text-[8px]">{t.status}</Badge>
                       </div>
                       {t.status !== "Concluída" && (
-                        <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={(e) => { e.stopPropagation(); onFinish(t); }}>
+                        <Button size="sm" variant="ghost" className="h-5 w-5 p-0 mt-1" onClick={(e) => { e.stopPropagation(); onFinish(t); }}>
                           <CheckCircle2 className="w-3 h-3" />
                         </Button>
                       )}
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
           </Card>
         );
