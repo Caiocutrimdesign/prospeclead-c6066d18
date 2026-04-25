@@ -236,6 +236,42 @@ export type Database = {
         }
         Relationships: []
       }
+      events: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          end_time: string
+          event_type: string
+          id: string
+          linked_to: string | null
+          responsible_id: string
+          start_time: string
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          end_time: string
+          event_type: string
+          id?: string
+          linked_to?: string | null
+          responsible_id: string
+          start_time: string
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          end_time?: string
+          event_type?: string
+          id?: string
+          linked_to?: string | null
+          responsible_id?: string
+          start_time?: string
+          title?: string
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           captured_at: string | null
@@ -638,45 +674,9 @@ export type Database = {
         }
         Relationships: []
       }
-      events: {
-        Row: {
-          created_at: string
-          description: string | null
-          end_time: string
-          event_type: string
-          id: string
-          linked_to: string | null
-          responsible_id: string
-          start_time: string
-          title: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          end_time: string
-          event_type: string
-          id?: string
-          linked_to?: string | null
-          responsible_id: string
-          start_time: string
-          title: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          end_time?: string
-          event_type?: string
-          id?: string
-          linked_to?: string | null
-          responsible_id?: string
-          start_time?: string
-          title?: string
-        }
-        Relationships: []
-      }
       tasks: {
         Row: {
-          created_at: string
+          created_at: string | null
           deadline: string
           id: string
           linked_to: string | null
@@ -688,7 +688,7 @@ export type Database = {
           title: string
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           deadline: string
           id?: string
           linked_to?: string | null
@@ -700,7 +700,7 @@ export type Database = {
           title: string
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           deadline?: string
           id?: string
           linked_to?: string | null
