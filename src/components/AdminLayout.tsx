@@ -310,6 +310,9 @@ function AdminHeader() {
       </div>
 
       <div className="flex items-center gap-2">
+        {/* Trocar ambiente (aparece se o usuário tiver mais de um papel) */}
+        <EnvironmentSwitcher />
+
         {/* Sino */}
         <Button
           variant="ghost"
