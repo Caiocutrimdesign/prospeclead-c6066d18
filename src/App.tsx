@@ -44,6 +44,7 @@ import VisualizadorLayout from "./components/VisualizadorLayout";
 import AdminVisualizador from "./pages/admin/AdminVisualizador";
 import AdminTarefas from "./pages/admin/AdminTarefas";
 import AdminKanban from "./pages/admin/AdminKanban";
+import AdminMarcas from "./pages/admin/AdminMarcas";
 
 const queryClient = new QueryClient();
 
@@ -89,7 +90,7 @@ const App = () => (
                 <Route path="kanban" element={<AdminKanban />} />
                 {/* Administração */}
                 <Route path="catalogo" element={<AdminProdutos />} />
-                <Route path="marcas" element={<AdminPlaceholder title="Gestão de Marcas" description="Marcas parceiras e identidade visual." />} />
+                <Route path="marcas" element={<AdminMarcas />} />
                 <Route path="usuarios" element={<AdminUsuarios />} />
                 <Route path="configuracoes" element={<AdminConfig />} />
                 {/* Financeiro */}
