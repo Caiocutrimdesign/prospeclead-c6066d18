@@ -45,6 +45,7 @@ import AdminVisualizador from "./pages/admin/AdminVisualizador";
 import AdminTarefas from "./pages/admin/AdminTarefas";
 import AdminKanban from "./pages/admin/AdminKanban";
 import AdminMarcas from "./pages/admin/AdminMarcas";
+import AdminInbox from "./pages/admin/AdminInbox";
 
 const queryClient = new QueryClient();
 
@@ -81,7 +82,7 @@ const App = () => (
                 <Route path="saques" element={<AdminSaques />} />
                 <Route path="ranking" element={<AdminRanking />} />
                 {/* Omnichannel IA */}
-                <Route path="inbox" element={<AdminPlaceholder title="Caixa de Entrada" description="Central omnichannel de mensagens (WhatsApp, e-mail, chat)." />} />
+                <Route path="inbox" element={<AdminInbox />} />
                 <Route path="ai-agents" element={<AdminPlaceholder title="Agentes de IA" description="Configuração de agentes inteligentes para qualificação e atendimento." />} />
                 <Route path="campaigns" element={<AdminPlaceholder title="Motor de Campanhas" description="Disparos automatizados e jornadas de marketing." />} />
                 <Route path="radar-b2b" element={<AdminPlaceholder title="Radar B2B" description="Captura automática de empresas e oportunidades B2B." />} />
