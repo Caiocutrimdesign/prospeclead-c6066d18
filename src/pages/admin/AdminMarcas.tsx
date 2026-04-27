@@ -11,6 +11,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
 interface BrandSettings {
@@ -32,6 +42,14 @@ export default function AdminMarcas() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [planFilter, setPlanFilter] = useState("all");
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [newBrand, setNewBrand] = useState({
+    brand_name: "",
+    brand_cnpj: "",
+    contact_email: "",
+    plan: "free",
+  });
 
   const fetchBrands = async () => {
     try {
@@ -58,6 +76,52 @@ export default function AdminMarcas() {
   const handleRefresh = () => {
     setIsRefreshing(true);
     fetchBrands();
+  };
+
+  const handleCreateBrand = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newBrand.brand_name) {
+      toast.error("O nome da marca é obrigatório");
+      return;
+    }
+
+    try {
+      setIsCreating(true);
+      
+      const baseSlug = newBrand.brand_name
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-|-$/g, "");
+      
+      const tenant_id = `${baseSlug}-${Math.floor(Math.random() * 10000)}`;
+
+      const { data, error } = await supabase
+        .from("app_settings")
+        .insert({
+          brand_name: newBrand.brand_name,
+          brand_cnpj: newBrand.brand_cnpj || null,
+          contact_email: newBrand.contact_email || null,
+          plan: newBrand.plan as any,
+          tenant_id: tenant_id,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast.success("Marca criada com sucesso!");
+      setIsCreateModalOpen(false);
+      setNewBrand({ brand_name: "", brand_cnpj: "", contact_email: "", plan: "free" });
+      
+      setBrands((prev) => [data, ...prev]);
+    } catch (error: any) {
+      toast.error("Erro ao criar marca", { description: error.message });
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   const filteredBrands = brands.filter((brand) => {
@@ -100,10 +164,79 @@ export default function AdminMarcas() {
             </p>
           </div>
         </div>
-        <Button className="gap-2" onClick={() => toast.info("Funcionalidade em desenvolvimento")}>
-          <Plus className="w-4 h-4" />
-          Nova Marca
-        </Button>
+        <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+          <DialogTrigger asChild>
+            <Button className="gap-2">
+              <Plus className="w-4 h-4" />
+              Nova Marca
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <form onSubmit={handleCreateBrand}>
+              <DialogHeader>
+                <DialogTitle>Criar Nova Marca</DialogTitle>
+                <DialogDescription>
+                  Adicione uma nova franquia ou operação white-label ao sistema.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="brand_name">Nome da Marca *</Label>
+                  <Input
+                    id="brand_name"
+                    value={newBrand.brand_name}
+                    onChange={(e) => setNewBrand({ ...newBrand, brand_name: e.target.value })}
+                    placeholder="Ex: Botega Fashion"
+                    required
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="brand_cnpj">CNPJ</Label>
+                  <Input
+                    id="brand_cnpj"
+                    value={newBrand.brand_cnpj}
+                    onChange={(e) => setNewBrand({ ...newBrand, brand_cnpj: e.target.value })}
+                    placeholder="00.000.000/0000-00"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="contact_email">E-mail de Contato</Label>
+                  <Input
+                    id="contact_email"
+                    type="email"
+                    value={newBrand.contact_email}
+                    onChange={(e) => setNewBrand({ ...newBrand, contact_email: e.target.value })}
+                    placeholder="contato@marca.com"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="plan">Plano</Label>
+                  <Select
+                    value={newBrand.plan}
+                    onValueChange={(value) => setNewBrand({ ...newBrand, plan: value })}
+                  >
+                    <SelectTrigger id="plan">
+                      <SelectValue placeholder="Selecione um plano" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="free">Free</SelectItem>
+                      <SelectItem value="pro">Pro</SelectItem>
+                      <SelectItem value="enterprise">Enterprise</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setIsCreateModalOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={isCreating}>
+                  {isCreating ? "Salvando..." : "Criar Marca"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Cards de Métricas */}
