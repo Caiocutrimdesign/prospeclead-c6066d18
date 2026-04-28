@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { LeadList, ChatLead } from "@/components/chat/LeadList";
+import { LeadList, ChatSession } from "@/components/chat/LeadList";
 import { ChatArea } from "@/components/chat/ChatArea";
 import { Card } from "@/components/ui/card";
 
 export default function AdminInbox() {
-  const [selectedLead, setSelectedLead] = useState<ChatLead | null>(null);
+  const [selectedSession, setSelectedSession] = useState<ChatSession | null>(null);
 
   return (
     <div className="h-[calc(100vh-120px)] w-full">
@@ -15,11 +15,11 @@ export default function AdminInbox() {
         </p>
       </div>
       <Card className="h-[calc(100%-70px)] flex overflow-hidden rounded-xl border-border shadow-sm">
-        <LeadList 
-          selectedLeadId={selectedLead?.id} 
-          onSelectLead={setSelectedLead} 
+        <LeadList
+          selectedSessionId={selectedSession?.session_id}
+          onSelectSession={setSelectedSession}
         />
-        <ChatArea lead={selectedLead} />
+        <ChatArea session={selectedSession} />
       </Card>
     </div>
   );

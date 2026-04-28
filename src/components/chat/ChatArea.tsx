@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { n8nSupabase } from "@/integrations/supabase/n8n-client";
-import { ChatLead } from "./LeadList";
+import { ChatSession } from "./LeadList";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Bot, User, Wifi, WifiOff, MessageSquareOff, Hash } from "lucide-react";
@@ -11,69 +11,54 @@ import { cn } from "@/lib/utils";
 // ─────────────────────────────────────────────
 interface RawMessage {
   type: "human" | "ai";
-  content: string;
+  content?: string;
+  additional_kwargs?: Record<string, unknown>;
+  response_metadata?: Record<string, unknown>;
+  tool_calls?: unknown[];
+  invalid_tool_calls?: unknown[];
 }
 
 interface ChatMessage {
   id: number;
   session_id: string;
   message: RawMessage;
-  hora_data_mensagem: string;
+  hora_data_mensagem: string | null;
 }
 
 interface ChatAreaProps {
-  lead: ChatLead | null;
-}
-
-// ─────────────────────────────────────────────
-// Session ID variations — n8n typically stores with DDI 55 (ex: 5517997814806)
-// Order of priority: with 55, without 55, with +55, with suffixes
-function buildSessionVariants(rawPhone: string): string[] {
-  const digits = rawPhone.replace(/\D/g, "");
-  if (!digits) return [];
-
-  const withDDI = digits.startsWith("55") ? digits : "55" + digits;
-  const withoutDDI = digits.startsWith("55") ? digits.slice(2) : digits;
-
-  // Priority order: DDI format first (most common in n8n Brazil)
-  const ordered: string[] = [
-    withDDI,              // 5517997814806  ← n8n default Brazil
-    withoutDDI,           // 17997814806
-    "+" + withDDI,        // +5517997814806
-    "+" + withoutDDI,     // +17997814806
-    withDDI + "@s.whatsapp.net",
-    withoutDDI + "@s.whatsapp.net",
-    withDDI + "@c.us",
-    withoutDDI + "@c.us",
-  ];
-
-  return [...new Set(ordered)];
+  session: ChatSession | null;
 }
 
 // ─────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────
-function formatTime(dateStr: string): string {
-  try { return format(new Date(dateStr), "HH:mm", { locale: ptBR }); }
-  catch { return ""; }
+function formatTime(dateStr: string | null, id: number): string {
+  if (dateStr) {
+    try { return format(new Date(dateStr), "HH:mm", { locale: ptBR }); } catch { /* */ }
+  }
+  return `msg ${id}`;
 }
 
-function formatDateSeparator(dateStr: string): string {
-  try { return format(new Date(dateStr), "EEEE, dd 'de' MMMM", { locale: ptBR }); }
-  catch { return ""; }
+function isSameGroup(a: ChatMessage, b: ChatMessage): boolean {
+  if (a.hora_data_mensagem && b.hora_data_mensagem) {
+    try {
+      const da = new Date(a.hora_data_mensagem);
+      const db = new Date(b.hora_data_mensagem);
+      return da.getFullYear() === db.getFullYear() &&
+        da.getMonth() === db.getMonth() &&
+        da.getDate() === db.getDate();
+    } catch { /* */ }
+  }
+  // If both null, group by every 20 messages
+  return Math.floor(a.id / 20) === Math.floor(b.id / 20);
 }
 
-function isSameDay(a: string, b: string): boolean {
-  try {
-    const da = new Date(a), db = new Date(b);
-    return da.getFullYear() === db.getFullYear() &&
-      da.getMonth() === db.getMonth() &&
-      da.getDate() === db.getDate();
-  } catch { return false; }
+function getContent(msg: RawMessage): string {
+  return msg?.content ?? "(sem conteúdo)";
 }
 
 // ─────────────────────────────────────────────
-// Empty / No Messages state
+// Empty state
 // ─────────────────────────────────────────────
 function EmptyState() {
   return (
@@ -88,40 +73,39 @@ function EmptyState() {
       </div>
       <h3 className="text-lg font-semibold text-foreground/80 mb-1">Caixa de Entrada</h3>
       <p className="text-sm text-muted-foreground max-w-xs text-center leading-relaxed">
-        Selecione um contato na lista lateral para visualizar o histórico de conversas monitorado pelo n8n.
+        Selecione uma conversa na lista lateral para visualizar o histórico monitorado pelo n8n.
       </p>
     </div>
   );
 }
 
-function NoMessages({ phone, sessionId }: { phone: string | null; sessionId: string }) {
+function NoMessages({ sessionId }: { sessionId: string }) {
   return (
     <div className="flex flex-col items-center justify-center h-full gap-3 select-none px-6 text-center">
       <div className="w-16 h-16 rounded-2xl bg-muted/50 flex items-center justify-center">
         <MessageSquareOff className="w-7 h-7 text-muted-foreground/40" />
       </div>
       <div>
-        <p className="text-sm font-medium text-muted-foreground">Sem mensagens encontradas</p>
-        <p className="text-xs text-muted-foreground/60 mt-1">
-          Buscado como: <code className="bg-muted px-1 rounded text-[10px]">{sessionId}</code>
-        </p>
-        <p className="text-[10px] text-muted-foreground/40 mt-2 max-w-xs">
-          Verifique se o n8n está salvando mensagens em <strong>n8n_chat_histories</strong> com este número no campo <strong>session_id</strong>.
-        </p>
+        <p className="text-sm font-medium text-muted-foreground">Sem mensagens</p>
+        <p className="text-[11px] text-muted-foreground/50 mt-1 font-mono">{sessionId}</p>
       </div>
     </div>
   );
 }
 
 // ─────────────────────────────────────────────
-// Date separator
+// Date/group separator
 // ─────────────────────────────────────────────
-function DateSeparator({ dateStr }: { dateStr: string }) {
+function GroupSeparator({ msg }: { msg: ChatMessage }) {
+  const label = msg.hora_data_mensagem
+    ? (() => { try { return format(new Date(msg.hora_data_mensagem), "EEEE, dd 'de' MMMM", { locale: ptBR }); } catch { return ""; } })()
+    : `Grupo de mensagens ${Math.floor(msg.id / 20) + 1}`;
+
   return (
     <div className="flex items-center gap-3 my-4 px-2 select-none">
       <div className="flex-1 h-px bg-border/50" />
       <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50 whitespace-nowrap">
-        {formatDateSeparator(dateStr)}
+        {label}
       </span>
       <div className="flex-1 h-px bg-border/50" />
     </div>
@@ -131,14 +115,14 @@ function DateSeparator({ dateStr }: { dateStr: string }) {
 // ─────────────────────────────────────────────
 // Message bubble
 // ─────────────────────────────────────────────
-function MessageBubble({ msg, leadName }: { msg: ChatMessage; leadName: string }) {
+function MessageBubble({ msg, displayName }: { msg: ChatMessage; displayName: string }) {
   const isAI = msg.message?.type === "ai";
-  const content = msg.message?.content ?? "(mensagem sem conteúdo)";
-  const timeStr = msg.hora_data_mensagem ? formatTime(msg.hora_data_mensagem) : "";
+  const content = getContent(msg.message);
+  const timeStr = formatTime(msg.hora_data_mensagem, msg.id);
 
   return (
     <div className={cn("flex w-full items-end gap-2 mb-1", isAI ? "justify-start" : "justify-end")}>
-      {/* Avatar — AI */}
+      {/* Avatar AI */}
       {isAI && (
         <div className="flex-shrink-0 w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-primary flex items-center justify-center shadow-sm mb-1">
           <Bot className="w-3.5 h-3.5 text-white" />
@@ -148,7 +132,10 @@ function MessageBubble({ msg, leadName }: { msg: ChatMessage; leadName: string }
       <div className={cn("group relative max-w-[72%] sm:max-w-[60%] flex flex-col", isAI ? "items-start" : "items-end")}>
         {/* Sender label */}
         <span className={cn("text-[10px] font-semibold mb-1 px-1 flex items-center gap-1", isAI ? "text-violet-500" : "text-emerald-600")}>
-          {isAI ? <><Bot className="w-2.5 h-2.5" /> Assistente Ray</> : <><User className="w-2.5 h-2.5" /> {leadName}</>}
+          {isAI
+            ? <><Bot className="w-2.5 h-2.5" /> Assistente Ray</>
+            : <><User className="w-2.5 h-2.5" /> {displayName}</>
+          }
         </span>
 
         {/* Bubble */}
@@ -162,14 +149,12 @@ function MessageBubble({ msg, leadName }: { msg: ChatMessage; leadName: string }
         </div>
 
         {/* Timestamp */}
-        {timeStr && (
-          <span className="text-[9px] mt-1 px-1 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-            {timeStr}
-          </span>
-        )}
+        <span className="text-[9px] mt-1 px-1 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          {timeStr}
+        </span>
       </div>
 
-      {/* Avatar — Human */}
+      {/* Avatar Human */}
       {!isAI && (
         <div className="flex-shrink-0 w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center shadow-sm mb-1">
           <User className="w-3.5 h-3.5 text-emerald-600" />
@@ -182,11 +167,10 @@ function MessageBubble({ msg, leadName }: { msg: ChatMessage; leadName: string }
 // ─────────────────────────────────────────────
 // Main component
 // ─────────────────────────────────────────────
-export function ChatArea({ lead }: ChatAreaProps) {
+export function ChatArea({ session }: ChatAreaProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [connected, setConnected] = useState(false);
-  const [resolvedSessionId, setResolvedSessionId] = useState<string>("");
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = useCallback((smooth = false) => {
@@ -196,60 +180,39 @@ export function ChatArea({ lead }: ChatAreaProps) {
   }, []);
 
   useEffect(() => {
-    if (!lead?.phone) {
+    if (!session?.session_id) {
       setMessages([]);
       setConnected(false);
-      setResolvedSessionId("");
       return;
     }
 
-    const variants = buildSessionVariants(lead.phone);
-    let activeChannel: ReturnType<typeof supabase.channel> | null = null;
+    const sid = session.session_id;
     let cancelled = false;
+    let activeChannel: ReturnType<typeof n8nSupabase.channel> | null = null;
 
-    async function findSessionAndLoad() {
+    async function load() {
       setLoading(true);
       setMessages([]);
-      setResolvedSessionId(variants[0]);
 
-      // Try each variant until we find one that has messages
-      let found: ChatMessage[] = [];
-      let foundSession = variants[0];
+      const { data, error } = await n8nSupabase
+        .from("n8n_chat_histories")
+        .select("*")
+        .eq("session_id", sid)
+        .order("id", { ascending: true })
+        .limit(500);
 
-      for (const variant of variants) {
-        if (cancelled) return;
-        const { data } = await n8nSupabase
-          .from("n8n_chat_histories")
-          .select("*")
-          .eq("session_id", variant)
-          .order("id", { ascending: true })   // fallback: id when hora_data_mensagem is NULL
-          .limit(300);
-
-        if (data && data.length > 0) {
-          found = data as unknown as ChatMessage[];
-          foundSession = variant;
-          break;
-        }
+      if (!cancelled) {
+        setMessages(error || !data ? [] : (data as unknown as ChatMessage[]));
+        setLoading(false);
+        scrollToBottom(false);
       }
 
-      if (cancelled) return;
-
-      setMessages(found);
-      setResolvedSessionId(foundSession);
-      setLoading(false);
-      scrollToBottom(false);
-
-      // Subscribe to realtime using resolved session_id
+      // Realtime subscription
       activeChannel = n8nSupabase
-        .channel(`chat_rt_${foundSession.replace(/[^a-zA-Z0-9]/g, "_")}`)
+        .channel(`chat_rt_${sid.replace(/[^a-zA-Z0-9]/g, "_")}`)
         .on(
           "postgres_changes",
-          {
-            event: "INSERT",
-            schema: "public",
-            table: "n8n_chat_histories",
-            filter: `session_id=eq.${foundSession}`,
-          },
+          { event: "INSERT", schema: "public", table: "n8n_chat_histories", filter: `session_id=eq.${sid}` },
           (payload) => {
             if (!cancelled) {
               setMessages((prev) => [...prev, payload.new as unknown as ChatMessage]);
@@ -262,25 +225,25 @@ export function ChatArea({ lead }: ChatAreaProps) {
         });
     }
 
-    findSessionAndLoad();
+    load();
 
     return () => {
       cancelled = true;
       if (activeChannel) n8nSupabase.removeChannel(activeChannel);
       setConnected(false);
     };
-  }, [lead, scrollToBottom]);
+  }, [session, scrollToBottom]);
 
-  if (!lead) return <EmptyState />;
+  if (!session) return <EmptyState />;
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden">
-      {/* ── Header ─────────────────────────────── */}
+      {/* Header */}
       <div className="px-5 py-3.5 bg-background border-b border-border flex items-center justify-between shrink-0 shadow-sm z-10">
         <div className="flex items-center gap-3">
           <div className="relative">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center font-bold text-primary text-sm">
-              {lead.name.substring(0, 2).toUpperCase()}
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 flex items-center justify-center font-bold text-emerald-700 text-sm">
+              WA
             </div>
             <span className={cn(
               "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-background",
@@ -288,11 +251,11 @@ export function ChatArea({ lead }: ChatAreaProps) {
             )} />
           </div>
           <div>
-            <h3 className="font-semibold text-sm leading-tight">{lead.name}</h3>
-            <div className="flex items-center gap-1.5">
-              <Hash className="w-2.5 h-2.5 text-muted-foreground/50" />
-              <p className="text-[11px] text-muted-foreground leading-tight font-mono">
-                {resolvedSessionId || lead.phone || "—"}
+            <h3 className="font-semibold text-sm leading-tight">{session.displayName}</h3>
+            <div className="flex items-center gap-1">
+              <Hash className="w-2.5 h-2.5 text-muted-foreground/40" />
+              <p className="text-[10px] text-muted-foreground font-mono leading-tight truncate max-w-[200px]">
+                {session.session_id}
               </p>
             </div>
           </div>
@@ -307,32 +270,30 @@ export function ChatArea({ lead }: ChatAreaProps) {
         </div>
       </div>
 
-      {/* ── Messages ─────────────────────────────── */}
+      {/* Messages */}
       <div
         className="flex-1 overflow-y-auto px-5 py-4"
         style={{ background: "radial-gradient(ellipse at top, hsl(var(--muted)/0.15) 0%, transparent 70%)" }}
       >
         {loading ? (
           <div className="flex flex-col gap-4 pt-6">
-            {[...Array(4)].map((_, i) => (
+            {[...Array(5)].map((_, i) => (
               <div key={i} className={cn("flex gap-2 animate-pulse", i % 2 === 0 ? "justify-start" : "justify-end")}>
                 <div className="w-7 h-7 rounded-full bg-muted shrink-0 self-end" />
-                <div className={cn("h-12 rounded-2xl bg-muted", i % 2 === 0 ? "w-48" : "w-36")} />
+                <div className={cn("h-12 rounded-2xl bg-muted", i % 2 === 0 ? "w-52" : "w-36")} />
               </div>
             ))}
           </div>
         ) : messages.length === 0 ? (
-          <NoMessages phone={lead.phone} sessionId={resolvedSessionId} />
+          <NoMessages sessionId={session.session_id} />
         ) : (
           <>
             {messages.map((msg, index) => {
-              const showSeparator =
-                index === 0 ||
-                !isSameDay(messages[index - 1].hora_data_mensagem, msg.hora_data_mensagem);
+              const showSeparator = index === 0 || !isSameGroup(messages[index - 1], msg);
               return (
                 <div key={msg.id ?? index}>
-                  {showSeparator && <DateSeparator dateStr={msg.hora_data_mensagem} />}
-                  <MessageBubble msg={msg} leadName={lead.name} />
+                  {showSeparator && <GroupSeparator msg={msg} />}
+                  <MessageBubble msg={msg} displayName={session.displayName} />
                 </div>
               );
             })}
@@ -341,7 +302,7 @@ export function ChatArea({ lead }: ChatAreaProps) {
         <div ref={bottomRef} />
       </div>
 
-      {/* ── Footer read-only ─────────────────────── */}
+      {/* Footer */}
       <div className="px-5 py-3 bg-background border-t border-border shrink-0">
         <div className="flex items-center gap-2 bg-muted/40 border border-border/50 border-dashed rounded-xl px-4 py-2.5">
           <Bot className="w-4 h-4 text-muted-foreground/50 shrink-0" />
