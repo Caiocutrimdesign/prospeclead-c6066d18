@@ -26,41 +26,28 @@ interface ChatAreaProps {
 }
 
 // ─────────────────────────────────────────────
-// Session ID variations (n8n may store in many formats)
-// Ex: "98984987587", "5598984987587", "+5598984987587",
-//     "98984987587@s.whatsapp.net", "5598984987587@c.us"
-// ─────────────────────────────────────────────
+// Session ID variations — n8n typically stores with DDI 55 (ex: 5517997814806)
+// Order of priority: with 55, without 55, with +55, with suffixes
 function buildSessionVariants(rawPhone: string): string[] {
   const digits = rawPhone.replace(/\D/g, "");
   if (!digits) return [];
 
-  const variants = new Set<string>();
+  const withDDI = digits.startsWith("55") ? digits : "55" + digits;
+  const withoutDDI = digits.startsWith("55") ? digits.slice(2) : digits;
 
-  // As-is (digits only)
-  variants.add(digits);
+  // Priority order: DDI format first (most common in n8n Brazil)
+  const ordered: string[] = [
+    withDDI,              // 5517997814806  ← n8n default Brazil
+    withoutDDI,           // 17997814806
+    "+" + withDDI,        // +5517997814806
+    "+" + withoutDDI,     // +17997814806
+    withDDI + "@s.whatsapp.net",
+    withoutDDI + "@s.whatsapp.net",
+    withDDI + "@c.us",
+    withoutDDI + "@c.us",
+  ];
 
-  // With Brazil DDI 55
-  if (!digits.startsWith("55")) {
-    variants.add("55" + digits);
-  } else {
-    // Also try without DDI
-    variants.add(digits.slice(2));
-  }
-
-  // With + prefix
-  variants.add("+" + digits);
-  if (!digits.startsWith("55")) {
-    variants.add("+55" + digits);
-  }
-
-  // WhatsApp suffixes
-  for (const d of [...variants]) {
-    variants.add(d + "@s.whatsapp.net");
-    variants.add(d + "@c.us");
-    variants.add(d + "@g.us");
-  }
-
-  return [...variants];
+  return [...new Set(ordered)];
 }
 
 // ─────────────────────────────────────────────
@@ -235,7 +222,7 @@ export function ChatArea({ lead }: ChatAreaProps) {
           .from("n8n_chat_histories")
           .select("*")
           .eq("session_id", variant)
-          .order("hora_data_mensagem", { ascending: true })
+          .order("id", { ascending: true })   // fallback: id when hora_data_mensagem is NULL
           .limit(300);
 
         if (data && data.length > 0) {
