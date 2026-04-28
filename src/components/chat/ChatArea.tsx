@@ -1,26 +1,17 @@
-import { useEffect, useState, useRef, useCallback, KeyboardEvent } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { n8nSupabase } from "@/integrations/supabase/n8n-client";
 import { ChatSession } from "./LeadList";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import {
-  Bot, User, Wifi, WifiOff, MessageSquareOff,
-  Hash, Send, Headphones, Loader2, AlertCircle,
-} from "lucide-react";
+import { Bot, User, Wifi, WifiOff, MessageSquareOff, Hash } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { toast } from "@/hooks/use-toast";
 
 // ─────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────
-type MessageType = "human" | "ai" | "admin";
-
 interface RawMessage {
-  type: MessageType;
+  type: "human" | "ai";
   content?: string;
-  sender_type?: string;
   additional_kwargs?: Record<string, unknown>;
   response_metadata?: Record<string, unknown>;
   tool_calls?: unknown[];
@@ -39,18 +30,13 @@ interface ChatAreaProps {
 }
 
 // ─────────────────────────────────────────────
-// Webhook URL (configure in .env / Lovable secrets)
-// ─────────────────────────────────────────────
-const WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_REPLY as string | undefined;
-
-// ─────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────
 function formatTime(dateStr: string | null, id: number): string {
   if (dateStr) {
     try { return format(new Date(dateStr), "HH:mm", { locale: ptBR }); } catch { /* */ }
   }
-  return `#${id}`;
+  return `msg ${id}`;
 }
 
 function isSameGroup(a: ChatMessage, b: ChatMessage): boolean {
@@ -63,6 +49,7 @@ function isSameGroup(a: ChatMessage, b: ChatMessage): boolean {
         da.getDate() === db.getDate();
     } catch { /* */ }
   }
+  // If both null, group by every 20 messages
   return Math.floor(a.id / 20) === Math.floor(b.id / 20);
 }
 
@@ -86,7 +73,7 @@ function EmptyState() {
       </div>
       <h3 className="text-lg font-semibold text-foreground/80 mb-1">Caixa de Entrada</h3>
       <p className="text-sm text-muted-foreground max-w-xs text-center leading-relaxed">
-        Selecione uma conversa para visualizar e responder via WhatsApp.
+        Selecione uma conversa na lista lateral para visualizar o histórico monitorado pelo n8n.
       </p>
     </div>
   );
@@ -107,15 +94,12 @@ function NoMessages({ sessionId }: { sessionId: string }) {
 }
 
 // ─────────────────────────────────────────────
-// Group separator
+// Date/group separator
 // ─────────────────────────────────────────────
 function GroupSeparator({ msg }: { msg: ChatMessage }) {
   const label = msg.hora_data_mensagem
-    ? (() => {
-        try { return format(new Date(msg.hora_data_mensagem), "EEEE, dd 'de' MMMM", { locale: ptBR }); }
-        catch { return ""; }
-      })()
-    : `Grupo ${Math.floor(msg.id / 20) + 1}`;
+    ? (() => { try { return format(new Date(msg.hora_data_mensagem), "EEEE, dd 'de' MMMM", { locale: ptBR }); } catch { return ""; } })()
+    : `Grupo de mensagens ${Math.floor(msg.id / 20) + 1}`;
 
   return (
     <div className="flex items-center gap-3 my-4 px-2 select-none">
@@ -132,63 +116,35 @@ function GroupSeparator({ msg }: { msg: ChatMessage }) {
 // Message bubble
 // ─────────────────────────────────────────────
 function MessageBubble({ msg, displayName }: { msg: ChatMessage; displayName: string }) {
-  const type = msg.message?.type;
-  const isAI    = type === "ai";
-  const isAdmin = type === "admin";
-  const isHuman = type === "human";
-  const isRight = isAdmin; // admin on right
-  const isLeft  = isAI || isHuman;
-  const content  = getContent(msg.message);
-  const timeStr  = formatTime(msg.hora_data_mensagem, msg.id);
-
-  // Bubble color
-  const bubbleClass = isAdmin
-    ? "bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-2xl rounded-tr-none"
-    : isAI
-    ? "bg-background border border-border text-foreground rounded-2xl rounded-tl-none"
-    : "bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-2xl rounded-tl-none";
-
-  // Label
-  const label = isAdmin
-    ? <><Headphones className="w-2.5 h-2.5" /> Atendente</>
-    : isAI
-    ? <><Bot className="w-2.5 h-2.5" /> Assistente Ray</>
-    : <><User className="w-2.5 h-2.5" /> {displayName}</>;
-
-  const labelColor = isAdmin
-    ? "text-blue-500"
-    : isAI
-    ? "text-violet-500"
-    : "text-emerald-600";
-
-  // Avatar
-  const avatarEl = isAdmin ? (
-    <div className="flex-shrink-0 w-7 h-7 rounded-full bg-gradient-to-br from-blue-600 to-indigo-500 flex items-center justify-center shadow-sm mb-1">
-      <Headphones className="w-3.5 h-3.5 text-white" />
-    </div>
-  ) : isAI ? (
-    <div className="flex-shrink-0 w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-primary flex items-center justify-center shadow-sm mb-1">
-      <Bot className="w-3.5 h-3.5 text-white" />
-    </div>
-  ) : (
-    <div className="flex-shrink-0 w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center shadow-sm mb-1">
-      <User className="w-3.5 h-3.5 text-emerald-600" />
-    </div>
-  );
+  const isAI = msg.message?.type === "ai";
+  const content = getContent(msg.message);
+  const timeStr = formatTime(msg.hora_data_mensagem, msg.id);
 
   return (
-    <div className={cn("flex w-full items-end gap-2 mb-1", isRight ? "justify-end" : "justify-start")}>
-      {/* Avatar — left side */}
-      {isLeft && avatarEl}
+    <div className={cn("flex w-full items-end gap-2 mb-1", isAI ? "justify-start" : "justify-end")}>
+      {/* Avatar AI */}
+      {isAI && (
+        <div className="flex-shrink-0 w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-primary flex items-center justify-center shadow-sm mb-1">
+          <Bot className="w-3.5 h-3.5 text-white" />
+        </div>
+      )}
 
-      <div className={cn("group relative max-w-[72%] sm:max-w-[60%] flex flex-col", isRight ? "items-end" : "items-start")}>
-        {/* Label */}
-        <span className={cn("text-[10px] font-semibold mb-1 px-1 flex items-center gap-1", labelColor)}>
-          {label}
+      <div className={cn("group relative max-w-[72%] sm:max-w-[60%] flex flex-col", isAI ? "items-start" : "items-end")}>
+        {/* Sender label */}
+        <span className={cn("text-[10px] font-semibold mb-1 px-1 flex items-center gap-1", isAI ? "text-violet-500" : "text-emerald-600")}>
+          {isAI
+            ? <><Bot className="w-2.5 h-2.5" /> Assistente Ray</>
+            : <><User className="w-2.5 h-2.5" /> {displayName}</>
+          }
         </span>
 
         {/* Bubble */}
-        <div className={cn("relative px-4 py-2.5 shadow-sm text-sm leading-relaxed whitespace-pre-wrap break-words", bubbleClass)}>
+        <div className={cn(
+          "relative px-4 py-2.5 shadow-sm text-sm leading-relaxed whitespace-pre-wrap break-words",
+          isAI
+            ? "bg-background border border-border text-foreground rounded-2xl rounded-tl-none"
+            : "bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-2xl rounded-tr-none"
+        )}>
           {content}
         </div>
 
@@ -198,8 +154,12 @@ function MessageBubble({ msg, displayName }: { msg: ChatMessage; displayName: st
         </span>
       </div>
 
-      {/* Avatar — right side (admin) */}
-      {isRight && avatarEl}
+      {/* Avatar Human */}
+      {!isAI && (
+        <div className="flex-shrink-0 w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center shadow-sm mb-1">
+          <User className="w-3.5 h-3.5 text-emerald-600" />
+        </div>
+      )}
     </div>
   );
 }
@@ -208,14 +168,10 @@ function MessageBubble({ msg, displayName }: { msg: ChatMessage; displayName: st
 // Main component
 // ─────────────────────────────────────────────
 export function ChatArea({ session }: ChatAreaProps) {
-  const [messages, setMessages]   = useState<ChatMessage[]>([]);
-  const [loading, setLoading]     = useState(false);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [loading, setLoading] = useState(false);
   const [connected, setConnected] = useState(false);
-  const [text, setText]           = useState("");
-  const [sending, setSending]     = useState(false);
-  const [sendError, setSendError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const scrollToBottom = useCallback((smooth = false) => {
     setTimeout(() => {
@@ -223,7 +179,6 @@ export function ChatArea({ session }: ChatAreaProps) {
     }, 80);
   }, []);
 
-  // ── Load + realtime ─────────────────────────
   useEffect(() => {
     if (!session?.session_id) {
       setMessages([]);
@@ -252,6 +207,7 @@ export function ChatArea({ session }: ChatAreaProps) {
         scrollToBottom(false);
       }
 
+      // Realtime subscription
       activeChannel = n8nSupabase
         .channel(`chat_rt_${sid.replace(/[^a-zA-Z0-9]/g, "_")}`)
         .on(
@@ -278,91 +234,11 @@ export function ChatArea({ session }: ChatAreaProps) {
     };
   }, [session, scrollToBottom]);
 
-  // ── Send message ────────────────────────────
-  const handleSend = useCallback(async () => {
-    const trimmed = text.trim();
-    if (!trimmed || !session?.session_id || sending) return;
-
-    setSending(true);
-    setSendError(null);
-    setText("");
-    textareaRef.current?.focus();
-
-    // Optimistic update — show message immediately
-    const optimistic: ChatMessage = {
-      id: Date.now(),
-      session_id: session.session_id,
-      message: { type: "admin", content: trimmed, sender_type: "admin" },
-      hora_data_mensagem: new Date().toISOString(),
-    };
-    setMessages((prev) => [...prev, optimistic]);
-    scrollToBottom(true);
-
-    try {
-      // ── Ação A: INSERT no Supabase ────────────
-      const { error: dbError } = await n8nSupabase
-        .from("n8n_chat_histories")
-        .insert({
-          session_id: session.session_id,
-          message: {
-            type: "admin",
-            content: trimmed,
-            sender_type: "admin",
-            additional_kwargs: {},
-            response_metadata: {},
-          },
-        });
-
-      if (dbError) {
-        console.error("Supabase insert error:", dbError);
-        // Don't fail entirely — message still shows optimistically
-      }
-
-      // ── Ação B: POST para webhook n8n ─────────
-      if (WEBHOOK_URL) {
-        const webhookRes = await fetch(WEBHOOK_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            phone: session.session_id,
-            message: trimmed,
-            session_id: session.session_id,
-            sender_type: "admin",
-          }),
-        });
-
-        if (!webhookRes.ok) {
-          console.warn("Webhook responded with status:", webhookRes.status);
-          setSendError(`Webhook retornou status ${webhookRes.status}. Mensagem salva localmente.`);
-        }
-      } else {
-        // No webhook configured — just local save
-        toast({
-          title: "Mensagem salva",
-          description: "Configure VITE_N8N_WEBHOOK_REPLY para enviar via WhatsApp.",
-        });
-      }
-    } catch (err) {
-      console.error("Send error:", err);
-      setSendError("Erro ao enviar. Tente novamente.");
-    } finally {
-      setSending(false);
-    }
-  }, [text, session, sending, scrollToBottom]);
-
-  // Enter to send (Shift+Enter = new line)
-  const handleKeyDown = useCallback((e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  }, [handleSend]);
-
   if (!session) return <EmptyState />;
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden">
-      {/* ── Header ─────────────────────────────── */}
+      {/* Header */}
       <div className="px-5 py-3.5 bg-background border-b border-border flex items-center justify-between shrink-0 shadow-sm z-10">
         <div className="flex items-center gap-3">
           <div className="relative">
@@ -394,7 +270,7 @@ export function ChatArea({ session }: ChatAreaProps) {
         </div>
       </div>
 
-      {/* ── Messages ─────────────────────────────── */}
+      {/* Messages */}
       <div
         className="flex-1 overflow-y-auto px-5 py-4"
         style={{ background: "radial-gradient(ellipse at top, hsl(var(--muted)/0.15) 0%, transparent 70%)" }}
@@ -426,68 +302,16 @@ export function ChatArea({ session }: ChatAreaProps) {
         <div ref={bottomRef} />
       </div>
 
-      {/* ── Input area ─────────────────────────── */}
-      <div className="px-4 py-3 bg-background border-t border-border shrink-0">
-        {/* Error banner */}
-        {sendError && (
-          <div className="flex items-center gap-2 mb-2 px-3 py-1.5 bg-destructive/10 border border-destructive/20 rounded-lg text-xs text-destructive">
-            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-            {sendError}
-          </div>
-        )}
-
-        {/* Webhook not configured warning */}
-        {!WEBHOOK_URL && (
-          <div className="flex items-center gap-2 mb-2 px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-lg text-[11px] text-amber-700 dark:text-amber-400">
-            <AlertCircle className="w-3 h-3 shrink-0" />
-            <span>Webhook não configurado — mensagens serão salvas mas não enviadas via WhatsApp.</span>
-          </div>
-        )}
-
-        <div className="flex items-end gap-2">
-          {/* Textarea */}
-          <div className="flex-1 relative">
-            <Textarea
-              ref={textareaRef}
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Digite uma mensagem… (Enter para enviar, Shift+Enter para nova linha)"
-              className={cn(
-                "min-h-[44px] max-h-[140px] resize-none pr-3 py-3 text-sm",
-                "border-border/60 bg-muted/30 focus-visible:ring-1 focus-visible:ring-primary/50",
-                "rounded-xl transition-all leading-relaxed"
-              )}
-              rows={1}
-              disabled={sending}
-            />
-          </div>
-
-          {/* Send button */}
-          <Button
-            onClick={handleSend}
-            disabled={!text.trim() || sending}
-            size="icon"
-            className={cn(
-              "h-11 w-11 rounded-xl shrink-0 transition-all duration-150",
-              "bg-gradient-to-br from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500",
-              "shadow-sm hover:shadow-md disabled:opacity-40"
-            )}
-          >
-            {sending
-              ? <Loader2 className="w-4 h-4 animate-spin" />
-              : <Send className="w-4 h-4" />
-            }
-          </Button>
+      {/* Footer */}
+      <div className="px-5 py-3 bg-background border-t border-border shrink-0">
+        <div className="flex items-center gap-2 bg-muted/40 border border-border/50 border-dashed rounded-xl px-4 py-2.5">
+          <Bot className="w-4 h-4 text-muted-foreground/50 shrink-0" />
+          <p className="text-xs text-muted-foreground/70 text-center flex-1">
+            Painel somente leitura — o n8n gerencia as respostas automaticamente via WhatsApp.
+          </p>
         </div>
-
-        {/* Hint */}
-        <p className="text-[10px] text-muted-foreground/40 mt-1.5 pl-1 flex items-center gap-1">
-          <Headphones className="w-2.5 h-2.5" />
-          Mensagem enviada como <strong className="text-blue-500/70">Atendente</strong>
-          {WEBHOOK_URL ? " · será enviada via WhatsApp" : " · configure o webhook para envio real"}
-        </p>
       </div>
     </div>
   );
 }
+
