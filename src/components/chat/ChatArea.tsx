@@ -136,8 +136,8 @@ function MessageBubble({ msg, displayName }: { msg: ChatMessage; displayName: st
   const isAI    = type === "ai";
   const isAdmin = type === "admin";
   const isHuman = type === "human";
-  const isRight = isAdmin; // admin on right
-  const isLeft  = isAI || isHuman;
+  const isRight = isAdmin || isAI; // admin & IA on right, cliente on left
+  const isLeft  = isHuman;
   const content  = getContent(msg.message);
   const timeStr  = formatTime(msg.hora_data_mensagem, msg.id);
 
