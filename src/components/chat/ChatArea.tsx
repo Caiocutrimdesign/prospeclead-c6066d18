@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 // Types
 // ─────────────────────────────────────────────
 interface RawMessage {
-  type: "human" | "ai";
+  type: "human" | "ai" | "admin";
   content?: string;
   additional_kwargs?: Record<string, unknown>;
   response_metadata?: Record<string, unknown>;
