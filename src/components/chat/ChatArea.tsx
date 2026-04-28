@@ -208,6 +208,9 @@ export function ChatArea({ session }: ChatAreaProps) {
       const webhookUrl = import.meta.env.VITE_N8N_WEBHOOK_REPLY;
       if (!webhookUrl) throw new Error("Webhook não configurado");
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+
       const response = await fetch(webhookUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -216,7 +219,10 @@ export function ChatArea({ session }: ChatAreaProps) {
           message: text,
           sender: "admin",
         }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) throw new Error(`Erro ${response.status}`);
 
