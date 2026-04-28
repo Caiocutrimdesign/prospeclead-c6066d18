@@ -145,7 +145,7 @@ function MessageBubble({ msg, displayName }: { msg: ChatMessage; displayName: st
   const bubbleClass = isAdmin
     ? "bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-2xl rounded-tr-none"
     : isAI
-    ? "bg-background border border-border text-foreground rounded-2xl rounded-tl-none"
+    ? "bg-gradient-to-br from-violet-500 to-purple-600 text-white rounded-2xl rounded-tr-none"
     : "bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-2xl rounded-tl-none";
 
   // Label
