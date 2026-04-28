@@ -3,7 +3,7 @@ import { n8nSupabase } from "@/integrations/supabase/n8n-client";
 import { ChatSession } from "./LeadList";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Bot, User, Wifi, WifiOff, MessageSquareOff, Hash } from "lucide-react";
+import { Bot, User, Wifi, WifiOff, MessageSquareOff, Hash, Send, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ─────────────────────────────────────────────
@@ -176,6 +176,10 @@ export function ChatArea({ session }: ChatAreaProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [connected, setConnected] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [inputValue, setInputValue] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = useCallback((smooth = false) => {
@@ -183,6 +187,51 @@ export function ChatArea({ session }: ChatAreaProps) {
       bottomRef.current?.scrollIntoView({ behavior: smooth ? "smooth" : "instant" });
     }, 80);
   }, []);
+
+  const adjustTextareaHeight = useCallback(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = "auto";
+      const newHeight = Math.min(Math.max(textarea.scrollHeight, 44), 150);
+      textarea.style.height = `${newHeight}px`;
+    }
+  }, []);
+
+  const handleSend = useCallback(async () => {
+    const text = inputValue.trim();
+    if (!text || !session?.session_id || sending) return;
+
+    setSending(true);
+    setError(null);
+
+    try {
+      const webhookUrl = import.meta.env.VITE_N8N_WEBHOOK_REPLY;
+      if (!webhookUrl) throw new Error("Webhook não configurado");
+
+      const response = await fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          session_id: session.session_id,
+          message: text,
+          sender: "admin",
+        }),
+      });
+
+      if (!response.ok) throw new Error(`Erro ${response.status}`);
+
+      setInputValue("");
+      if (textareaRef.current) {
+        textareaRef.current.style.height = "auto";
+      }
+      scrollToBottom(false);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erro ao enviar";
+      setError(msg);
+    } finally {
+      setSending(false);
+    }
+  }, [inputValue, session, sending, scrollToBottom]);
 
   useEffect(() => {
     if (!session?.session_id) {
@@ -309,12 +358,45 @@ export function ChatArea({ session }: ChatAreaProps) {
 
       {/* Footer */}
       <div className="px-5 py-3 bg-background border-t border-border shrink-0">
-        <div className="flex items-center gap-2 bg-muted/40 border border-border/50 border-dashed rounded-xl px-4 py-2.5">
-          <Bot className="w-4 h-4 text-muted-foreground/50 shrink-0" />
-          <p className="text-xs text-muted-foreground/70 text-center flex-1">
-            Painel somente leitura — o n8n gerencia as respostas automaticamente via WhatsApp.
-          </p>
+        {error && (
+          <div className="mb-2 px-3 py-2 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
+            <WifiOff className="w-4 h-4 text-red-500 shrink-0" />
+            <p className="text-xs text-red-600">{error}</p>
+            <button onClick={() => setError(null)} className="ml-auto text-red-400 hover:text-red-600 text-lg leading-none">×</button>
+          </div>
+        )}
+        <div className="flex items-end gap-2">
+          <textarea
+            ref={textareaRef}
+            value={inputValue}
+            onChange={(e) => { setInputValue(e.target.value); adjustTextareaHeight(); }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
+            placeholder="Digite sua mensagem..."
+            className="flex-1 min-h-[44px] max-h-[150px] resize-none rounded-xl border border-border/50 bg-muted/30 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all"
+            rows={1}
+            disabled={sending}
+          />
+          <button
+            onClick={handleSend}
+            disabled={!inputValue.trim() || sending}
+            className={cn(
+              "shrink-0 w-11 h-11 rounded-xl flex items-center justify-center transition-all",
+              inputValue.trim() && !sending
+                ? "bg-gradient-to-br from-primary to-primary/80 text-white shadow-md hover:shadow-lg hover:scale-105"
+                : "bg-muted text-muted-foreground/50 cursor-not-allowed"
+            )}
+          >
+            {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+          </button>
         </div>
+        <p className="text-[10px] text-muted-foreground/40 text-center mt-2">
+          Enter = enviar • Shift+Enter = nova linha
+        </p>
       </div>
     </div>
   );
