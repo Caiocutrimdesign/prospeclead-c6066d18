@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { n8nSupabase } from "@/integrations/supabase/n8n-client";
 import { ChatLead } from "./LeadList";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -218,7 +218,7 @@ export function ChatArea({ lead }: ChatAreaProps) {
 
       for (const variant of variants) {
         if (cancelled) return;
-        const { data } = await supabase
+        const { data } = await n8nSupabase
           .from("n8n_chat_histories")
           .select("*")
           .eq("session_id", variant)
@@ -240,7 +240,7 @@ export function ChatArea({ lead }: ChatAreaProps) {
       scrollToBottom(false);
 
       // Subscribe to realtime using resolved session_id
-      activeChannel = supabase
+      activeChannel = n8nSupabase
         .channel(`chat_rt_${foundSession.replace(/[^a-zA-Z0-9]/g, "_")}`)
         .on(
           "postgres_changes",
@@ -266,7 +266,7 @@ export function ChatArea({ lead }: ChatAreaProps) {
 
     return () => {
       cancelled = true;
-      if (activeChannel) supabase.removeChannel(activeChannel);
+      if (activeChannel) n8nSupabase.removeChannel(activeChannel);
       setConnected(false);
     };
   }, [lead, scrollToBottom]);

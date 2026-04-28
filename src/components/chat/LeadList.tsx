@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { n8nSupabase } from "@/integrations/supabase/n8n-client";
 import { Search, MessageCircle, RefreshCw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -100,7 +101,7 @@ export function LeadList({ selectedLeadId, onSelectLead }: LeadListProps) {
       return;
     }
 
-    const { data: chatData } = await supabase
+    const { data: chatData } = await n8nSupabase
       .from("n8n_chat_histories")
       .select("session_id, message, hora_data_mensagem")
       .order("hora_data_mensagem", { ascending: false })
@@ -153,13 +154,13 @@ export function LeadList({ selectedLeadId, onSelectLead }: LeadListProps) {
   useEffect(() => { loadLeads(); }, [loadLeads]);
 
   useEffect(() => {
-    const channel = supabase
+    const channel = n8nSupabase
       .channel("leadlist_realtime_watcher")
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "n8n_chat_histories" }, () => {
         loadLeads();
       })
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => { n8nSupabase.removeChannel(channel); };
   }, [loadLeads]);
 
   const filtered = leads.filter(
