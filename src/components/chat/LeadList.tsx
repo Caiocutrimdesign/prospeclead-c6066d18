@@ -9,6 +9,28 @@ import { format, isToday, isYesterday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
+// Build all possible session_id variants for a given phone number
+function buildPhoneVariants(rawPhone: string): string[] {
+  const digits = rawPhone.replace(/\D/g, "");
+  if (!digits) return [];
+  const base = new Set<string>();
+  base.add(digits);
+  if (!digits.startsWith("55")) {
+    base.add("55" + digits);
+  } else {
+    base.add(digits.slice(2));
+  }
+  base.add("+" + digits);
+  if (!digits.startsWith("55")) base.add("+55" + digits);
+  const result = new Set<string>();
+  for (const d of base) {
+    result.add(d);
+    result.add(d + "@s.whatsapp.net");
+    result.add(d + "@c.us");
+  }
+  return [...result];
+}
+
 export interface ChatLead {
   id: string;
   name: string;
@@ -84,6 +106,7 @@ export function LeadList({ selectedLeadId, onSelectLead }: LeadListProps) {
       .order("hora_data_mensagem", { ascending: false })
       .limit(2000);
 
+    // Map all session_ids we know about to their last message
     const sessionMap = new Map<string, { content: string; at: string; type: "human" | "ai" }>();
     if (chatData) {
       for (const row of chatData) {
@@ -100,8 +123,12 @@ export function LeadList({ selectedLeadId, onSelectLead }: LeadListProps) {
     }
 
     const enriched: ChatLead[] = leadsData.map((lead) => {
-      const phone = (lead.phone ?? "").replace(/\D/g, "");
-      const chatInfo = sessionMap.get(phone);
+      // Try all phone variants to find a matching session
+      const variants = buildPhoneVariants(lead.phone ?? "");
+      let chatInfo: { content: string; at: string; type: "human" | "ai" } | undefined;
+      for (const v of variants) {
+        if (sessionMap.has(v)) { chatInfo = sessionMap.get(v); break; }
+      }
       return {
         id: lead.id,
         name: lead.name,
