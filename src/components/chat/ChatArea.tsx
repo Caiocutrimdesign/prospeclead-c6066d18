@@ -116,9 +116,14 @@ function GroupSeparator({ msg }: { msg: ChatMessage }) {
 // Message bubble
 // ─────────────────────────────────────────────
 function MessageBubble({ msg, displayName }: { msg: ChatMessage; displayName: string }) {
-  const isAI = msg.message?.type === "ai";
-  const content = getContent(msg.message);
-  const timeStr = formatTime(msg.hora_data_mensagem, msg.id);
+const type = msg.message?.type;
+  const isAI    = type === "ai";
+  const isAdmin = type === "admin";
+  const isHuman = type === "human";
+  const isRight = isAdmin || isAI; // admin & IA on right, cliente on left
+  const isLeft  = isHuman;
+  const content  = getContent(msg.message);
+  const timeStr  = formatTime(msg.hora_data_mensagem, msg.id);
 
   return (
     <div className={cn("flex w-full items-end gap-2 mb-1", isAI ? "justify-start" : "justify-end")}>
