@@ -244,7 +244,7 @@ export function ChatArea({ session }: ChatAreaProps) {
       setMessages([]);
 
       const { data, error } = await n8nSupabase
-        .from("n8n_chat_histories")
+        .from("n8n_chat_histories_v2")
         .select("*")
         .eq("session_id", sid)
         .order("id", { ascending: true })
@@ -261,7 +261,7 @@ export function ChatArea({ session }: ChatAreaProps) {
         .channel(`chat_rt_${sid.replace(/[^a-zA-Z0-9]/g, "_")}`)
         .on(
           "postgres_changes",
-          { event: "INSERT", schema: "public", table: "n8n_chat_histories", filter: `session_id=eq.${sid}` },
+          { event: "INSERT", schema: "public", table: "n8n_chat_histories_v2", filter: `session_id=eq.${sid}` },
           (payload) => {
             if (!cancelled) {
               setMessages((prev) => [...prev, payload.new as unknown as ChatMessage]);
