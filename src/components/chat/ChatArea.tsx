@@ -116,55 +116,75 @@ function GroupSeparator({ msg }: { msg: ChatMessage }) {
 // Message bubble
 // ─────────────────────────────────────────────
 function MessageBubble({ msg, displayName }: { msg: ChatMessage; displayName: string }) {
-const type = msg.message?.type;
+  const type = msg.message?.type;
   const isAI    = type === "ai";
   const isAdmin = type === "admin";
-  const isHuman = type === "human";
-  const isRight = isAdmin || isAI; // admin & IA on right, cliente on left
-  const isLeft  = isHuman;
+  const isHuman = type === "human" || (!isAI && !isAdmin);
   const content  = getContent(msg.message);
   const timeStr  = formatTime(msg.hora_data_mensagem, msg.id);
 
-  return (
-    <div className={cn("flex w-full items-end gap-2 mb-1", isAI ? "justify-start" : "justify-end")}>
-      {/* Avatar AI */}
-      {isAI && (
-        <div className="flex-shrink-0 w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-primary flex items-center justify-center shadow-sm mb-1">
-          <Bot className="w-3.5 h-3.5 text-white" />
-        </div>
-      )}
+  // Cliente (human) → esquerda. IA e Atendente → direita.
+  const onLeft = isHuman;
 
-      <div className={cn("group relative max-w-[72%] sm:max-w-[60%] flex flex-col", isAI ? "items-start" : "items-end")}>
-        {/* Sender label */}
-        <span className={cn("text-[10px] font-semibold mb-1 px-1 flex items-center gap-1", isAI ? "text-violet-500" : "text-emerald-600")}>
-          {isAI
-            ? <><Bot className="w-2.5 h-2.5" /> Assistente Ray</>
-            : <><User className="w-2.5 h-2.5" /> {displayName}</>
-          }
+  // Identificação clara: nome + telefone/sessão para o cliente
+  const senderName = isAI
+    ? "Assistente Ray (IA)"
+    : isAdmin
+      ? "Atendente (Você)"
+      : displayName;
+
+  const senderSubtitle = isHuman ? (msg.session_id || "") : "";
+
+  const labelColor = isAI
+    ? "text-violet-600"
+    : isAdmin
+      ? "text-blue-600"
+      : "text-emerald-700";
+
+  const bubbleClass = isAI
+    ? "bg-violet-50 border border-violet-200 text-foreground rounded-2xl rounded-tl-none"
+    : isAdmin
+      ? "bg-blue-500 text-white rounded-2xl rounded-tr-none"
+      : "bg-emerald-500 text-white rounded-2xl rounded-tl-none";
+
+  const Avatar = (
+    <div className={cn(
+      "flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center shadow-sm mb-1",
+      isAI ? "bg-violet-500" : isAdmin ? "bg-blue-500" : "bg-emerald-500"
+    )}>
+      {isAI ? <Bot className="w-3.5 h-3.5 text-white" /> : <User className="w-3.5 h-3.5 text-white" />}
+    </div>
+  );
+
+  return (
+    <div className={cn("flex w-full items-end gap-2 mb-2", onLeft ? "justify-start" : "justify-end")}>
+      {onLeft && Avatar}
+
+      <div className={cn("group relative max-w-[72%] sm:max-w-[60%] flex flex-col", onLeft ? "items-start" : "items-end")}>
+        {/* Sender label sempre visível */}
+        <span className={cn("text-[11px] font-semibold mb-1 px-1 flex items-center gap-1", labelColor)}>
+          {isAI ? <Bot className="w-2.5 h-2.5" /> : <User className="w-2.5 h-2.5" />}
+          {senderName}
+          {senderSubtitle && (
+            <span className="text-muted-foreground font-normal font-mono text-[10px]">• {senderSubtitle}</span>
+          )}
         </span>
 
         {/* Bubble */}
         <div className={cn(
           "relative px-4 py-2.5 shadow-sm text-sm leading-relaxed whitespace-pre-wrap break-words",
-          isAI
-            ? "bg-background border border-border text-foreground rounded-2xl rounded-tl-none"
-            : "bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-2xl rounded-tr-none"
+          bubbleClass
         )}>
           {content}
         </div>
 
-        {/* Timestamp */}
-        <span className="text-[9px] mt-1 px-1 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+        {/* Timestamp sempre visível */}
+        <span className="text-[10px] mt-1 px-1 text-muted-foreground">
           {timeStr}
         </span>
       </div>
 
-      {/* Avatar Human */}
-      {!isAI && (
-        <div className="flex-shrink-0 w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center shadow-sm mb-1">
-          <User className="w-3.5 h-3.5 text-emerald-600" />
-        </div>
-      )}
+      {!onLeft && Avatar}
     </div>
   );
 }
