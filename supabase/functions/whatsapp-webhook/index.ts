@@ -69,9 +69,9 @@ Deno.serve(async (req) => {
 
           console.log(`Recebendo mensagem de ${from}: ${content}`);
 
-          // Salvar no histórico do chat (usando o mesmo formato que o n8n usava)
+          // Salvar no histórico do chat (usando v2 que é a tabela atual do CRM)
           const { error } = await supabase
-            .from("n8n_chat_histories")
+            .from("n8n_chat_histories_v2")
             .insert({
               session_id: from,
               message: {

@@ -26,8 +26,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    const PHONE_NUMBER_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID") || "924963413700361";
-    const WHATSAPP_TOKEN = Deno.env.get("WHATSAPP_TOKEN") || "EAANJP9O0LwkBRUVUNT2v3hlwFvvVjTiHI2UpSrJZAtMgZBnatW7VnZCfYOGt2qI3LvATzepier1SCEW0id4ABZCKyaiefWWMyUWA5yZBFo2gjZAKWZC2qKW1cR1VZAdcVIul34KzmdNiYR3yeXpiESjZBwTQuNMPDw64bixDXR9UsWcC4urPKnXmM8W7ZCSTH30QZDZD";
+    const PHONE_NUMBER_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
+    const WHATSAPP_TOKEN = Deno.env.get("WHATSAPP_TOKEN");
 
     console.log(`Enviando mensagem direta via Meta para: ${session_id}`);
 
