@@ -285,8 +285,15 @@ export type Database = {
           location_accuracy: number | null
           longitude: number | null
           name: string
+          origem: string | null
+          pain: string | null
           phone: string | null
+          phone_normalized: string | null
           photo_url: string | null
+          plate_verified: boolean
+          plate_verified_at: string | null
+          plate_verified_by: string | null
+          profession: string | null
           status: Database["public"]["Enums"]["lead_status"]
           updated_at: string
           user_id: string
@@ -306,8 +313,15 @@ export type Database = {
           location_accuracy?: number | null
           longitude?: number | null
           name: string
+          origem?: string | null
+          pain?: string | null
           phone?: string | null
+          phone_normalized?: string | null
           photo_url?: string | null
+          plate_verified?: boolean
+          plate_verified_at?: string | null
+          plate_verified_by?: string | null
+          profession?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
           updated_at?: string
           user_id: string
@@ -327,8 +341,15 @@ export type Database = {
           location_accuracy?: number | null
           longitude?: number | null
           name?: string
+          origem?: string | null
+          pain?: string | null
           phone?: string | null
+          phone_normalized?: string | null
           photo_url?: string | null
+          plate_verified?: boolean
+          plate_verified_at?: string | null
+          plate_verified_by?: string | null
+          profession?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
           updated_at?: string
           user_id?: string
@@ -856,6 +877,62 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_messages: {
+        Row: {
+          created_at: string
+          direction: string
+          id: string
+          lead_id: string | null
+          message_type: string
+          meta_message_id: string | null
+          phone: string
+          phone_normalized: string
+          raw_payload: Json | null
+          sent_at: string
+          status: string | null
+          text: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          direction: string
+          id?: string
+          lead_id?: string | null
+          message_type?: string
+          meta_message_id?: string | null
+          phone: string
+          phone_normalized: string
+          raw_payload?: Json | null
+          sent_at?: string
+          status?: string | null
+          text?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          direction?: string
+          id?: string
+          lead_id?: string | null
+          message_type?: string
+          meta_message_id?: string | null
+          phone?: string
+          phone_normalized?: string
+          raw_payload?: Json | null
+          sent_at?: string
+          status?: string | null
+          text?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_messages_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -920,6 +997,30 @@ export type Database = {
           source_queue: string
         }
         Returns: number
+      }
+      promoter_shift_detail: {
+        Args: { _day?: string; _user_id: string }
+        Returns: {
+          afternoon_count: number
+          morning_count: number
+          total_all: number
+          total_today: number
+        }[]
+      }
+      promoters_daily_shifts: {
+        Args: { _day?: string }
+        Returns: {
+          afternoon_count: number
+          full_name: string
+          last_checkin_at: string
+          last_lat: number
+          last_lead_at: string
+          last_lng: number
+          last_location_name: string
+          morning_count: number
+          total_today: number
+          user_id: string
+        }[]
       }
       promoters_ranking: {
         Args: { _month_start?: string }
