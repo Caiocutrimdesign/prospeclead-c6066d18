@@ -205,26 +205,15 @@ export function ChatArea({ session }: ChatAreaProps) {
     setError(null);
 
     try {
-      const webhookUrl = import.meta.env.VITE_N8N_WEBHOOK_REPLY;
-      if (!webhookUrl) throw new Error("Webhook não configurado");
-
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000);
-
-      const response = await fetch(webhookUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const { error } = await n8nSupabase.functions.invoke("send-whatsapp", {
+        body: {
           session_id: session.session_id,
           message: text,
           sender: "admin",
-        }),
-        signal: controller.signal,
+        },
       });
 
-      clearTimeout(timeoutId);
-
-      if (!response.ok) throw new Error(`Erro ${response.status}`);
+      if (error) throw error;
 
       setInputValue("");
       if (textareaRef.current) {
