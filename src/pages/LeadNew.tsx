@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { n8nSupabase } from "@/integrations/supabase/n8n-client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProspectingTimer } from "@/hooks/useProspectingTimer";
 import { useSync } from "@/hooks/useSync";
@@ -206,6 +207,22 @@ export default function LeadNew() {
       if (error) throw error;
 
       registerActivity();
+      
+      // Envio automático via Meta (Integração Direta)
+      if (form.phone) {
+        const firstName = form.name.split(" ")[0];
+        const msgText = `Olá ${firstName}! Seja bem-vindo à ProspecLead. Vi que você tem um ${form.vehicle_model} e gostaria de saber mais sobre nossos planos de proteção. Como posso te ajudar hoje?`;
+        
+        console.log("Disparando mensagem automática de boas-vindas...");
+        n8nSupabase.functions.invoke("send-whatsapp", {
+          body: {
+            session_id: form.phone.replace(/\D/g, ""),
+            message: msgText,
+            sender: "admin"
+          }
+        }).catch(err => console.error("Erro no envio automático:", err));
+      }
+
       openWa();
 
       toast.success(action === "save" ? "Lead cadastrado como prospectado!" : "Lead cadastrado!");
@@ -373,16 +390,26 @@ export default function LeadNew() {
           </div>
         </Field>
 
-        {/* CTA único */}
-        <div className="pt-2">
+        {/* CTA duplo */}
+        <div className="grid grid-cols-1 gap-3 pt-2">
           <Button
             type="button"
             onClick={() => save("save")}
             disabled={busy}
-            className="w-full h-14 text-base font-bold bg-success hover:bg-success/90 text-success-foreground rounded-xl"
+            className="w-full h-14 text-base font-bold bg-muted hover:bg-muted/90 text-muted-foreground rounded-xl border border-border"
           >
             {busy ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : null}
-            SALVAR
+            SALVAR APENAS
+          </Button>
+
+          <Button
+            type="button"
+            onClick={() => save("whatsapp")}
+            disabled={busy}
+            className="w-full h-14 text-base font-bold bg-success hover:bg-success/90 text-success-foreground rounded-xl shadow-lg"
+          >
+            {busy ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <MessageCircle className="w-5 h-5 mr-2" />}
+            SALVAR E ENVIAR WHATSAPP
           </Button>
         </div>
       </div>
