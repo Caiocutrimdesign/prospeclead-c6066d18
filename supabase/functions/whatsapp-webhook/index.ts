@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
 
           // Salvar no histórico do chat (usando v2 que é a tabela atual do CRM)
           const { error } = await supabase
-            .from("n8n_chat_histories_v2")
+            .from("n8n_chat_histories")
             .insert({
               session_id: from,
               message: {

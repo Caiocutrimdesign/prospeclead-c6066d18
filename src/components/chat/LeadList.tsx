@@ -100,7 +100,7 @@ export function LeadList({ selectedSessionId, onSelectSession }: LeadListProps) 
 
     // Fetch all messages ordered by id desc, then group in JS
     const { data, error } = await n8nSupabase
-      .from("n8n_chat_histories_v2")
+      .from("n8n_chat_histories")
       .select("id, session_id, message")
       .order("id", { ascending: false })
       .limit(2000);
@@ -152,7 +152,7 @@ export function LeadList({ selectedSessionId, onSelectSession }: LeadListProps) 
   useEffect(() => {
     const channel = n8nSupabase
       .channel("leadlist_n8n_watcher")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "n8n_chat_histories_v2" }, () => {
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "n8n_chat_histories" }, () => {
         loadSessions();
       })
       .subscribe();
