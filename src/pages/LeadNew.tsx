@@ -37,6 +37,7 @@ export default function LeadNew() {
     name: "",
     phone: "",
     vehicle_model: "",
+    vehicle_type: "carro" as "carro" | "moto",
     plate: "",
     location: "",
     profession: "",
@@ -208,12 +209,16 @@ export default function LeadNew() {
 
       registerActivity();
       
-      // Envio automático via Meta (Integração Direta)
+      // Envio automático via Meta (Integração Direta - Script da Ray)
       if (form.phone) {
         const firstName = form.name.split(" ")[0];
-        const msgText = `Olá ${firstName}! Seja bem-vindo à ProspecLead. Vi que você tem um ${form.vehicle_model} e gostaria de saber mais sobre nossos planos de proteção. Como posso te ajudar hoje?`;
+        const brand = form.vehicle_type === "moto" ? "Topy Pro" : "Rastremix";
+        const location = form.location || "nossa unidade";
         
-        console.log("Disparando mensagem automática de boas-vindas...");
+        // Script de Vendas Padrão Vale (Inteligente)
+        const msgText = `Oi ${firstName}! 👋 Tudo bem? Sou a Ray, da ${brand}. Vi que conversamos no ${location} sobre a proteção da sua ${form.vehicle_model}. Nosso sistema padrão Vale aciona a polícia em < 3min com sua localização exata. Posso te mostrar as opções hoje com um desconto especial?\n\n(Para não receber mais nossas ofertas, responda com a palavra SAIR)`;
+        
+        console.log(`Disparando script da Ray via ${brand}...`);
         n8nSupabase.functions.invoke("send-whatsapp", {
           body: {
             session_id: form.phone.replace(/\D/g, ""),
@@ -281,13 +286,36 @@ export default function LeadNew() {
         </Field>
 
         {/* Veículo */}
-        <Field label="Veículo" icon="🚗" required>
+        <Field label="Modelo do Veículo" icon="🚗" required>
           <Input
             value={form.vehicle_model}
             onChange={(e) => set("vehicle_model", e.target.value)}
             placeholder="Ex: Gol, Civic, HB20"
             className="h-12"
           />
+        </Field>
+
+        {/* Tipo de Veículo para Lógica de Marca */}
+        <Field label="Tipo de Veículo" icon="🏢">
+          <div className="grid grid-cols-2 gap-3">
+            {(["carro", "moto"] as const).map((type) => (
+              <button
+                key={type}
+                type="button"
+                onClick={() => setForm(s => ({ ...s, vehicle_type: type }))}
+                className={`h-12 rounded-xl border-2 font-semibold capitalize transition flex items-center justify-center gap-2 ${
+                  form.vehicle_type === type
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border bg-background text-muted-foreground"
+                }`}
+              >
+                {type === "carro" ? "🚗 Carro" : "🏍️ Moto"}
+              </button>
+            ))}
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-1 px-1">
+            * Define a marca do atendimento: {form.vehicle_type === "carro" ? "Rastremix" : "Topy Pro"}
+          </p>
         </Field>
 
         {/* Já tem rastreador? */}

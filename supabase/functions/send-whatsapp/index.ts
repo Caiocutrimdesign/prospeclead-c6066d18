@@ -26,8 +26,21 @@ Deno.serve(async (req) => {
       );
     }
 
-    const PHONE_NUMBER_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
-    const WHATSAPP_TOKEN = Deno.env.get("WHATSAPP_TOKEN");
+    // Criar cliente Supabase com service role para buscar configurações e salvar histórico
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
+
+    // Buscar credenciais dinâmicas da tabela system_settings
+    const { data: settings } = await supabase
+      .from("system_settings")
+      .select("key, value");
+
+    const getSetting = (key: string) => settings?.find(s => s.key === key)?.value;
+
+    const PHONE_NUMBER_ID = getSetting("WHATSAPP_PHONE_NUMBER_ID") || Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
+    const WHATSAPP_TOKEN = getSetting("WHATSAPP_TOKEN") || Deno.env.get("WHATSAPP_TOKEN");
 
     console.log(`Enviando mensagem direta via Meta para: ${session_id}`);
 
@@ -61,10 +74,6 @@ Deno.serve(async (req) => {
     }
 
     // 2. Salvar a mensagem enviada no histórico (tipo 'admin')
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
 
     const { error: dbError } = await supabase
       .from("n8n_chat_histories")
