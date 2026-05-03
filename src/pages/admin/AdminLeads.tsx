@@ -60,26 +60,34 @@ export default function AdminLeads() {
 
   const filteredLeads = useMemo(() => {
     return leads.filter((l) => {
-      const matchesSearch = 
-        (l.nome?.toLowerCase() || "").includes(search.toLowerCase()) ||
-        (l.phone?.toLowerCase() || "").includes(search.toLowerCase()) ||
-        (l.placa?.toLowerCase() || "").includes(search.toLowerCase());
+      const nameVal = l.nome || l.name || "";
+      const phoneVal = l.phone || "";
+      const plateVal = l.placa || l.vehicle_plate || "";
       
-      const matchesPraca = filterPraca === "all" || l.praca === filterPraca;
-      const matchesMedo = filterMedo === "all" || l.medo === filterMedo;
+      const matchesSearch = 
+        nameVal.toLowerCase().includes(search.toLowerCase()) ||
+        phoneVal.toLowerCase().includes(search.toLowerCase()) ||
+        plateVal.toLowerCase().includes(search.toLowerCase());
+      
+      const pracaVal = l.praca || l.city || "all";
+      const medoVal = l.medo || l.pain || "all";
+
+      const matchesPraca = filterPraca === "all" || pracaVal === filterPraca;
+      const matchesMedo = filterMedo === "all" || medoVal === filterMedo;
 
       return matchesSearch && matchesPraca && matchesMedo;
     });
   }, [leads, search, filterPraca, filterMedo]);
 
-  const pracas = Array.from(new Set(leads.map(l => l.praca).filter(Boolean)));
-  const medos = Array.from(new Set(leads.map(l => l.medo).filter(Boolean)));
+  const pracas = Array.from(new Set(leads.map(l => l.praca || l.city).filter(Boolean)));
+  const medos = Array.from(new Set(leads.map(l => l.medo || l.pain).filter(Boolean)));
 
   const formatPhone = (phone: string) => {
     const cleaned = phone.replace(/\D/g, "");
-    return cleaned.length === 11 
-      ? `(${cleaned.slice(2, 4)}) ${cleaned.slice(4, 9)}-${cleaned.slice(9)}`
-      : phone;
+    if (cleaned.length === 11) {
+      return `(${cleaned.slice(2, 4)}) ${cleaned.slice(4, 9)}-${cleaned.slice(9)}`;
+    }
+    return phone;
   };
 
   return (
@@ -89,6 +97,9 @@ export default function AdminLeads() {
           <h1 className="text-2xl font-bold tracking-tight">Gestão de Leads</h1>
           <p className="text-muted-foreground text-sm">Controle total dos leads captados em campo.</p>
         </div>
+        <Button onClick={loadLeads} variant="outline" size="sm">
+          Atualizar Dados
+        </Button>
       </div>
 
       {/* Filtros */}
@@ -157,84 +168,86 @@ export default function AdminLeads() {
                 </TableCell>
               </TableRow>
             ) : (
-              filteredLeads.map((l) => (
-                <TableRow key={l.id} className="hover:bg-muted/30 transition-colors">
-                  {/* Cliente */}
-                  <TableCell>
-                    <div className="flex flex-col">
-                      <span className="font-bold">{l.nome || l.name || "Não informado"}</span>
-                      <a 
-                        href={`https://wa.me/${l.phone?.replace(/\D/g, "")}`} 
-                        target="_blank" 
-                        rel="noreferrer"
-                        className="text-xs text-primary hover:underline flex items-center gap-1"
-                      >
-                        {l.phone ? formatPhone(l.phone) : "S/ Tel"}
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-                    </div>
-                  </TableCell>
-
-                  {/* Veículo */}
-                  <TableCell>
-                    <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium">{l.veiculo || l.vehicle_model || "—"}</span>
-                        <Badge 
-                          className={cn(
-                            "text-[10px] uppercase font-bold px-1.5 h-4",
-                            (l.veiculo?.toLowerCase().includes("moto") || l.vehicle_type === "moto")
-                              ? "bg-orange-500 hover:bg-orange-600" 
-                              : "bg-blue-600 hover:bg-blue-700"
-                          )}
+              filteredLeads.map((l) => {
+                const isMoto = (l.veiculo || l.vehicle_model || "").toLowerCase().includes("moto") || l.vehicle_type === "moto";
+                
+                return (
+                  <TableRow key={l.id} className="hover:bg-muted/30 transition-colors">
+                    {/* Cliente */}
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <span className="font-bold">{l.nome || l.name || "Não informado"}</span>
+                        <a 
+                          href={`https://wa.me/${l.phone?.replace(/\D/g, "")}`} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          className="text-xs text-primary hover:underline flex items-center gap-1"
                         >
-                          {(l.veiculo?.toLowerCase().includes("moto") || l.vehicle_type === "moto") ? "Topy Pro" : "Rastremix"}
-                        </Badge>
+                          {l.phone ? formatPhone(l.phone) : "S/ Tel"}
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
                       </div>
-                      <span className="text-[10px] font-mono bg-muted px-1 rounded w-fit">
-                        {l.placa || l.vehicle_plate || "SEM PLACA"}
+                    </TableCell>
+
+                    {/* Veículo */}
+                    <TableCell>
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium">{l.veiculo || l.vehicle_model || "—"}</span>
+                          <Badge 
+                            className={cn(
+                              "text-[10px] uppercase font-bold px-1.5 h-4",
+                              isMoto ? "bg-orange-500 hover:bg-orange-600" : "bg-blue-600 hover:bg-blue-700"
+                            )}
+                          >
+                            {isMoto ? "Topy Pro" : "Rastremix"}
+                          </Badge>
+                        </div>
+                        <span className="text-[10px] font-mono bg-muted px-1 rounded w-fit">
+                          {l.placa || l.vehicle_plate || "SEM PLACA"}
+                        </span>
+                      </div>
+                    </TableCell>
+
+                    {/* Praça */}
+                    <TableCell>
+                      <span className="text-sm text-muted-foreground">{l.praca || l.city || "—"}</span>
+                    </TableCell>
+
+                    {/* Medo */}
+                    <TableCell>
+                      <span className="text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                        {l.medo || l.pain || "—"}
                       </span>
-                    </div>
-                  </TableCell>
+                    </TableCell>
 
-                  {/* Praça */}
-                  <TableCell>
-                    <span className="text-sm text-muted-foreground">{l.praca || l.location || "—"}</span>
-                  </TableCell>
+                    {/* Evidência */}
+                    <TableCell>
+                      {l.photo_url ? (
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <div className="w-10 h-10 rounded-lg overflow-hidden border-2 border-background shadow-sm hover:scale-110 transition cursor-pointer">
+                              <img src={l.photo_url} alt="Lead" className="w-full h-full object-cover" />
+                            </div>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-3xl p-1">
+                            <img src={l.photo_url} alt="Full" className="w-full h-auto rounded-lg" />
+                          </DialogContent>
+                        </Dialog>
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center text-muted-foreground/30">
+                          <Camera className="w-4 h-4" />
+                        </div>
+                      )}
+                    </TableCell>
 
-                  {/* Medo */}
-                  <TableCell>
-                    <span className="text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
-                      {l.medo || l.pain_point || "—"}
-                    </span>
-                  </TableCell>
-
-                  {/* Evidência */}
-                  <TableCell>
-                    {l.foto_url ? (
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <div className="w-10 h-10 rounded-lg overflow-hidden border-2 border-background shadow-sm hover:scale-110 transition cursor-pointer">
-                            <img src={l.foto_url} alt="Lead" className="w-full h-full object-cover" />
-                          </div>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-3xl p-1">
-                          <img src={l.foto_url} alt="Full" className="w-full h-auto rounded-lg" />
-                        </DialogContent>
-                      </Dialog>
-                    ) : (
-                      <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center text-muted-foreground/30">
-                        <Camera className="w-4 h-4" />
-                      </div>
-                    )}
-                  </TableCell>
-
-                  {/* Data */}
-                  <TableCell className="text-xs text-muted-foreground">
-                    {l.created_at ? format(new Date(l.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR }) : "—"}
-                  </TableCell>
-                </TableRow>
-              ))
+                    {/* Data */}
+                    <TableCell className="text-xs text-muted-foreground">
+                      {l.created_at ? format(new Date(l.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR }) : "—"}
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>
