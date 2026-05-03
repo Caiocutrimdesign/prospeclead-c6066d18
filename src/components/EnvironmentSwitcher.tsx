@@ -72,7 +72,8 @@ export default function EnvironmentSwitcher({
   const envs: EnvKey[] = [];
   if (isAdmin) envs.push("admin");
   if (isRh) envs.push("rh");
-  if (isVisualizador) envs.push("visualizador");
+  // Admins também podem abrir o Painel Visualizador (read-only).
+  if (isVisualizador || isAdmin) envs.push("visualizador");
   // Sempre permite acessar o painel Promoter quando o usuário tem outro papel.
   if (envs.length > 0) envs.push("promoter");
 
