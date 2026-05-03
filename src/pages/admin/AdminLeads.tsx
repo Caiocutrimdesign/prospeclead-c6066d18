@@ -30,6 +30,13 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
+const getPublicImageUrl = (path: string | null) => {
+  if (!path) return null;
+  if (path.startsWith("http")) return path;
+  const { data } = supabase.storage.from("lead-photos").getPublicUrl(path);
+  return data.publicUrl;
+};
+
 export default function AdminLeads() {
   const [leads, setLeads] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -227,11 +234,11 @@ export default function AdminLeads() {
                         <Dialog>
                           <DialogTrigger asChild>
                             <div className="w-10 h-10 rounded-lg overflow-hidden border-2 border-background shadow-sm hover:scale-110 transition cursor-pointer">
-                              <img src={l.photo_url} alt="Lead" className="w-full h-full object-cover" />
+                              <img src={getPublicImageUrl(l.photo_url) || ""} alt="Lead" className="w-full h-full object-cover" />
                             </div>
                           </DialogTrigger>
                           <DialogContent className="max-w-3xl p-1">
-                            <img src={l.photo_url} alt="Full" className="w-full h-auto rounded-lg" />
+                            <img src={getPublicImageUrl(l.photo_url) || ""} alt="Full" className="w-full h-auto rounded-lg" />
                           </DialogContent>
                         </Dialog>
                       ) : (
