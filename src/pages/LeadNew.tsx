@@ -141,7 +141,7 @@ export default function LeadNew() {
       veiculo: form.vehicle_model || null,
       placa: form.plate?.toUpperCase() || null,
       praca: form.location || null,
-      medo: PAINS.find(p => p.id === form.pain_id)?.title || "Não informado",
+      medo: PAINS.find(p => p.id === pain)?.title || "Não informado",
       status: action === "save" ? "prospectado" : "contatado",
       latitude: coords?.lat ?? null,
       longitude: coords?.lng ?? null,
@@ -370,7 +370,21 @@ export default function LeadNew() {
           )}
         </Field>
 
-        {/* Praça/Local removido — GPS continua sendo capturado em background */}
+        {/* Praça/Local da Abordagem */}
+        <Field label="Local da Abordagem (Praça)" icon="📍" required>
+          <div className="relative">
+            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              value={form.location}
+              onChange={(e) => set("location", e.target.value)}
+              placeholder="Ex: Atacadão, Detran, Vila Palmeira"
+              className="h-12 pl-9"
+            />
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-1 px-1">
+            * Este local será usado no script da IA Ray.
+          </p>
+        </Field>
 
         {/* Profissão */}
         <Field label="Profissão do cliente" icon="💼">
