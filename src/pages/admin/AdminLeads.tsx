@@ -664,12 +664,12 @@ export default function AdminLeads() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Cliente</TableHead>
-              <TableHead>Tipo</TableHead>
-              <TableHead>Origem</TableHead>
-              <TableHead>Prospectado</TableHead>
-              <TableHead className="text-right">Comissão</TableHead>
-              <TableHead>Data Criação</TableHead>
+              <TableHead>Nome / WhatsApp</TableHead>
+              <TableHead>Veículo / Placa</TableHead>
+              <TableHead>Praça (Abordagem)</TableHead>
+              <TableHead>Medo (Pain Point)</TableHead>
+              <TableHead>Evidência</TableHead>
+              <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
@@ -696,49 +696,80 @@ export default function AdminLeads() {
               return (
                 <TableRow key={l.id} className="hover:bg-muted/40">
                   <TableCell>
-                    <p className="font-medium text-sm">{l.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {l.phone ?? "Sem telefone"}
-                    </p>
+                    <div className="flex flex-col">
+                      <span className="font-bold text-sm text-foreground">{l.name}</span>
+                      <span className="text-xs text-muted-foreground font-mono">
+                        {l.phone ? formatPhoneExport(l.phone) : "Sem WhatsApp"}
+                      </span>
+                    </div>
                   </TableCell>
                   <TableCell>
-                    <Badge
-                      variant="outline"
-                      className={
-                        l.kind === "b2b"
-                          ? "border-purple-500/40 text-purple-700 dark:text-purple-300 bg-purple-500/10"
-                          : "border-cyan-500/40 text-cyan-700 dark:text-cyan-300 bg-cyan-500/10"
-                      }
-                    >
-                      {l.kind.toUpperCase()}
-                    </Badge>
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">{l.vehicle_model}</span>
+                        <Badge 
+                          variant="outline" 
+                          className={cn(
+                            "text-[9px] uppercase px-1.5 h-4 border-primary/30",
+                            (l as any).vehicle_type === "moto" ? "bg-orange-500/10 text-orange-700" : "bg-blue-500/10 text-blue-700"
+                          )}
+                        >
+                          {(l as any).vehicle_type === "moto" ? "Topy Pro" : "Rastremix"}
+                        </Badge>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground uppercase tracking-wider bg-muted w-fit px-1 rounded">
+                        {l.vehicle_plate || "S/ Placa"}
+                      </span>
+                    </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className="capitalize">
-                      {origin === "pdv"
-                        ? "PDV"
-                        : origin === "campanha"
-                          ? "Campanha"
-                          : "Manual"}
-                    </Badge>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      <span className="text-xs text-muted-foreground">{l.location || "Local não inf."}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="max-w-[200px] truncate group relative">
+                      <span className="text-xs text-amber-700 dark:text-amber-400 font-medium bg-amber-500/5 px-1.5 py-0.5 rounded border border-amber-500/10 italic">
+                        "{(l as any).pain_point || "Não mapeado"}"
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {l.foto_url ? (
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <div className="w-10 h-10 rounded-lg overflow-hidden border-2 border-background shadow-sm hover:scale-105 transition cursor-pointer bg-muted">
+                            <img 
+                              src={l.foto_url} 
+                              alt="Evidência" 
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-3xl p-1 bg-black/90 border-none">
+                          <img 
+                            src={l.foto_url} 
+                            alt="Evidência Ampliada" 
+                            className="w-full h-auto rounded-lg"
+                          />
+                        </DialogContent>
+                      </Dialog>
+                    ) : (
+                      <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+                        <Camera className="w-4 h-4 text-muted-foreground/40" />
+                      </div>
+                    )}
                   </TableCell>
                   <TableCell>
                     <Badge
                       className={cn(
-                        "border-transparent",
+                        "border-transparent text-[10px] uppercase font-bold",
                         STATUS_META[l.status].className,
                       )}
                     >
                       {STATUS_META[l.status].label}
                     </Badge>
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums text-sm">
-                    {l.value != null ? formatBRL(l.value) : "—"}
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                    {format(new Date(l.created_at), "dd/MM/yyyy HH:mm", {
-                      locale: ptBR,
-                    })}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center justify-end gap-1">
