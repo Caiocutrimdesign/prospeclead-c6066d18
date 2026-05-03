@@ -133,19 +133,20 @@ export default function LeadNew() {
     setBusy(true);
 
     // Monta o payload (sem photo_url — definido conforme caminho online/offline).
-    const basePayload: Omit<LeadInsert, "photo_url"> = {
+    const basePayload: any = {
       user_id: user.id,
       kind: "b2c",
-      name: form.name,
+      nome: form.name,
       phone: form.phone || null,
-      vehicle_model: form.vehicle_model || null,
-      vehicle_plate: form.plate?.toUpperCase() || null,
+      veiculo: form.vehicle_model || null,
+      placa: form.plate?.toUpperCase() || null,
+      praca: form.location || null,
+      medo: PAINS.find(p => p.id === form.pain_id)?.title || "Não informado",
       status: action === "save" ? "prospectado" : "contatado",
       latitude: coords?.lat ?? null,
       longitude: coords?.lng ?? null,
       location_accuracy: coords?.accuracy ?? null,
       captured_at: coords?.capturedAt ?? null,
-      city: form.location,
     };
 
     // Helper que abre o WhatsApp se o usuário pediu.

@@ -5,16 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -26,1347 +17,228 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import {
-  CalendarIcon,
-  CheckCircle2,
-  Eye,
-  FileDown,
   Loader2,
-  Pencil,
-  Plus,
   Search,
-  Target,
-  TrendingUp,
-  Trash2,
-  Users,
-  X,
+  Camera,
+  MapPin,
+  AlertTriangle,
+  ExternalLink,
 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { formatBRL } from "@/lib/format";
-import { useReadOnly } from "@/hooks/useReadOnly";
-import type { Database } from "@/integrations/supabase/types";
-import * as XLSX from "xlsx";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-
-type LeadRow = Database["public"]["Tables"]["leads"]["Row"];
-type LeadInsert = Database["public"]["Tables"]["leads"]["Insert"];
-type LeadStatus = Database["public"]["Enums"]["lead_status"];
-type LeadKind = Database["public"]["Enums"]["lead_kind"];
-
-const STATUSES: LeadStatus[] = [
-  "coletado",
-  "contatado",
-  "respondido",
-  "vendido",
-  "prospectado",
-  "negociando",
-  "fechado",
-];
-
-const STATUS_META: Record<
-  LeadStatus,
-  { label: string; className: string }
-> = {
-  coletado: {
-    label: "Prospectado",
-    className: "bg-muted text-foreground hover:bg-muted",
-  },
-  contatado: {
-    label: "Contatado",
-    className: "bg-blue-500/15 text-blue-700 dark:text-blue-300 hover:bg-blue-500/20",
-  },
-  respondido: {
-    label: "Respondido",
-    className: "bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-500/20",
-  },
-  prospectado: {
-    label: "Prospectado",
-    className: "bg-amber-500/15 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20",
-  },
-  negociando: {
-    label: "Negociando",
-    className: "bg-orange-500/15 text-orange-700 dark:text-orange-300 hover:bg-orange-500/20",
-  },
-  vendido: {
-    label: "Lead",
-    className: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20",
-  },
-  fechado: {
-    label: "Fechado",
-    className: "bg-emerald-600/20 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-600/25",
-  },
-};
-
-const isConverted = (s: string) => s === "vendido" || s === "fechado";
-
-/* ======================== Página ======================== */
 
 export default function AdminLeads() {
-  const readOnly = useReadOnly();
-  const [leads, setLeads] = useState<LeadRow[]>([]);
-  const [pdvLeadIds, setPdvLeadIds] = useState<Set<string>>(new Set());
-  const [profiles, setProfiles] = useState<Record<string, string>>({});
+  const [leads, setLeads] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // filtros
   const [search, setSearch] = useState("");
-  const [filterKind, setFilterKind] = useState<string>("all");
-  const [filterOrigin, setFilterOrigin] = useState<string>("all");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
-  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
+  const [filterPraca, setFilterPraca] = useState("all");
+  const [filterMedo, setFilterMedo] = useState("all");
 
-  // modais
-  const [detailLead, setDetailLead] = useState<LeadRow | null>(null);
-  const [formOpen, setFormOpen] = useState(false);
-  const [editingLead, setEditingLead] = useState<LeadRow | null>(null);
-
-  const load = async () => {
+  const loadLeads = async () => {
     setLoading(true);
-    // Busca paginada para trazer TODOS os leads (Supabase limita 1000 por requisição)
-    const PAGE = 1000;
-    let from = 0;
-    let all: LeadRow[] = [];
-    let firstError: string | null = null;
-    // Loop até retornar menos que PAGE
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
+    try {
       const { data, error } = await supabase
         .from("leads")
         .select("*")
-        .order("created_at", { ascending: false })
-        .range(from, from + PAGE - 1);
-      if (error) {
-        firstError = error.message;
-        break;
-      }
-      const batch = (data ?? []) as LeadRow[];
-      all = all.concat(batch);
-      if (batch.length < PAGE) break;
-      from += PAGE;
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setLeads(data || []);
+    } catch (error: any) {
+      toast.error("Erro ao carregar leads: " + error.message);
+    } finally {
+      setLoading(false);
     }
-
-    const [{ data: ps }, { data: pls }] = await Promise.all([
-      supabase.from("profiles").select("id, full_name"),
-      supabase.from("pdv_leads").select("lead_id"),
-    ]);
-
-    if (firstError) toast.error(firstError);
-    setLeads(all);
-    setProfiles(
-      Object.fromEntries((ps ?? []).map((p) => [p.id, p.full_name ?? "—"])),
-    );
-    setPdvLeadIds(
-      new Set(
-        (pls ?? [])
-          .map((r) => r.lead_id)
-          .filter((id): id is string => Boolean(id)),
-      ),
-    );
-    setLoading(false);
   };
 
   useEffect(() => {
-    load();
+    loadLeads();
   }, []);
 
-  /* ----- Origem (Manual / PDV / Campanha) ----- */
-  const originOf = (l: LeadRow): "manual" | "pdv" | "campanha" => {
-    if (pdvLeadIds.has(l.id)) return "pdv";
-    return "manual";
-  };
-
-  /* ----- Filtros ----- */
-  const filtered = useMemo(() => {
+  const filteredLeads = useMemo(() => {
     return leads.filter((l) => {
-      if (filterKind !== "all" && l.kind !== filterKind) return false;
-      if (filterStatus !== "all" && l.status !== filterStatus) return false;
-      if (filterOrigin !== "all" && originOf(l) !== filterOrigin) return false;
-      if (search) {
-        const q = search.toLowerCase();
-        const hit =
-          l.name?.toLowerCase().includes(q) ||
-          l.phone?.toLowerCase().includes(q) ||
-          l.vehicle_plate?.toLowerCase().includes(q) ||
-          l.company_cnpj?.toLowerCase().includes(q);
-        if (!hit) return false;
-      }
-      const created = new Date(l.created_at);
-      if (dateFrom) {
-        const f = new Date(dateFrom);
-        f.setHours(0, 0, 0, 0);
-        if (created < f) return false;
-      }
-      if (dateTo) {
-        const t = new Date(dateTo);
-        t.setHours(23, 59, 59, 999);
-        if (created > t) return false;
-      }
-      return true;
+      const matchesSearch = 
+        (l.nome?.toLowerCase() || "").includes(search.toLowerCase()) ||
+        (l.phone?.toLowerCase() || "").includes(search.toLowerCase()) ||
+        (l.placa?.toLowerCase() || "").includes(search.toLowerCase());
+      
+      const matchesPraca = filterPraca === "all" || l.praca === filterPraca;
+      const matchesMedo = filterMedo === "all" || l.medo === filterMedo;
+
+      return matchesSearch && matchesPraca && matchesMedo;
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [leads, pdvLeadIds, search, filterKind, filterStatus, filterOrigin, dateFrom, dateTo]);
+  }, [leads, search, filterPraca, filterMedo]);
 
-  /* ----- Stats ----- */
-  const stats = useMemo(() => {
-    const todayStr = new Date().toDateString();
-    let total = leads.length;
-    let today = 0;
-    let converted = 0;
-    leads.forEach((l) => {
-      if (new Date(l.created_at).toDateString() === todayStr) today++;
-      if (isConverted(l.status)) converted++;
-    });
-    const rate = total > 0 ? (converted / total) * 100 : 0;
-    return { total, today, converted, rate };
-  }, [leads]);
+  const pracas = Array.from(new Set(leads.map(l => l.praca).filter(Boolean)));
+  const medos = Array.from(new Set(leads.map(l => l.medo).filter(Boolean)));
 
-  /* ----- Ações ----- */
-  const removeLead = async (id: string) => {
-    const { error } = await supabase.from("leads").delete().eq("id", id);
-    if (error) return toast.error(error.message);
-    toast.success("Lead excluído");
-    load();
-  };
-
-  const clearDates = () => {
-    setDateFrom(undefined);
-    setDateTo(undefined);
-  };
-
-  const openCreate = () => {
-    setEditingLead(null);
-    setFormOpen(true);
-  };
-  const openEdit = (l: LeadRow) => {
-    setEditingLead(l);
-    setFormOpen(true);
-  };
-
-  /* ----- Formatação de telefone para exportação (+55 (DDD) NNNNN-NNNN) ----- */
-  const formatPhoneExport = (raw?: string | null): string => {
-    if (!raw) return "—";
-    let digits = raw.replace(/\D/g, "");
-    if (!digits) return "—";
-    // Garante DDI 55 quando faltar
-    if (digits.length <= 11) digits = `55${digits}`;
-    if (!digits.startsWith("55")) digits = `55${digits}`;
-
-    const ddi = digits.slice(0, 2);
-    const ddd = digits.slice(2, 4);
-    const rest = digits.slice(4);
-    if (ddd.length < 2 || rest.length < 8) return `+${digits}`;
-
-    const mid = rest.length === 9 ? rest.slice(0, 5) : rest.slice(0, 4);
-    const end = rest.length === 9 ? rest.slice(5) : rest.slice(4);
-    return `+${ddi} (${ddd}) ${mid}-${end}`;
-  };
-
-  /* ----- Exportação Excel ----- */
-  const exportExcel = async (range: "today" | "month" | "all") => {
-    try {
-      const now = new Date();
-      let scope: LeadRow[] = leads;
-      let rangeLabel = "Todos os Leads";
-
-      if (range === "today") {
-        const todayStr = now.toDateString();
-        scope = leads.filter(
-          (l) => new Date(l.created_at).toDateString() === todayStr,
-        );
-        rangeLabel = "Leads de Hoje";
-      } else if (range === "month") {
-        const m = now.getMonth();
-        const y = now.getFullYear();
-        scope = leads.filter((l) => {
-          const d = new Date(l.created_at);
-          return d.getMonth() === m && d.getFullYear() === y;
-        });
-        rangeLabel = `Leads de ${format(now, "MMMM 'de' yyyy", { locale: ptBR })}`;
-      }
-
-      if (scope.length === 0) {
-        toast.error("Nenhum lead no período selecionado");
-        return;
-      }
-
-      const { data: settings } = await supabase
-        .from("app_settings")
-        .select("brand_name")
-        .eq("id", 1)
-        .maybeSingle();
-      const brandName = settings?.brand_name ?? "Plataforma";
-      const generatedAt = format(now, "dd/MM/yyyy HH:mm", { locale: ptBR });
-
-      // Cabeçalho informativo (linhas 1-4) + linha em branco + tabela
-      const header = [
-        [brandName],
-        [rangeLabel],
-        [`Gerado em: ${generatedAt}`],
-        [`Total de leads: ${scope.length}`],
-        [],
-        ["Lead", "Telefone", "Tipo", "Prospectado", "Promotor", "Data da Captura"],
-      ];
-
-      const body = scope.map((l) => [
-        l.name ?? "—",
-        formatPhoneExport(l.phone),
-        l.kind.toUpperCase(),
-        STATUS_META[l.status]?.label ?? l.status,
-        profiles[l.user_id] ?? "—",
-        format(new Date(l.captured_at ?? l.created_at), "dd/MM/yyyy HH:mm", {
-          locale: ptBR,
-        }),
-      ]);
-
-      const sheet = XLSX.utils.aoa_to_sheet([...header, ...body]);
-
-      // Larguras das colunas
-      sheet["!cols"] = [
-        { wch: 32 }, // Lead
-        { wch: 18 }, // Telefone
-        { wch: 8 }, // Tipo
-        { wch: 14 }, // Status
-        { wch: 28 }, // Promotor
-        { wch: 20 }, // Data
-      ];
-
-      // Mesclar células do cabeçalho informativo
-      sheet["!merges"] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } },
-        { s: { r: 1, c: 0 }, e: { r: 1, c: 5 } },
-        { s: { r: 2, c: 0 }, e: { r: 2, c: 5 } },
-        { s: { r: 3, c: 0 }, e: { r: 3, c: 5 } },
-      ];
-
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, sheet, "Leads");
-
-      const fileName = `leads-${range}-${format(now, "yyyy-MM-dd-HHmm")}.xlsx`;
-      XLSX.writeFile(workbook, fileName);
-      toast.success(`${scope.length} leads exportados`);
-    } catch (e) {
-      console.error(e);
-      toast.error("Erro ao gerar Excel");
-    }
-  };
-
-  /* ----- Exportação PDF ----- */
-  const exportPDF = async (range: "today" | "month" | "all") => {
-    try {
-      const now = new Date();
-      let scope: LeadRow[] = leads;
-      let rangeLabel = "Todos os Leads";
-
-      if (range === "today") {
-        const todayStr = now.toDateString();
-        scope = leads.filter(
-          (l) => new Date(l.created_at).toDateString() === todayStr,
-        );
-        rangeLabel = "Leads de Hoje";
-      } else if (range === "month") {
-        const m = now.getMonth();
-        const y = now.getFullYear();
-        scope = leads.filter((l) => {
-          const d = new Date(l.created_at);
-          return d.getMonth() === m && d.getFullYear() === y;
-        });
-        rangeLabel = `Leads de ${format(now, "MMMM 'de' yyyy", { locale: ptBR })}`;
-      }
-
-      if (scope.length === 0) {
-        toast.error("Nenhum lead no período selecionado");
-        return;
-      }
-
-      const { data: settings } = await supabase
-        .from("app_settings")
-        .select("brand_name")
-        .eq("id", 1)
-        .maybeSingle();
-      const brandName = settings?.brand_name ?? "Plataforma";
-      const generatedAt = format(now, "dd/MM/yyyy HH:mm", { locale: ptBR });
-
-      const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
-      const pageWidth = doc.internal.pageSize.getWidth();
-
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(16);
-      doc.text(brandName, 40, 40);
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(11);
-      doc.text(rangeLabel, 40, 60);
-
-      doc.setFontSize(9);
-      doc.setTextColor(100);
-      doc.text(`Gerado em: ${generatedAt}`, 40, 76);
-      doc.text(`Total de leads: ${scope.length}`, pageWidth - 40, 76, { align: "right" });
-      doc.setTextColor(0);
-
-      const body = scope.map((l) => [
-        l.name ?? "—",
-        formatPhoneExport(l.phone),
-        l.kind.toUpperCase(),
-        STATUS_META[l.status]?.label ?? l.status,
-        profiles[l.user_id] ?? "—",
-        format(new Date(l.captured_at ?? l.created_at), "dd/MM/yyyy HH:mm", {
-          locale: ptBR,
-        }),
-      ]);
-
-      autoTable(doc, {
-        head: [["Lead", "Telefone", "Tipo", "Prospectado", "Promotor", "Data da Captura"]],
-        body,
-        startY: 90,
-        styles: { fontSize: 9, cellPadding: 5 },
-        headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: "bold" },
-        alternateRowStyles: { fillColor: [245, 247, 250] },
-        margin: { left: 40, right: 40, bottom: 40 },
-        didDrawPage: () => {
-          const internal = doc.internal as unknown as {
-            getNumberOfPages: () => number;
-            getCurrentPageInfo: () => { pageNumber: number };
-          };
-          const pageCount = internal.getNumberOfPages();
-          const current = internal.getCurrentPageInfo().pageNumber;
-          const ph = doc.internal.pageSize.getHeight();
-          doc.setFontSize(8);
-          doc.setTextColor(120);
-          doc.text(`${brandName} — ${rangeLabel}`, 40, ph - 20);
-          doc.text(`Página ${current} de ${pageCount}`, pageWidth - 40, ph - 20, {
-            align: "right",
-          });
-          doc.setTextColor(0);
-        },
-      });
-
-      const fileName = `leads-${range}-${format(now, "yyyy-MM-dd-HHmm")}.pdf`;
-      doc.save(fileName);
-      toast.success(`${scope.length} leads exportados em PDF`);
-    } catch (e) {
-      console.error(e);
-      toast.error("Erro ao gerar PDF");
-    }
+  const formatPhone = (phone: string) => {
+    const cleaned = phone.replace(/\D/g, "");
+    return cleaned.length === 11 
+      ? `(${cleaned.slice(2, 4)}) ${cleaned.slice(4, 9)}-${cleaned.slice(9)}`
+      : phone;
   };
 
   return (
-    <div className="space-y-6 max-w-[1400px]">
-      {/* ---------- Header ---------- */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold">Leads</h1>
-          <p className="text-xs sm:text-sm text-muted-foreground">
-            Gestão completa de todos os leads da plataforma.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="gap-2">
-                <FileDown className="w-4 h-4" />
-                Exportar
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>Formato e período</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger>
-                  <FileDown className="w-4 h-4 mr-2" />
-                  PDF
-                </DropdownMenuSubTrigger>
-                <DropdownMenuSubContent className="w-52">
-                  <DropdownMenuLabel>Período</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => exportPDF("today")}>
-                    Leads de hoje
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => exportPDF("month")}>
-                    Leads do mês atual
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => exportPDF("all")}>
-                    Todos os leads
-                  </DropdownMenuItem>
-                </DropdownMenuSubContent>
-              </DropdownMenuSub>
-
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger>
-                  <FileDown className="w-4 h-4 mr-2" />
-                  Excel (XLSX)
-                </DropdownMenuSubTrigger>
-                <DropdownMenuSubContent className="w-52">
-                  <DropdownMenuLabel>Período</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => exportExcel("today")}>
-                    Leads de hoje
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => exportExcel("month")}>
-                    Leads do mês atual
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => exportExcel("all")}>
-                    Todos os leads
-                  </DropdownMenuItem>
-                </DropdownMenuSubContent>
-              </DropdownMenuSub>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          {!readOnly && (
-            <Button onClick={openCreate} className="gap-2">
-              <Plus className="w-4 h-4" />
-              Novo Lead
-            </Button>
-          )}
+          <h1 className="text-2xl font-bold tracking-tight">Gestão de Leads</h1>
+          <p className="text-muted-foreground text-sm">Controle total dos leads captados em campo.</p>
         </div>
       </div>
 
-      {/* ---------- Stats ---------- */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard
-          label="Total Leads"
-          value={stats.total.toLocaleString("pt-BR")}
-          icon={<Users className="w-4 h-4" />}
-          tone="default"
-        />
-        <StatCard
-          label="Hoje"
-          value={stats.today.toLocaleString("pt-BR")}
-          icon={<TrendingUp className="w-4 h-4" />}
-          tone="info"
-        />
-        <StatCard
-          label="Convertidos"
-          value={stats.converted.toLocaleString("pt-BR")}
-          icon={<CheckCircle2 className="w-4 h-4" />}
-          tone="success"
-        />
-        <StatCard
-          label="Taxa Conversão"
-          value={`${stats.rate.toFixed(1)}%`}
-          icon={<Target className="w-4 h-4" />}
-          tone="warning"
-        />
-      </div>
-
-      {/* ---------- Filtros ---------- */}
-      <Card className="p-3 sm:p-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-2">
-          <div className="relative lg:col-span-4">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Buscar nome, telefone, placa ou CNPJ…"
+      {/* Filtros */}
+      <Card className="p-4 border-2">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input 
+              placeholder="Buscar por nome, telefone ou placa..." 
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
             />
           </div>
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="lg:col-span-2">
-              <SelectValue placeholder="Prospectado" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos status</SelectItem>
-              {STATUSES.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {STATUS_META[s].label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={filterKind} onValueChange={setFilterKind}>
-            <SelectTrigger className="lg:col-span-1">
-              <SelectValue placeholder="Tipo" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="b2c">B2C</SelectItem>
-              <SelectItem value="b2b">B2B</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={filterOrigin} onValueChange={setFilterOrigin}>
-            <SelectTrigger className="lg:col-span-2">
-              <SelectValue placeholder="Origem" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas origens</SelectItem>
-              <SelectItem value="manual">Manual</SelectItem>
-              <SelectItem value="pdv">PDV</SelectItem>
-              <SelectItem value="campanha">Campanha</SelectItem>
-            </SelectContent>
-          </Select>
+          
+          <div className="flex gap-2">
+            <MapPin className="w-4 h-4 mt-3 text-muted-foreground shrink-0" />
+            <select 
+              className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary"
+              value={filterPraca}
+              onChange={(e) => setFilterPraca(e.target.value)}
+            >
+              <option value="all">Todas as Praças</option>
+              {pracas.map(p => <option key={p} value={p}>{p}</option>)}
+            </select>
+          </div>
 
-          {/* Date range */}
-          <div className="flex gap-2 lg:col-span-3">
-            <DatePickerButton
-              value={dateFrom}
-              onChange={setDateFrom}
-              placeholder="De"
-            />
-            <DatePickerButton
-              value={dateTo}
-              onChange={setDateTo}
-              placeholder="Até"
-            />
-            {(dateFrom || dateTo) && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={clearDates}
-                aria-label="Limpar datas"
-                className="shrink-0"
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            )}
+          <div className="flex gap-2">
+            <AlertTriangle className="w-4 h-4 mt-3 text-muted-foreground shrink-0" />
+            <select 
+              className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary"
+              value={filterMedo}
+              onChange={(e) => setFilterMedo(e.target.value)}
+            >
+              <option value="all">Todos os Medos</option>
+              {medos.map(m => <option key={m} value={m}>{m}</option>)}
+            </select>
           </div>
         </div>
       </Card>
 
-      {/* ---------- Tabela ---------- */}
-      <Card className="overflow-x-auto">
+      {/* Tabela */}
+      <Card className="overflow-hidden border-2">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-muted/50">
             <TableRow>
-              <TableHead>Nome / WhatsApp</TableHead>
-              <TableHead>Veículo / Placa</TableHead>
-              <TableHead>Praça (Abordagem)</TableHead>
-              <TableHead>Medo (Pain Point)</TableHead>
-              <TableHead>Evidência</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
+              <TableHead className="font-bold">Cliente</TableHead>
+              <TableHead className="font-bold">Veículo</TableHead>
+              <TableHead className="font-bold">Praça</TableHead>
+              <TableHead className="font-bold">Medo</TableHead>
+              <TableHead className="font-bold">Evidência</TableHead>
+              <TableHead className="font-bold">Data</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loading && (
+            {loading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-10">
-                  <Loader2 className="w-5 h-5 animate-spin inline" />
+                <TableCell colSpan={6} className="h-32 text-center">
+                  <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" />
                 </TableCell>
               </TableRow>
-            )}
-            {!loading && filtered.length === 0 && (
+            ) : filteredLeads.length === 0 ? (
               <TableRow>
-                <TableCell
-                  colSpan={7}
-                  className="text-center py-10 text-muted-foreground"
-                >
-                  Nenhum lead encontrado
+                <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
+                  Nenhum lead encontrado para os filtros selecionados.
                 </TableCell>
               </TableRow>
-            )}
-            {filtered.map((l) => {
-              const origin = originOf(l);
-              return (
-                <TableRow key={l.id} className="hover:bg-muted/40">
+            ) : (
+              filteredLeads.map((l) => (
+                <TableRow key={l.id} className="hover:bg-muted/30 transition-colors">
+                  {/* Cliente */}
                   <TableCell>
                     <div className="flex flex-col">
-                      <span className="font-bold text-sm text-foreground">{l.name}</span>
-                      <span className="text-xs text-muted-foreground font-mono">
-                        {l.phone ? formatPhoneExport(l.phone) : "Sem WhatsApp"}
-                      </span>
+                      <span className="font-bold">{l.nome || "Não informado"}</span>
+                      <a 
+                        href={`https://wa.me/${l.phone?.replace(/\D/g, "")}`} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="text-xs text-primary hover:underline flex items-center gap-1"
+                      >
+                        {l.phone ? formatPhone(l.phone) : "S/ Tel"}
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
                     </div>
                   </TableCell>
+
+                  {/* Veículo */}
                   <TableCell>
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium">{l.vehicle_model}</span>
+                        <span className="text-sm font-medium">{l.veiculo || "—"}</span>
                         <Badge 
-                          variant="outline" 
                           className={cn(
-                            "text-[9px] uppercase px-1.5 h-4 border-primary/30",
-                            (l as any).vehicle_type === "moto" ? "bg-orange-500/10 text-orange-700" : "bg-blue-500/10 text-blue-700"
+                            "text-[10px] uppercase font-bold px-1.5 h-4",
+                            l.veiculo?.toLowerCase().includes("moto") 
+                              ? "bg-orange-500 hover:bg-orange-600" 
+                              : "bg-blue-600 hover:bg-blue-700"
                           )}
                         >
-                          {(l as any).vehicle_type === "moto" ? "Topy Pro" : "Rastremix"}
+                          {l.veiculo?.toLowerCase().includes("moto") ? "Topy Pro" : "Rastremix"}
                         </Badge>
                       </div>
-                      <span className="text-[10px] text-muted-foreground uppercase tracking-wider bg-muted w-fit px-1 rounded">
-                        {l.vehicle_plate || "S/ Placa"}
+                      <span className="text-[10px] font-mono bg-muted px-1 rounded w-fit">
+                        {l.placa || "SEM PLACA"}
                       </span>
                     </div>
                   </TableCell>
+
+                  {/* Praça */}
                   <TableCell>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                      <span className="text-xs text-muted-foreground">{l.location || "Local não inf."}</span>
-                    </div>
+                    <span className="text-sm text-muted-foreground">{l.praca || "—"}</span>
                   </TableCell>
+
+                  {/* Medo */}
                   <TableCell>
-                    <div className="max-w-[200px] truncate group relative">
-                      <span className="text-xs text-amber-700 dark:text-amber-400 font-medium bg-amber-500/5 px-1.5 py-0.5 rounded border border-amber-500/10 italic">
-                        "{(l as any).pain_point || "Não mapeado"}"
-                      </span>
-                    </div>
+                    <span className="text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                      {l.medo || "—"}
+                    </span>
                   </TableCell>
+
+                  {/* Evidência */}
                   <TableCell>
                     {l.foto_url ? (
                       <Dialog>
                         <DialogTrigger asChild>
-                          <div className="w-10 h-10 rounded-lg overflow-hidden border-2 border-background shadow-sm hover:scale-105 transition cursor-pointer bg-muted">
-                            <img 
-                              src={l.foto_url} 
-                              alt="Evidência" 
-                              className="w-full h-full object-cover"
-                            />
+                          <div className="w-10 h-10 rounded-lg overflow-hidden border-2 border-background shadow-sm hover:scale-110 transition cursor-pointer">
+                            <img src={l.foto_url} alt="Lead" className="w-full h-full object-cover" />
                           </div>
                         </DialogTrigger>
-                        <DialogContent className="max-w-3xl p-1 bg-black/90 border-none">
-                          <img 
-                            src={l.foto_url} 
-                            alt="Evidência Ampliada" 
-                            className="w-full h-auto rounded-lg"
-                          />
+                        <DialogContent className="max-w-3xl p-1">
+                          <img src={l.foto_url} alt="Full" className="w-full h-auto rounded-lg" />
                         </DialogContent>
                       </Dialog>
                     ) : (
-                      <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
-                        <Camera className="w-4 h-4 text-muted-foreground/40" />
+                      <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center text-muted-foreground/30">
+                        <Camera className="w-4 h-4" />
                       </div>
                     )}
                   </TableCell>
-                  <TableCell>
-                    <Badge
-                      className={cn(
-                        "border-transparent text-[10px] uppercase font-bold",
-                        STATUS_META[l.status].className,
-                      )}
-                    >
-                      {STATUS_META[l.status].label}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center justify-end gap-1">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setDetailLead(l)}
-                        title="Ver detalhes"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                      {!readOnly && (
-                        <>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => openEdit(l)}
-                            title="Editar"
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="text-destructive"
-                                title="Excluir"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>
-                                  Excluir lead "{l.name}"?
-                                </AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Esta ação não pode ser desfeita.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => removeLead(l.id)}
-                                  className="bg-destructive text-destructive-foreground"
-                                >
-                                  Excluir
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </>
-                      )}
-                    </div>
+
+                  {/* Data */}
+                  <TableCell className="text-xs text-muted-foreground">
+                    {l.created_at ? format(new Date(l.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR }) : "—"}
                   </TableCell>
                 </TableRow>
-              );
-            })}
+              ))
+            )}
           </TableBody>
         </Table>
       </Card>
-
-      {/* ---------- Modal: Detalhes ---------- */}
-      <LeadDetailDialog
-        lead={detailLead}
-        promoterName={detailLead ? profiles[detailLead.user_id] ?? "—" : ""}
-        origin={detailLead ? originOf(detailLead) : "manual"}
-        readOnly={readOnly}
-        onClose={() => setDetailLead(null)}
-        onEdit={(l) => {
-          setDetailLead(null);
-          openEdit(l);
-        }}
-      />
-
-      {/* ---------- Modal: Criar/Editar ---------- */}
-      <LeadFormDialog
-        open={formOpen}
-        lead={editingLead}
-        onClose={() => setFormOpen(false)}
-        onSaved={() => {
-          setFormOpen(false);
-          load();
-        }}
-      />
     </div>
-  );
-}
-
-/* ======================== Componentes auxiliares ======================== */
-
-function StatCard({
-  label,
-  value,
-  icon,
-  tone,
-}: {
-  label: string;
-  value: string;
-  icon: React.ReactNode;
-  tone: "default" | "info" | "success" | "warning";
-}) {
-  const toneClass = {
-    default: "bg-muted text-foreground",
-    info: "bg-blue-500/15 text-blue-700 dark:text-blue-300",
-    success: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
-    warning: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
-  }[tone];
-
-  return (
-    <Card className="p-4">
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <p className="text-xs text-muted-foreground font-medium">{label}</p>
-          <p className="text-2xl font-bold mt-1 tabular-nums">{value}</p>
-        </div>
-        <div
-          className={cn(
-            "h-9 w-9 rounded-lg flex items-center justify-center shrink-0",
-            toneClass,
-          )}
-        >
-          {icon}
-        </div>
-      </div>
-    </Card>
-  );
-}
-
-function DatePickerButton({
-  value,
-  onChange,
-  placeholder,
-}: {
-  value: Date | undefined;
-  onChange: (d: Date | undefined) => void;
-  placeholder: string;
-}) {
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          className={cn(
-            "flex-1 justify-start text-left font-normal",
-            !value && "text-muted-foreground",
-          )}
-        >
-          <CalendarIcon className="w-4 h-4 mr-2 shrink-0" />
-          {value ? (
-            format(value, "dd/MM/yyyy", { locale: ptBR })
-          ) : (
-            <span>{placeholder}</span>
-          )}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
-        <Calendar
-          mode="single"
-          selected={value}
-          onSelect={onChange}
-          initialFocus
-          locale={ptBR}
-          className={cn("p-3 pointer-events-auto")}
-        />
-      </PopoverContent>
-    </Popover>
-  );
-}
-
-/* ======================== Modal: Detalhes ======================== */
-
-function LeadDetailDialog({
-  lead,
-  promoterName,
-  origin,
-  readOnly = false,
-  onClose,
-  onEdit,
-}: {
-  lead: LeadRow | null;
-  promoterName: string;
-  origin: "manual" | "pdv" | "campanha";
-  readOnly?: boolean;
-  onClose: () => void;
-  onEdit: (l: LeadRow) => void;
-}) {
-  if (!lead) return null;
-  return (
-    <Dialog open={!!lead} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Detalhes do Lead</DialogTitle>
-          <DialogDescription>
-            Informações completas do lead capturado.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-3 text-sm">
-          <Field label="Nome" value={lead.name} />
-          <Field label="Telefone" value={lead.phone ?? "—"} />
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <p className="text-xs text-muted-foreground">Tipo</p>
-              <Badge
-                variant="outline"
-                className={
-                  lead.kind === "b2b"
-                    ? "border-purple-500/40 text-purple-700 dark:text-purple-300 bg-purple-500/10 mt-1"
-                    : "border-cyan-500/40 text-cyan-700 dark:text-cyan-300 bg-cyan-500/10 mt-1"
-                }
-              >
-                {lead.kind.toUpperCase()}
-              </Badge>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Prospectado</p>
-              <Badge
-                className={cn(
-                  "border-transparent mt-1",
-                  STATUS_META[lead.status].className,
-                )}
-              >
-                {STATUS_META[lead.status].label}
-              </Badge>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Origem</p>
-              <Badge variant="outline" className="mt-1 capitalize">
-                {origin === "pdv"
-                  ? "PDV"
-                  : origin === "campanha"
-                    ? "Campanha"
-                    : "Manual"}
-              </Badge>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Comissão</p>
-              <p className="font-semibold mt-1 tabular-nums">
-                {lead.value != null ? formatBRL(lead.value) : "—"}
-              </p>
-            </div>
-          </div>
-
-          {lead.kind === "b2c" && (
-            <div className="grid grid-cols-2 gap-3 pt-2 border-t">
-              <Field label="Veículo" value={lead.vehicle_model ?? "—"} />
-              <Field label="Placa" value={lead.vehicle_plate ?? "—"} />
-            </div>
-          )}
-
-          {lead.kind === "b2b" && (
-            <div className="grid grid-cols-2 gap-3 pt-2 border-t">
-              <Field label="CNPJ" value={lead.company_cnpj ?? "—"} />
-              <Field
-                label="Frota"
-                value={lead.fleet_size ? String(lead.fleet_size) : "—"}
-              />
-            </div>
-          )}
-
-          <div className="grid grid-cols-2 gap-3 pt-2 border-t">
-            <Field label="Cidade" value={lead.city ?? "—"} />
-            <Field label="Promoter" value={promoterName} />
-          </div>
-
-          <Field
-            label="Criado em"
-            value={format(new Date(lead.created_at), "dd/MM/yyyy 'às' HH:mm", {
-              locale: ptBR,
-            })}
-          />
-
-          {lead.photo_url && (
-            <div>
-              <p className="text-xs text-muted-foreground mb-1">Foto</p>
-              <div className="rounded-lg overflow-hidden border">
-                <img
-                  src={lead.photo_url}
-                  alt="Foto do lead"
-                  className="w-full max-h-64 object-cover"
-                />
-              </div>
-            </div>
-          )}
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Fechar
-          </Button>
-          {!readOnly && (
-            <Button onClick={() => onEdit(lead)} className="gap-2">
-              <Pencil className="w-4 h-4" />
-              Editar
-            </Button>
-          )}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function Field({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="font-medium mt-0.5 break-words">{value}</p>
-    </div>
-  );
-}
-
-/* ======================== Modal: Criar/Editar ======================== */
-
-type FormState = {
-  name: string;
-  phone: string;
-  kind: LeadKind;
-  vehicle_model: string;
-  vehicle_plate: string;
-  company_cnpj: string;
-  fleet_size: string;
-  city: string;
-  status: LeadStatus;
-  value: string;
-};
-
-const emptyForm = (): FormState => ({
-  name: "",
-  phone: "",
-  kind: "b2c",
-  vehicle_model: "",
-  vehicle_plate: "",
-  company_cnpj: "",
-  fleet_size: "",
-  city: "",
-  status: "coletado",
-  value: "",
-});
-
-function LeadFormDialog({
-  open,
-  lead,
-  onClose,
-  onSaved,
-}: {
-  open: boolean;
-  lead: LeadRow | null;
-  onClose: () => void;
-  onSaved: () => void;
-}) {
-  const [form, setForm] = useState<FormState>(emptyForm());
-  const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    if (!open) return;
-    if (lead) {
-      setForm({
-        name: lead.name,
-        phone: lead.phone ?? "",
-        kind: lead.kind,
-        vehicle_model: lead.vehicle_model ?? "",
-        vehicle_plate: lead.vehicle_plate ?? "",
-        company_cnpj: lead.company_cnpj ?? "",
-        fleet_size: lead.fleet_size != null ? String(lead.fleet_size) : "",
-        city: lead.city ?? "",
-        status: lead.status,
-        value: lead.value != null ? String(lead.value) : "",
-      });
-    } else {
-      setForm(emptyForm());
-    }
-  }, [open, lead]);
-
-  const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
-    setForm((s) => ({ ...s, [k]: v }));
-
-  const submit = async () => {
-    if (!form.name.trim()) {
-      toast.error("Informe o nome");
-      return;
-    }
-    setBusy(true);
-    try {
-      const valueNum = form.value
-        ? Number(form.value.replace(",", "."))
-        : null;
-      const fleet = form.fleet_size ? Number(form.fleet_size) : null;
-
-      if (lead) {
-        const { error } = await supabase
-          .from("leads")
-          .update({
-            name: form.name.trim(),
-            phone: form.phone || null,
-            kind: form.kind,
-            vehicle_model: form.kind === "b2c" ? form.vehicle_model || null : null,
-            vehicle_plate: form.kind === "b2c"
-              ? form.vehicle_plate?.toUpperCase() || null
-              : null,
-            company_cnpj: form.kind === "b2b" ? form.company_cnpj || null : null,
-            fleet_size: form.kind === "b2b" ? fleet : null,
-            city: form.city || null,
-            status: form.status,
-            value: valueNum,
-          })
-          .eq("id", lead.id);
-        if (error) throw error;
-        toast.success("Lead atualizado");
-      } else {
-        const { data: u } = await supabase.auth.getUser();
-        if (!u.user) throw new Error("Sessão expirada");
-        const payload: LeadInsert = {
-          user_id: u.user.id,
-          name: form.name.trim(),
-          phone: form.phone || null,
-          kind: form.kind,
-          vehicle_model: form.kind === "b2c" ? form.vehicle_model || null : null,
-          vehicle_plate: form.kind === "b2c"
-            ? form.vehicle_plate?.toUpperCase() || null
-            : null,
-          company_cnpj: form.kind === "b2b" ? form.company_cnpj || null : null,
-          fleet_size: form.kind === "b2b" ? fleet : null,
-          city: form.city || null,
-          status: form.status,
-          value: valueNum,
-        };
-        const { error } = await supabase.from("leads").insert(payload);
-        if (error) throw error;
-        toast.success("Lead criado");
-      }
-      onSaved();
-    } catch (e: any) {
-      toast.error(e.message ?? "Erro ao salvar");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>
-            {lead ? "Editar Lead" : "Novo Lead"}
-          </DialogTitle>
-          <DialogDescription>
-            {lead
-              ? "Atualize as informações do lead."
-              : "Preencha as informações para cadastrar um novo lead."}
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div className="sm:col-span-2">
-            <Label htmlFor="name">Nome *</Label>
-            <Input
-              id="name"
-              value={form.name}
-              onChange={(e) => set("name", e.target.value)}
-              placeholder="Nome do cliente"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="phone">Telefone</Label>
-            <Input
-              id="phone"
-              value={form.phone}
-              onChange={(e) => set("phone", e.target.value)}
-              placeholder="(11) 99999-9999"
-              inputMode="tel"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="city">Cidade</Label>
-            <Input
-              id="city"
-              value={form.city}
-              onChange={(e) => set("city", e.target.value)}
-              placeholder="Cidade"
-            />
-          </div>
-
-          <div>
-            <Label>Tipo</Label>
-            <Select
-              value={form.kind}
-              onValueChange={(v) => set("kind", v as LeadKind)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="b2c">B2C</SelectItem>
-                <SelectItem value="b2b">B2B</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label>Prospectado</Label>
-            <Select
-              value={form.status}
-              onValueChange={(v) => set("status", v as LeadStatus)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {STATUSES.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {STATUS_META[s].label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {form.kind === "b2c" && (
-            <>
-              <div>
-                <Label htmlFor="vehicle">Veículo</Label>
-                <Input
-                  id="vehicle"
-                  value={form.vehicle_model}
-                  onChange={(e) => set("vehicle_model", e.target.value)}
-                  placeholder="Ex: Civic, HB20…"
-                />
-              </div>
-              <div>
-                <Label htmlFor="plate">Placa</Label>
-                <Input
-                  id="plate"
-                  value={form.vehicle_plate}
-                  onChange={(e) =>
-                    set("vehicle_plate", e.target.value.toUpperCase())
-                  }
-                  placeholder="ABC1D23"
-                  maxLength={8}
-                  className="font-mono tracking-widest"
-                />
-              </div>
-            </>
-          )}
-
-          {form.kind === "b2b" && (
-            <>
-              <div>
-                <Label htmlFor="cnpj">CNPJ</Label>
-                <Input
-                  id="cnpj"
-                  value={form.company_cnpj}
-                  onChange={(e) => set("company_cnpj", e.target.value)}
-                  placeholder="00.000.000/0000-00"
-                />
-              </div>
-              <div>
-                <Label htmlFor="fleet">Tamanho da frota</Label>
-                <Input
-                  id="fleet"
-                  type="number"
-                  min={0}
-                  value={form.fleet_size}
-                  onChange={(e) => set("fleet_size", e.target.value)}
-                  placeholder="Ex: 25"
-                />
-              </div>
-            </>
-          )}
-
-          <div className="sm:col-span-2">
-            <Label htmlFor="value">Valor da comissão (R$)</Label>
-            <Input
-              id="value"
-              type="number"
-              step="0.01"
-              min={0}
-              value={form.value}
-              onChange={(e) => set("value", e.target.value)}
-              placeholder="0,00"
-            />
-          </div>
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={busy}>
-            Cancelar
-          </Button>
-          <Button onClick={submit} disabled={busy} className="gap-2">
-            {busy && <Loader2 className="w-4 h-4 animate-spin" />}
-            {lead ? "Salvar alterações" : "Criar lead"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   );
 }
