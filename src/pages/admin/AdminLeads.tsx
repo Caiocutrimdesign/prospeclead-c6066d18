@@ -162,7 +162,7 @@ export default function AdminLeads() {
                   {/* Cliente */}
                   <TableCell>
                     <div className="flex flex-col">
-                      <span className="font-bold">{l.nome || "Não informado"}</span>
+                      <span className="font-bold">{l.nome || l.name || "Não informado"}</span>
                       <a 
                         href={`https://wa.me/${l.phone?.replace(/\D/g, "")}`} 
                         target="_blank" 
@@ -179,33 +179,33 @@ export default function AdminLeads() {
                   <TableCell>
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium">{l.veiculo || "—"}</span>
+                        <span className="text-sm font-medium">{l.veiculo || l.vehicle_model || "—"}</span>
                         <Badge 
                           className={cn(
                             "text-[10px] uppercase font-bold px-1.5 h-4",
-                            l.veiculo?.toLowerCase().includes("moto") 
+                            (l.veiculo?.toLowerCase().includes("moto") || l.vehicle_type === "moto")
                               ? "bg-orange-500 hover:bg-orange-600" 
                               : "bg-blue-600 hover:bg-blue-700"
                           )}
                         >
-                          {l.veiculo?.toLowerCase().includes("moto") ? "Topy Pro" : "Rastremix"}
+                          {(l.veiculo?.toLowerCase().includes("moto") || l.vehicle_type === "moto") ? "Topy Pro" : "Rastremix"}
                         </Badge>
                       </div>
                       <span className="text-[10px] font-mono bg-muted px-1 rounded w-fit">
-                        {l.placa || "SEM PLACA"}
+                        {l.placa || l.vehicle_plate || "SEM PLACA"}
                       </span>
                     </div>
                   </TableCell>
 
                   {/* Praça */}
                   <TableCell>
-                    <span className="text-sm text-muted-foreground">{l.praca || "—"}</span>
+                    <span className="text-sm text-muted-foreground">{l.praca || l.location || "—"}</span>
                   </TableCell>
 
                   {/* Medo */}
                   <TableCell>
                     <span className="text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
-                      {l.medo || "—"}
+                      {l.medo || l.pain_point || "—"}
                     </span>
                   </TableCell>
 
