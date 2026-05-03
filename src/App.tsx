@@ -46,6 +46,7 @@ import AdminTarefas from "./pages/admin/AdminTarefas";
 import AdminKanban from "./pages/admin/AdminKanban";
 import AdminMarcas from "./pages/admin/AdminMarcas";
 import AdminInbox from "./pages/admin/AdminInbox";
+import WhatsAppConfig from "./pages/admin/WhatsAppConfig";
 
 const queryClient = new QueryClient();
 
@@ -94,6 +95,7 @@ const App = () => (
                 <Route path="marcas" element={<AdminMarcas />} />
                 <Route path="usuarios" element={<AdminUsuarios />} />
                 <Route path="configuracoes" element={<AdminConfig />} />
+                <Route path="config/whatsapp" element={<WhatsAppConfig />} />
                 {/* Financeiro */}
                 <Route path="auditoria-fotos" element={<AdminPlaceholder title="Auditoria de Fotos" description="Validação manual das fotos enviadas pelos promoters." />} />
                 <Route path="comissoes-kyc" element={<AdminPlaceholder title="Comissões & KYC" description="Aprovação de comissões e verificação de identidade." />} />

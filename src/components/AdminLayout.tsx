@@ -80,6 +80,7 @@ const NAV_SECTIONS: {
       { to: "/admin/ai-agents", label: "Agentes de IA", icon: Bot },
       { to: "/admin/campaigns", label: "Motor de Campanhas", icon: Megaphone },
       { to: "/admin/radar-b2b", label: "Radar B2B", icon: Radar },
+      { to: "/admin/config/whatsapp", label: "Configuração WhatsApp", icon: ShieldCheck },
     ],
   },
   {
@@ -142,6 +143,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/admin/pdvs": "Pontos de Venda",
   "/admin/leads": "Leads",
   "/admin/ranking": "Ranking",
+  "/admin/config/whatsapp": "Configurações WhatsApp",
 };
 
 function getInitials(name?: string | null, email?: string | null) {
