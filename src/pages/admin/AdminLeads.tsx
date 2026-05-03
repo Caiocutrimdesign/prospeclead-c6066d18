@@ -30,7 +30,6 @@ import {
   Edit,
   MoreHorizontal
 } from "lucide-react";
-import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
@@ -41,13 +40,46 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const getPublicImageUrl = (path: string | null) => {
-  if (!path) return null;
-  if (path.startsWith("http")) return path;
-  // Remove barras extras no início se houver
-  const cleanPath = path.startsWith("/") ? path.substring(1) : path;
-  const { data } = supabase.storage.from("lead-photos").getPublicUrl(cleanPath);
-  return data.publicUrl;
+const SecureImage = ({ path, className, alt }: { path: string | null; className?: string; alt?: string }) => {
+  const [url, setUrl] = useState<string | null>(null);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    if (!path) {
+      setError(true);
+      return;
+    }
+    if (path.startsWith("http")) {
+      setUrl(path);
+      return;
+    }
+    
+    const cleanPath = path.startsWith("/") ? path.substring(1) : path;
+    
+    // Gerar Signed URL para garantir acesso mesmo em buckets privados
+    const fetchSignedUrl = async () => {
+      const { data, error } = await supabase.storage.from("lead-photos").createSignedUrl(cleanPath, 60 * 60);
+      if (error || !data?.signedUrl) {
+        console.error("Erro ao gerar URL da foto:", error);
+        setError(true);
+      } else {
+        setUrl(data.signedUrl);
+      }
+    };
+    
+    fetchSignedUrl();
+  }, [path]);
+
+  if (error || !url) {
+    return (
+      <div className={cn("flex flex-col items-center justify-center bg-muted text-muted-foreground/30", className)}>
+        <Camera className="w-6 h-6 mb-1" />
+        <span className="text-[8px] font-bold">SEM FOTO</span>
+      </div>
+    );
+  }
+
+  return <img src={url} alt={alt} className={className} onError={() => setError(true)} />;
 };
 
 export default function AdminLeads() {
@@ -261,20 +293,11 @@ export default function AdminLeads() {
                         <Dialog>
                           <DialogTrigger asChild>
                             <div className="w-10 h-10 rounded-lg overflow-hidden border-2 border-background shadow-sm hover:scale-110 transition cursor-pointer bg-muted">
-                              <img 
-                                src={getPublicImageUrl(l.photo_url) || ""} 
-                                alt="Lead" 
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).style.display = "none";
-                                  (e.target as HTMLImageElement).parentElement?.classList.add("flex", "items-center", "justify-center");
-                                  (e.target as HTMLImageElement).parentElement?.insertAdjacentHTML('beforeend', '<svg class="w-4 h-4 text-muted-foreground/30" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>');
-                                }}
-                              />
+                              <SecureImage path={l.photo_url} alt="Lead thumbnail" className="w-full h-full object-cover" />
                             </div>
                           </DialogTrigger>
                           <DialogContent className="max-w-3xl p-1">
-                            <img src={getPublicImageUrl(l.photo_url) || ""} alt="Full" className="w-full h-auto rounded-lg" />
+                            <SecureImage path={l.photo_url} alt="Lead full" className="w-full h-auto rounded-lg" />
                           </DialogContent>
                         </Dialog>
                       ) : (
