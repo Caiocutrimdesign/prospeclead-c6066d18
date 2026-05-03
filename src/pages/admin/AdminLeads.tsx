@@ -26,14 +26,27 @@ import {
   MapPin,
   AlertTriangle,
   ExternalLink,
+  Trash2,
+  Edit,
+  MoreHorizontal
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const getPublicImageUrl = (path: string | null) => {
   if (!path) return null;
   if (path.startsWith("http")) return path;
-  const { data } = supabase.storage.from("lead-photos").getPublicUrl(path);
+  // Remove barras extras no início se houver
+  const cleanPath = path.startsWith("/") ? path.substring(1) : path;
+  const { data } = supabase.storage.from("lead-photos").getPublicUrl(cleanPath);
   return data.publicUrl;
 };
 
@@ -58,6 +71,19 @@ export default function AdminLeads() {
       toast.error("Erro ao carregar leads: " + error.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Tem certeza que deseja excluir este lead permanentemente?")) return;
+    
+    try {
+      const { error } = await supabase.from("leads").delete().eq("id", id);
+      if (error) throw error;
+      toast.success("Lead excluído com sucesso!");
+      loadLeads();
+    } catch (error: any) {
+      toast.error("Erro ao excluir: " + error.message);
     }
   };
 
@@ -159,18 +185,19 @@ export default function AdminLeads() {
               <TableHead className="font-bold">Medo</TableHead>
               <TableHead className="font-bold">Evidência</TableHead>
               <TableHead className="font-bold">Data</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-32 text-center">
+                <TableCell colSpan={7} className="h-32 text-center">
                   <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" />
                 </TableCell>
               </TableRow>
             ) : filteredLeads.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
+                <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
                   Nenhum lead encontrado para os filtros selecionados.
                 </TableCell>
               </TableRow>
@@ -233,8 +260,17 @@ export default function AdminLeads() {
                       {l.photo_url ? (
                         <Dialog>
                           <DialogTrigger asChild>
-                            <div className="w-10 h-10 rounded-lg overflow-hidden border-2 border-background shadow-sm hover:scale-110 transition cursor-pointer">
-                              <img src={getPublicImageUrl(l.photo_url) || ""} alt="Lead" className="w-full h-full object-cover" />
+                            <div className="w-10 h-10 rounded-lg overflow-hidden border-2 border-background shadow-sm hover:scale-110 transition cursor-pointer bg-muted">
+                              <img 
+                                src={getPublicImageUrl(l.photo_url) || ""} 
+                                alt="Lead" 
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display = "none";
+                                  (e.target as HTMLImageElement).parentElement?.classList.add("flex", "items-center", "justify-center");
+                                  (e.target as HTMLImageElement).parentElement?.insertAdjacentHTML('beforeend', '<svg class="w-4 h-4 text-muted-foreground/30" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>');
+                                }}
+                              />
                             </div>
                           </DialogTrigger>
                           <DialogContent className="max-w-3xl p-1">
@@ -251,6 +287,30 @@ export default function AdminLeads() {
                     {/* Data */}
                     <TableCell className="text-xs text-muted-foreground">
                       {l.created_at ? format(new Date(l.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR }) : "—"}
+                    </TableCell>
+
+                    {/* Ações */}
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <MoreHorizontal className="h-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="cursor-pointer">
+                            <Edit className="mr-2 h-4 w-4" /> Editar Lead
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            className="cursor-pointer text-destructive focus:text-destructive"
+                            onClick={() => handleDelete(l.id)}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" /> Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 );
