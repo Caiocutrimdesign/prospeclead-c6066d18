@@ -227,7 +227,7 @@ export default function AdminLeads() {
                     <TableCell>
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium">{l.veiculo || l.vehicle_model || "—"}</span>
+                          <span className="text-sm font-medium">{l.vehicle_model || l.veiculo || l.vehicle || "—"}</span>
                           <Badge 
                             className={cn(
                               "text-[10px] uppercase font-bold px-1.5 h-4",
@@ -238,20 +238,20 @@ export default function AdminLeads() {
                           </Badge>
                         </div>
                         <span className="text-[10px] font-mono bg-muted px-1 rounded w-fit">
-                          {l.placa || l.vehicle_plate || "SEM PLACA"}
+                          {l.vehicle_plate || l.placa || l.plate || "SEM PLACA"}
                         </span>
                       </div>
                     </TableCell>
 
                     {/* Praça */}
                     <TableCell>
-                      <span className="text-sm text-muted-foreground">{l.praca || l.city || "—"}</span>
+                      <span className="text-sm text-muted-foreground">{l.city || l.location || l.praca || "—"}</span>
                     </TableCell>
 
                     {/* Medo */}
                     <TableCell>
                       <span className="text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
-                        {l.medo || l.pain || "—"}
+                        {l.pain || l.pain_point || l.medo || "—"}
                       </span>
                     </TableCell>
 
